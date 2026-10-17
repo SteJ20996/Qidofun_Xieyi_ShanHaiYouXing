@@ -106,6 +106,7 @@
       if (type === '魄') return d.kind !== 'fire';
       if (type === '鳥' || type === '龍' || type === '鷹') return d.kind !== 'fire';
       if (type === '魚' || type === '蜃') return d.kind === 'water';
+      if (type === '青龍') return ch === '淼';   // 東海青龍只在深海上盤著（v0.42）
       if (d.walk <= 0 || d.shelter || d.gate) return false;
       if (d.bog && type !== '蟾') return false;                             // 沼澤：除了蟾，獸都不進
       if (SCARED.indexOf(type) >= 0 && this.world.scared(x, y)) return false;
@@ -239,6 +240,8 @@
           this.spawnNear(type, p, 14, 30, night);
           if (type === '魚' && Math.random() < FISH_RATE - 1 && this.count('魚') < caps['魚']) this.spawnNear('魚', p, 14, 30, night);   // 魚每回多八成的機會再刷一條（v0.37）
         }
+        // 東海青龍（v0.42）：人到四十格內就在牠那片海上現身；走遠了跟別的生靈一樣散去（不存檔，回來再現）
+        const az = g.azure; if (az && U.cheb(p.x, p.y, az.x, az.y) <= 40 && !this.list.some(e => e.type === '青龍')) this.add('青龍', az.x, az.y, { moveT: 2 });
         // 蜃：只在玩家行船或落水時，從十到十六格外的深海浮上來；機率低，一次只一隻
         if ((p.sailing || p.swimming) && this.count('蜃') === 0 && Math.random() < this.seaP) {
           const m = this.spawnNear('蜃', p, 10, 16, night, { moveT: 1.5, fogT: 4 });
@@ -318,6 +321,12 @@
             e.moveT = 0.6;
           } else if (atSea && d <= 14) { e.moveT = 0.4; this.stepTo(e, p.x, p.y, false, night); }
           else { e.moveT = 1 + Math.random() * 1.5; this.wander(e, night, null); }
+          continue;
+        }
+        if (e.type === '青龍') {   // 在自己那片海上盤著（離家三格內），不近人也不避人
+          e.moveT = 1.2 + Math.random() * 1.5; const az = g.azure;
+          if (d <= 4) continue;   // 人來了就停下來等（也免得壓在船上）
+          if (az && U.cheb(e.x, e.y, az.x, az.y) > 3) this.stepTo(e, az.x, az.y, false, night); else if (Math.random() < 0.5) this.wander(e, night, null);
           continue;
         }
         if (e.type === '龍') {
