@@ -143,7 +143,7 @@
       if ((old === '灶' || old === '鼎') && ch !== '灶' && ch !== '鼎') this.stoves.delete(k);
       if (old === '灶' && ch !== '灶') this.shelves.delete(k);   // 柴架跟著灶走（拆灶時遊戲端先把它記到囊裡那個灶上）
       if ((ch === '灶' || ch === '鼎') && !this.stoves.has(k)) this.stoves.set(k, 0);
-      if (old === '包' && ch !== '包') this.bags.delete(k);
+      if ((old === '包' || old === '囊') && ch !== old) this.bags.delete(k);   // 荷包、小囊（v0.42）拿走了，裡面的記錄也清掉
       if (old === '偶' && ch !== '偶') this.scarecrows.delete(k);
       if ('網罟罾'.indexOf(old) >= 0 && '網罟罾'.indexOf(ch) < 0 && this.netCells.has(k)) { const rec = this.nets.get(this.netCells.get(k)); if (rec) this.removeNet(rec); }
       if (old === '櫃' && ch !== '櫃') this.chests.delete(k);

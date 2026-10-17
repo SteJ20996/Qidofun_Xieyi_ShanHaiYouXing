@@ -975,8 +975,15 @@ const result = await page.evaluate(async () => {
   const mu = by('mu'); goNextTo(mu.x, mu.y); const b0 = g.count('磚'); g.pressGather(); await sleep(30); await press('KeyE', 20);
   ok('墓 gives bricks and pebbles', g.count('磚') === b0 + 6 && g.count('石子') >= 3);
   const dong = by('dong'); goNextTo(dong.x, dong.y); g.pressGather(); await sleep(30); await press('KeyE', 20);
+  ok('v0.42: 洞 no longer releases a dragon — it leaves a 青鱗 pointing to the east sea', g.count('青鱗') === 1 && p.scaleTaken && !p.dragon && !p.azure && !g.ents.list.some(e => e.type === '龍') && /青鱗|東海/.test(toasts()));
+  { const az = g.ents.add('青龍', p.x - 2, p.y, { moveT: 99 }); face(1, 0);
+    g.pressGather(); await sleep(30);
+    ok('v0.42: without a 蜃珠 the 青龍 sends you off to slay a 蜃 first', !p.azure && !p.dragon && g.count('青鱗') === 1 && /蜃珠/.test(toasts()));
+    g.addItem('蜃珠', 1); g.pressGather(); await sleep(30);
+    ok('v0.42: with a 蜃珠 the 青龍 takes it (and the scale), teaches ship mending, and a small dragon follows', p.azure && p.dragon && g.count('蜃珠') === 0 && g.count('青鱗') === 0 && g.ents.list.some(e => e.type === '龍') && /求教青龍/.test(toasts()));
+    g.ents.remove(az); }
   await until(() => p.creatures.indexOf('龍') >= 0, 4000);
-  ok('洞 releases a dragon that follows', g.ents.list.some(e => e.type === '龍') && p.dragon && p.creatures.indexOf('龍') >= 0);
+  ok('the small dragon follows', g.ents.list.some(e => e.type === '龍') && p.dragon && p.creatures.indexOf('龍') >= 0);
   { const dr = g.ents.list.find(e => e.type === '龍'); setDay(0.98); hold('木'); if (p.worn['帽']) g.takeOff('帽'); g.removeItem('燈帽', 9);
     const spot = [[6, 0], [-6, 0], [0, 6], [0, -6]].map(([dx, dy]) => [dr.x + dx, dr.y + dy]).find(([x, y]) => !w.lightNear(x, y, 7) && U.cheb(x, y, p.x, p.y) > 6);
     if (spot) {
@@ -1630,6 +1637,63 @@ const result = await page.evaluate(async () => {
     const r0 = U.trueRand, cb = w.onWeather, ra = w.rainUntil, rn = w.nextRainAt; w.onWeather = null; U.trueRand = () => 0; w.rainUntil = 0; w.nextRainAt = w.time; w.step(p.x, p.y); const rainLen = w.rainUntil - w.time;
     U.trueRand = r0; w.onWeather = cb; w.rainUntil = ra; w.nextRainAt = rn;
     ok('v0.37: things counted in days follow the longer day (the shortest rain is a quarter of 360 = 90 s)', Math.abs(rainLen - 90) <= 0.5, rainLen); }
+  // ============ v0.42：八格存檔、暫停面板「存到」別格；東海青龍、蜃珠、船自己回命、舊存檔的龍換青鱗 ============
+  { const E = g.ents, p0 = { x: p.x, y: p.y }, slot0 = g.slot, GK = XIEYI.Game, sb = (n) => document.querySelector('#saveas .saveas-slot[data-slot="' + n + '"]');
+    ok('v0.42: eight save slots — slot 1 keeps the old key, slot 8 is xieyi.save.v5.8', GK.slotKey(1) === 'xieyi.save.v5' && GK.slotKey(8) === 'xieyi.save.v5.8');
+    for (let n = 2; n <= 8; n++) if (n !== slot0) GK.clearSave(n);
+    g.togglePause();
+    ok('v0.42: the pause panel lists eight slots to save to, this game’s own slot marked', document.querySelectorAll('#saveas .saveas-slot').length === 8 && document.querySelector('#saveas .saveas-slot.on').dataset.slot === String(slot0) && !hidden('pause'));
+    const t1 = w.time; sb(2).click(); const s2 = GK.readSave(2);
+    ok('v0.42: clicking slot 2 copies this moment there; the game keeps its own slot for autosaves', !!s2 && s2.seed === g.seed && Math.abs(s2.world.time - t1) < 1e-3 && g.slot === slot0 && /抄到了第二格/.test(document.getElementById('saveas-note').textContent) && /這一局/.test(sb(slot0).textContent), document.getElementById('saveas-note').textContent);
+    g.togglePause(); w.time += 5; g.save();
+    g.togglePause(); sb(3).click(); g.togglePause();
+    const s2b = GK.readSave(2), s3 = GK.readSave(3), s1 = GK.readSave(slot0);
+    ok('v0.42: later, slot 3 holds the later moment, slot 2 still the earlier one, and autosave went to the own slot', Math.abs(s2b.world.time - t1) < 1e-3 && Math.abs(s3.world.time - (t1 + 5)) < 1e-3 && Math.abs(s1.world.time - (t1 + 5)) < 1e-3, [s2b.world.time - t1, s3.world.time - t1, s1.world.time - t1]);
+    const other = JSON.parse(JSON.stringify(s3)); other.seed = 4242; localStorage.setItem(GK.slotKey(4), JSON.stringify(other));
+    g.togglePause(); sb(4).click(); const armedText = sb(4).textContent, still = GK.readSave(4).seed; sb(4).click(); const after = GK.readSave(4).seed;
+    sb(3).click(); const again3 = GK.readSave(3).world.time; g.togglePause();
+    ok('v0.42: another island’s save needs a second click to overwrite; a slot this game copied to a moment ago takes one', /再按一次/.test(armedText) && still === 4242 && after === g.seed && Math.abs(again3 - w.time) < 1e-3, [armedText, still, after]);
+    for (let n = 2; n <= 8; n++) if (n !== slot0) GK.clearSave(n);
+    // 東海青龍：本島往東約六百格的深海上；四十格內現身；兩格內 E 求教
+    const az = g.azure; let open = true; for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) if (w.get(az.x + dx, az.y + dy) !== '淼') open = false;
+    ok('v0.42: the 青龍 lives on open deep sea about six hundred tiles east of the island', az.x >= 560 && az.x <= 720 && Math.abs(az.y) <= 220 && open, az);
+    E.list = E.list.filter(e => e.type === '龍' || e.tame);
+    p.x = p.rx = az.x - 20; p.y = p.ry = az.y; p.sailing = true; p.swimming = false; p.ship = { kind: '孤帆', hp: 60, skulls: [], repairs: 0 }; E.px = p.x; E.py = p.y;
+    await until(() => E.list.some(e => e.type === '青龍'), 5000);
+    const dr = E.list.find(e => e.type === '青龍');
+    ok('v0.42: sailing within forty tiles, the 青龍 shows up on its own patch of sea', !!dr && U.cheb(dr.x, dr.y, az.x, az.y) <= 3, dr && [dr.x - az.x, dr.y - az.y]);
+    if (dr) { p.x = p.rx = dr.x - 2; p.y = p.ry = dr.y; face(1, 0); g.msgUntil = 0; await sleep(120);
+      ok('v0.42: two tiles from it the hint line names the 東海青龍', /東海青龍/.test(document.getElementById('msg').textContent), document.getElementById('msg').textContent);
+      g.pressGather(); ok('v0.42: once taught, E only gets a word from the 青龍 (never an attack)', /去吧/.test(g.msgText) && dr.hp === G.DB['青龍'].hp, g.msgText); }
+    const hp0 = p.ship.hp; g.mendShips(DAY);
+    ok('v0.42: taught by the 青龍, a 孤帆 mends itself — half its hull a day, full in two', Math.abs(p.ship.hp - Math.min(120, hp0 + 60)) < 1e-3, p.ship.hp);
+    const pk = w.addShip(az.x - 12, az.y + 6, { kind: '方舟', hp: 20, skulls: [], repairs: 0 }); g.mendShips(DAY / 2);
+    ok('v0.42: …and a parked ship mends too (方舟: a quarter of 420 in half a day)', Math.abs(pk.hp - (20 + 105)) < 1e-3, pk.hp); w.removeShip(U.key(az.x - 12, az.y + 6));
+    g.toggleMap(); await sleep(60); const mv = g.renderer.mapView; g.toggleMap();
+    ok('v0.42: with the scale (or once taught) the big map reaches out to mark the 青龍', !!mv && az.x >= mv.ox && az.x <= mv.ox + mv.N && az.y >= mv.oy && az.y <= mv.oy + mv.N, mv);
+    // 蜃死留蜃珠
+    const sm = E.add('蜃', p.x + 4, p.y + 3, { moveT: 99, fogT: 999 }), pr0 = g.count('蜃珠'); g.kill(sm);
+    ok('v0.42: a slain 蜃 leaves a 蜃珠', g.count('蜃珠') === pr0 + 1 && /蜃珠/.test(toasts()));
+    g.removeItem('蜃珠', 9);
+    p.sailing = false; p.ship = null; E.list = E.list.filter(e => e.type !== '青龍');
+    // 舊存檔：龍跟著、沒求教過、囊滿了、睡過一張床——龍回東海，青鱗用小囊包著擱在床邊
+    p.x = p.rx = p0.x; p.y = p.ry = p0.y; E.px = p.x; E.py = p.y;
+    const bx = p0.x + 5, by = p0.y + 5; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) w.set(bx + dx, by + dy, '草'); w.set(bx, by, '床');
+    g.save(); const sv = JSON.parse(localStorage.getItem(GK.slotKey(g.slot))), old = JSON.parse(JSON.stringify(sv));
+    old.player.azure = undefined; old.player.scaleTaken = undefined; old.player.dragon = true; old.player.bed = { x: bx, y: by };
+    old.player.bag = Array.from({ length: g.slots() }, () => ({ n: '石子', c: 1 })); old.ents = (old.ents || []).filter(e => e.t !== '龍').concat([{ t: '龍', x: p.x + 1, y: p.y, hp: 500 }]);
+    p.azure = false; p.scaleTaken = false; g.load(old);
+    const ring = (cx, cy) => { const a = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx || dy) a.push([cx + dx, cy + dy]); return a; };
+    const sack = ring(bx, by).find(([x, y]) => w.get(x, y) === '囊'), inSack = sack ? (w.bags.get(U.key(sack[0], sack[1])) || []) : [];
+    ok('v0.42: an old save’s dragon flies home to the east sea — gone, and the scale counts as taken', !p.dragon && !E.list.some(e => e.type === '龍') && p.scaleTaken && !p.azure);
+    ok('v0.42: …leaving a 青鱗; the bag is full, so a 小囊 by the last bed slept in holds it', !!sack && inSack.some(it => it.n === '青鱗') && g.count('青鱗') === 0, [sack, inSack]);
+    ok('v0.42: …and a toast says where the 青龍 is and that it wants a 蜃珠', /龍回東海去了/.test(toasts()) && /蜃珠/.test(toasts()));
+    if (sack) { p.bag.pop(); const st = ring(sack[0], sack[1]).find(([x, y]) => w.get(x, y) === '草'); p.x = p.rx = st[0]; p.y = p.ry = st[1]; face(sack[0] - st[0], sack[1] - st[1]); g.msgUntil = 0; await sleep(120);
+      const hint = document.getElementById('msg').textContent; g.pressGather();
+      ok('v0.42: the hint names what is in the 小囊; E takes the 青鱗 and the sack is gone', /小囊（青鱗）/.test(hint) && g.count('青鱗') === 1 && w.get(sack[0], sack[1]) !== '囊' && !w.bags.has(U.key(sack[0], sack[1])), hint); }
+    const n0 = w.ver; g.load(sv); p.x = p.rx = p0.x; p.y = p.ry = p0.y;
+    ok('v0.42: a save made after the teaching keeps its small dragon (brought back to your side if it had strayed)', p.azure && p.dragon && E.list.some(e => e.type === '龍'));
+    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) w.set(bx + dx, by + dy, w.base(bx + dx, by + dy)); }
   // ============ v0.41：半友好的（無毒蛛、蟾、沒馴的鷹、野牛）被惹了發紅、變大、衝過來；不惹不打 ============
   { const E = g.ents, X = p.x + 46, Y = p.y + 8, p0 = { x: p.x, y: p.y }; for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) w.set(X + dx, Y + dy, '草');
     E.list = E.list.filter(e => e.type === '龍' || e.tame); p.x = p.rx = X; p.y = p.ry = Y; E.px = p.x; E.py = p.y; calm();
@@ -1857,7 +1921,7 @@ const result = await page.evaluate(async () => {
   g.save(); const sv = JSON.parse(localStorage.getItem('xieyi.save.v5'));
   ok('save v5 keeps sanity, courage, scarecrows and chests', sv && sv.v === 5 && typeof sv.player.san === 'number' && typeof sv.player.cour === 'number' && sv.world.scarecrows && sv.world.chests && sv.player.places.ta === 2);
   // —— 三格存檔：第一格沿用舊鍵；每格帶摘要
-  ok('three save slots: slot 1 keeps the old key, slots 2 and 3 get suffixes, autostart plays slot 1', XIEYI.Game.slotKey(1) === 'xieyi.save.v5' && XIEYI.Game.slotKey(2) === 'xieyi.save.v5.2' && XIEYI.Game.slotKey(3) === 'xieyi.save.v5.3' && g.slot === 1);
+  ok('eight save slots: slot 1 keeps the old key, slots 2–8 get suffixes, autostart plays slot 1', XIEYI.Game.slotKey(1) === 'xieyi.save.v5' && XIEYI.Game.slotKey(2) === 'xieyi.save.v5.2' && XIEYI.Game.slotKey(3) === 'xieyi.save.v5.3' && XIEYI.Game.slotKey(8) === 'xieyi.save.v5.8' && g.slot === 1);
   ok('the save carries a brief: day, night, level, deaths, slept nights', !!sv.brief && sv.brief.day === g.day() && sv.brief.night === g.nightNo() && sv.brief.level === g.level() && typeof sv.brief.deaths === 'number' && typeof sv.brief.nights === 'number', sv.brief);
   { const m = XIEYI.Game.summary(sv);
     ok('summary of a save names island, difficulty, day, night, level and time', m.seed === g.seed && m.diff === g.diff.name && m.day === g.day() && m.level === g.level() && /^第 \d+ 日$/.test(m.dayText) && /\d\d\/\d\d \d\d:\d\d/.test(m.whenText), m);
@@ -1886,8 +1950,8 @@ try {
   await page.evaluate(() => { const g = XIEYI.game; g.slot = 1; g.save(); const s = JSON.parse(localStorage.getItem('xieyi.save.v5')), s3 = JSON.parse(JSON.stringify(s)); s3.seed = 99; s3.savedAt = s.savedAt - 60000; s3.diff = 'hard'; s3.brief.level = 5; localStorage.setItem('xieyi.save.v5.3', JSON.stringify(s3)); localStorage.removeItem('xieyi.save.v5.2'); localStorage.removeItem('xieyi.slot'); });
   await page.goto(base, { waitUntil: 'load' });
   const cards = await page.$$eval('.save-card', (cs) => cs.map(c => ({ slot: c.dataset.slot, on: c.classList.contains('on'), empty: c.classList.contains('empty'), text: c.textContent })));
-  ok2('start page shows three save cards', cards.length === 3 && cards.map(c => c.slot).join('') === '123');
-  ok2('the newest save (slot 1) is selected by default', cards[0].on && !cards[1].on && !cards[2].on);
+  ok2('v0.42: start page shows eight save cards, four to a row', cards.length === 8 && cards.map(c => c.slot).join('') === '12345678' && await page.$eval('#saves', e => getComputedStyle(e).gridTemplateColumns.split(' ').length) === 4);
+  ok2('the newest save (slot 1) is selected by default', cards[0].on && cards.slice(1).every(c => !c.on));
   ok2('an occupied card tells island, difficulty, day, courage and time (no night, no slept-nights — v0.37)', /島 #7/.test(cards[0].text) && /一般/.test(cards[0].text) && /第 \d+ 日/.test(cards[0].text) && !/夜/.test(cards[0].text) && /膽氣第 \d+ 重/.test(cards[0].text) && !/睡過/.test(cards[0].text) && /存於 \d\d\/\d\d/.test(cards[0].text), cards[0].text);
   ok2('slot 3 shows its own island, difficulty and courage', /島 #99/.test(cards[2].text) && /困難/.test(cards[2].text) && /膽氣第 5 重/.test(cards[2].text), cards[2].text);
   ok2('slot 2 is empty and says so', cards[1].empty && /空格/.test(cards[1].text) && !/繼續/.test(cards[1].text));
@@ -1913,7 +1977,7 @@ try {
   ok2('arming 刪 drops the overwrite question and asks 真的刪？', await page.$eval('#btn-new', b => b.textContent) === '落筆' && /真的刪/.test(await page.$eval('.save-card[data-slot="3"] .save-del', b => b.textContent)));
   await page.click('.save-card[data-slot="3"] .save-del'); await page.waitForTimeout(100);
   const after = await page.evaluate(() => ({ gone: !localStorage.getItem('xieyi.save.v5.3'), empty: document.querySelector('.save-card[data-slot="3"]').classList.contains('empty'), n: document.querySelectorAll('.save-card').length, still1: !!localStorage.getItem('xieyi.save.v5'), still2: !!localStorage.getItem('xieyi.save.v5.2') }));
-  ok2('second 刪 clears slot 3 only and the card turns empty', after.gone && after.empty && after.n === 3 && after.still1 && after.still2, after);
+  ok2('second 刪 clears slot 3 only and the card turns empty', after.gone && after.empty && after.n === 8 && after.still1 && after.still2, after);
   await page.click('.save-card[data-slot="1"] .save-no'); await page.fill('#seed', '55'); await page.click('#btn-new'); await page.waitForTimeout(100); await page.click('#btn-new'); await started();
   const r3 = await page.evaluate(() => { XIEYI.game.save(); return { slot: XIEYI.game.slot, seed: XIEYI.game.seed, s1: JSON.parse(localStorage.getItem('xieyi.save.v5')).seed, cour: XIEYI.game.player.cour }; });
   ok2('second 落筆 overwrites slot 1 with island 55', r3.slot === 1 && r3.seed === 55 && r3.s1 === 55, r3);

@@ -9,7 +9,7 @@
     '草': '#b9c98f', '花': '#d29b8e', '木': '#8aa86f', '林': '#5e8a55', '森': '#3b5f3a', '竹': '#7fa36b', '田': '#d1c572',
     '土': '#a98a62', '灰': '#8d8781', '白': '#f3ebd8', '火': '#d9593c', '炎': '#d9593c', '焱': '#d9593c',
     '明': '#f0c54a', '休': '#9a6b45', '橋': '#9a6b45', '困': '#7a5a3e', '碑': '#2a2724', '日': '#e07a4a', '月': '#e3c35a',
-    '果': '#c9654a', '灶': '#d9593c', '鼎': '#b4452c', '包': '#2a2724', '煤': '#2a2724', '鐵': '#8a5a3a', '網': '#5a86a8', '罟': '#4f7a9c', '罾': '#446e90', '路': '#c9b27a', '門': '#9a7a55', '井': '#4a6f8f',
+    '果': '#c9654a', '灶': '#d9593c', '鼎': '#b4452c', '包': '#2a2724', '囊': '#5a3e2b', '煤': '#2a2724', '鐵': '#8a5a3a', '網': '#5a86a8', '罟': '#4f7a9c', '罾': '#446e90', '路': '#c9b27a', '門': '#9a7a55', '井': '#4a6f8f',
     '棉': '#e8e2d0', '礫': '#b9b4a8', '磚': '#9a5a40', '墟': '#8a8378', '窗': '#c09a6a', '沼': '#6b6a3c', '棧': '#9a6b45', '床': '#a06a4a', '橋': '#9a6b45', '漁': '#5a86a8', '麻': '#a9b07a', '偶': '#b08a5a', '櫃': '#7a4e2d', '舟': '#7a4e2d',
     '塔': '#2a2724', '寺': '#5a3e2b', '船': '#5a3e2b', '泉': '#4a6f8f', '墓': '#6e6c75', '洞': '#2a2724', '燈': '#e0a020',
     '漠': '#e3cf98', '丘': '#d6bb7a', '池': '#5f9cc0', '棗': '#7d9a55', '熔': '#d2502a', '岩': '#5d5a62', '曜': '#2b2133', '川': '#5f9cc0', '湖': '#5a92b8', '湯': '#8cc3d0', '窟': '#3a3028'   // v0.38
@@ -17,7 +17,7 @@
 
   // 光照（v0.31；v0.36 改成射線）：每道光從燈芯往外射線，碰到磚、門、墟的邊就停，圍出一個多邊形——影子的邊沿著牆角斜斜射出去，不是一格一格的方塊。
   // 夜色與暖光畫在一張每格 LM_PX 點的小畫布上（多邊形裁切＋放射漸層），再平滑放大蓋上去；多邊形按地上的字的版本（world.ver）與燈芯位置快取。各種光的顏色：
-  const LM_PX = 10, LAMP = [255, 192, 96], BEACON = [255, 214, 130], FIRE = [255, 138, 58], STOVE = [255, 158, 70], TORCH = [255, 172, 82], DRAGON = [236, 214, 160];
+  const LM_PX = 10, LAMP = [255, 192, 96], BEACON = [255, 214, 130], FIRE = [255, 138, 58], STOVE = [255, 158, 70], TORCH = [255, 172, 82], DRAGON = [236, 214, 160], AZURE = [150, 230, 205];
   const smooth = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 
   class Renderer {
@@ -305,6 +305,14 @@
           this.drawGlyph('魄', d.ink, px, py + Math.sin(now * 3 + e.bob) * 3 - (1 - fade) * T * 0.6, T * (1.0 + (1 - fade) * 0.5), wob, (e.frozen ? 0.5 : 0.78) * fade);
           continue;
         }
+        if (e.type === '青龍') {     // 東海青龍（v0.42）：比蜃還大的青字，身下一圈青水旋著，自己帶著光
+          ctx.save(); ctx.strokeStyle = 'rgba(36,118,107,0.4)'; ctx.lineWidth = 2.5;
+          for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(px, py, T * (0.9 + i * 0.3), -now * (0.6 + i * 0.2) + i, -now * (0.6 + i * 0.2) + i + 3.6); ctx.stroke(); }
+          ctx.restore();
+          lights.push({ x: e.x, y: e.y, cx: e.rx + 0.5, cy: e.ry + 0.5, r: 4, c: AZURE });
+          this.drawGlyph('龍', d.ink, px, py + Math.sin(now * 0.9 + e.bob) * 4, T * 1.9, Math.sin(now * 0.5 + e.bob) * 0.05, 1);
+          continue;
+        }
         if (e.type === '蜃') {       // 蜃：一個大字，身下一圈暗水旋著
           ctx.save(); ctx.strokeStyle = 'rgba(34,63,90,0.35)'; ctx.lineWidth = 2;
           for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(px, py, T * (0.7 + i * 0.25), now * (1 + i * 0.3) + i, now * (1 + i * 0.3) + i + 4); ctx.stroke(); }
@@ -511,6 +519,7 @@
         if (e.type === '虎') { m.fillStyle = '#b4392a'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
         else if (e.type === '魄') { m.fillStyle = '#3b3550'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
         else if (e.type === '蜃') { m.fillStyle = '#223f5a'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
+        else if (e.type === '青龍') { m.fillStyle = '#24766b'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '豹' || e.type === '狼' || e.type === '蛇') { m.fillStyle = '#8a2a1a'; m.fillRect(i * px, j * px, px + 1, px + 1); }
       }
       m.fillStyle = '#1c1a17'; m.beginPath(); m.arc(half * px + px / 2, half * px + px / 2, 3, 0, 7); m.fill();
@@ -528,6 +537,8 @@
       let x0 = -G.HOME_R, y0 = -G.HOME_R, x1 = G.HOME_R, y1 = G.HOME_R;
       for (const k of w.explored.keys()) { const [cx, cy] = U.unkey(k); x0 = Math.min(x0, cx * CHK); y0 = Math.min(y0, cy * CHK); x1 = Math.max(x1, cx * CHK + CHK - 1); y1 = Math.max(y1, cy * CHK + CHK - 1); }
       x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y);
+      const az = (p.scaleTaken || p.azure) && g.azure;   // 拿到青鱗以後，東海青龍的所在也畫進來（v0.42）
+      if (az) { x0 = Math.min(x0, az.x - 12); y0 = Math.min(y0, az.y - 12); x1 = Math.max(x1, az.x + 12); y1 = Math.max(y1, az.y + 12); }
       const N = Math.min(2 * G.WORLD_R, Math.ceil(Math.max(x1 - x0, y1 - y0) * 1.06) + 8), px = S / N;
       const ox = Math.round((x0 + x1) / 2 - N / 2), oy = Math.round((y0 + y1) / 2 - N / 2);
       const X = (x) => (x - ox) * px, Y = (y) => (y - oy) * px, F = (k, min) => Math.max(min, Math.round(px * k)) + 'px ' + FONT;
@@ -572,6 +583,7 @@
         m.fillStyle = read ? '#b4392a' : 'rgba(180,57,42,0.45)'; m.fillRect(cx + u * 2.4, cy - u * 2.2, u * 3.2, u * 3.2);
         m.fillStyle = '#f7efe0'; m.font = F(2.4, 8); m.fillText(L(pl.name), cx + u * 4.0, cy - u * 0.5);
       }
+      if (az) { m.font = F(6, 16); m.fillStyle = '#24766b'; m.fillText(L('龍'), X(az.x + 0.5), Y(az.y + 0.5)); m.font = F(3, 11); m.fillText(L(p.azure ? '青龍' : '青龍（帶蜃珠來）'), X(az.x + 0.5), Y(az.y + 0.5) + Math.max(14, px * 5)); }
       // 家、人
       if (p.home) { m.fillStyle = '#9a6b45'; m.beginPath(); m.arc(X(p.home.x + 0.5), Y(p.home.y + 0.5), Math.max(2.5, px * 1.2), 0, 7); m.fill(); }
       m.font = F(4, 13); m.fillStyle = '#1c1a17'; m.fillText('人', X(p.x + 0.5), Y(p.y + 0.5));

@@ -9,7 +9,8 @@
     black: '#1c1a17', water: '#2f5878', deep: '#223f5a', rock: '#4a4f5c', snow: '#7f8ea3',
     plant: '#263428', forest: '#1b261d', red: '#b4392a', gold: '#9c6d12', brown: '#5a3e2b',
     sand: '#8d7a4b', ash: '#6f6a66', soil: '#6b4a2f', field: '#4f5a2f', beast: '#2a2320', ghost: '#3b3550', cotton: '#6f6a5a', brick: '#7a4a35', hemp: '#5a6a3a', bog: '#4d4a2c',
-    desert: '#9a7f45', lava: '#c2461f', basalt: '#3d3a40', obsidian: '#2b2133', river: '#3a6f92', spring: '#4f8aa0', cave: '#3a3028'   // v0.38 外島的新地形
+    desert: '#9a7f45', lava: '#c2461f', basalt: '#3d3a40', obsidian: '#2b2133', river: '#3a6f92', spring: '#4f8aa0', cave: '#3a3028',   // v0.38 外島的新地形
+    azure: '#24766b'   // v0.42 東海青龍
   };
 
   // 字庫（地上的格子）。欄位：
@@ -84,6 +85,7 @@
     '舟': { s: 6, walk: 0, kind: 'object', ink: INK.brown, place: true, onWater: true, flavor: '停著的船（孤帆一乘二、方舟二乘三）。面向它按 E 上船；上了船，深水亦可渡。' },
     '碑': { s: 13, walk: 0, kind: 'object', ink: INK.black, flavor: '古碑，刻著活下去的法子。讀之，力氣漸長。' },
     '包': { s: 5, walk: 0, kind: 'object', ink: INK.black, flavor: '落下的荷包。死時囊裡、具欄裡、身上的東西都在裡面。' },
+    '囊': { s: 22, walk: 0, kind: 'object', ink: INK.brown, flavor: '小囊。囊滿了放不下的要緊東西（青鱗、蜃珠），用小囊包著擱在最近睡過的床邊。面向它按 E 取。' },
     '墟': { s: 15, walk: 0, kind: 'object', ink: INK.ash, opaque: true, yield: { '石': 1 }, time: 3.0, fast: '鎬', flavor: '殘垣斷壁：村裡塌剩的舊屋，或被野牛撞到只剩一半的磚，顏色發灰，快塌了。一樣擋獸擋光，但經不起撞，再撞兩下就塌。鎬拆之快，得石一。' },
     // —— 地標（大字）
     '塔': { s: 13, walk: 0, kind: 'place', ink: INK.black, flavor: '從塔上能看見整張紙。' },
@@ -91,7 +93,7 @@
     '船': { s: 11, walk: 0, kind: 'place', ink: INK.brown, flavor: '擱淺的船。' },
     '泉': { s: 9, walk: 0, kind: 'place', ink: INK.water, flavor: '白水為泉。傍邊可療傷；空瓶可取淡水。' },
     '墓': { s: 14, walk: 0, kind: 'place', ink: INK.rock, flavor: '埋著寫錯的字。' },
-    '洞': { s: 9, walk: 0, kind: 'place', ink: INK.black, flavor: '黑處藏著龍。' },
+    '洞': { s: 9, walk: 0, kind: 'place', ink: INK.black, flavor: '黑處藏過龍。牠往東海去了，只留下一片青鱗。' },
     '井': { s: 4, walk: 0, kind: 'place', ink: INK.water, flavor: '井裡有水。空瓶可取淡水。' },
     // —— 獸（hp 血；atk 一擊傷害；bite 每秒毒；passive 不惹不攻擊）
     '鳥': { s: 11, kind: 'beast', ink: INK.beast, hp: 10, flavor: '飛鳥，見人則起，捉不住。聽鳥鳴，心裡舒坦。' },
@@ -109,7 +111,8 @@
     '豬': { s: 16, kind: 'beast', ink: INK.beast, hp: 200, atk: 7.5, name: '野豬', flavor: '林邊的野豬，白天黑夜都在。快如豹，命是豹的一倍又四分之一（二百），一撞七點五；五格內見人就衝，不怕火光，稻草人嚇得住。得肉三，四分之一的機會得油脂。' },
     '牛': { s: 4, kind: 'beast', ink: INK.beast, hp: 450, atk: 5, passive: true, name: '野牛', flavor: '草原上的野牛。命是虎的一倍半（四百五十），一頂五滴血，腳程是狼的三分之二。不惹不動；惹了就追著頂，記仇記得遠：追出十八格外或三十息後才消氣；你躲進屋裡，牠就撞磚，三下撞碎一塊。得肉四，四分之一的機會得油脂。' },
     '蜃': { s: 13, kind: 'beast', ink: INK.red, hp: 900, atk: 30, ram: 25, sea: true, flavor: '海中的大蜃，吐氣成霧（蜃樓）。命九百，只在海上：撞船一下二十五，咬落水的人一口三十，所過之處吞吐霧障。船頭有獸首骨鎮著就不敢撞。九閽鳴雷打牠減半，燭龍焚溟專克。' },
-    '龍': { s: 16, kind: 'beast', light: 3, ink: INK.red, hp: 500, flavor: '洞中之龍。隨你同行，夜能照路，獸與魄不敢近。' },
+    '龍': { s: 16, kind: 'beast', light: 3, ink: INK.red, hp: 500, flavor: '小龍。求教過東海青龍，牠讓一條小龍跟你回來：隨你同行，夜能照路，獸與魄不敢近。' },
+    '青龍': { s: 24, kind: 'beast', light: 4, ink: INK.azure, hp: 9999, name: '青龍', flavor: '東海青龍，盤在本島往東約六百格的深海上，不近人也不避人。帶一顆蜃珠去求教，牠教你行船的水性（孤帆、方舟從此自己慢慢回命），再讓一條小龍跟你回去。' },
   };
   const VIS = { '草': [0.6, 0.42], '花': [0.62, 0.8], '棉': [0.75, 0.85], '麻': [0.72, 0.85], '沙': [0.58, 0.5], '礫': [0.62, 0.6], '田': [0.78, 0.6], '土': [0.6, 0.5], '灰': [0.6, 0.5], '雪': [0.7, 0.55],
     '水': [0.82, 0.8], '淼': [0.95, 0.9], '石': [0.72, 0.85], '山': [1.12, 1], '木': [0.9, 1], '果': [0.9, 1], '竹': [0.85, 0.95], '林': [1.0, 1], '森': [1.08, 1],
@@ -164,6 +167,8 @@
     '大漁網': { s: 17, kind: 'build', tile: '罾', flavor: '三乘三的大撒網。拿著走到水邊按 F 撒，網影裡的魚一網打盡。耐久二百四十。' },
     '錦囊': { s: 16, kind: 'use', flavor: '麻布三棉二織成的錦囊。選中按 V 用掉：囊永久多兩格、具欄多一格。最多八個（已用的加囊裡的湊滿八個就不再織）。' },
     '龜甲': { s: 16, kind: 'use', flavor: '龜甲。選中按 V 灼而卜之：四分之一的機會得吉兆，五日內魄不來；不吉則甲裂無用。' },
+    '青鱗': { s: 31, kind: 'item', flavor: '洞裡留下的一片青鱗。龍往東海去了：本島往東約六百格的深海上，就是青龍盤著的地方（囊裡有這片鱗，大地圖上就標得出來）。帶一顆蜃珠去求教。' },
+    '蜃珠': { s: 23, kind: 'item', flavor: '斃蜃得的珠，一頭一顆。東海青龍要的就是它：帶去求教，青龍收下就教你行船的水性。' },
     '油脂': { s: 18, kind: 'item', flavor: '野豬野牛身上割下的油脂（斃之四分之一的機會得）。棉一油脂一，做成蠟燭三根。' },
     '燭龍焚溟': { s: 58, kind: 'tool', tool: '焚', dmg: 120, dur: 199, flavor: '燭龍銜火，焚盡溟海。火屬而克海水，故為神兵。膽氣卅一重方可造、可揮：面向獸按 E，三格內諸獸同受灼燒，海中之物（蜃、龜）一百二十，陸上與天上之物減半。隨身的膽氣減益與九閽鳴雷相同，兩件同帶只算一重。按 L 拿出（手上已是神兵就換另一件）、P 收回。' },
     '九閽鳴雷': { s: 26, kind: 'tool', tool: '鎚', dmg: 120, dur: 199, flavor: '撼地之鎚。膽氣卅一重方可造、可掄：面向獸按 E，三格內諸獸同受一百二十傷。隨身則膽氣減得快（簡單四日、一般三日、困難二日一減，下限廿八／廿七／廿六重；困難另慢慢掉力），兩件神兵同帶也只算一重；低於卅一重掄不動。按 L 拿出、P 收回。' },
@@ -489,6 +494,14 @@
     }
     return classify(x, y, s, h, m, U.fbm(x / 150 - 700, y / 150 + 700, s + 29, 3));   // 青島：跟本島一樣的尋常地貌
   }
+  // v0.42 東海青龍：本島往東約 AZURE_X 格的深海上（四周四格都是深海，不貼著外島），每座島各算一次
+  const AZURE_X = 600, azureCache = {};
+  function azureAt(seed) {
+    if (azureCache[seed]) return azureCache[seed];
+    const open = (x, y) => { for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) if (baseTile(x + dx, y + dy, seed) !== '淼') return false; return true; };
+    const at = spiralFind(AZURE_X, Math.round((U.rand2(3, 5, seed + 811) - 0.5) * 160), 200, open) || [AZURE_X, 0];
+    return (azureCache[seed] = { x: at[0], y: at[1] });
+  }
   function baseTile(x, y, seed) {
     if (x < -WORLD_R || y < -WORLD_R || x >= WORLD_R || y >= WORLD_R) return '淼';
     if (Math.abs(x) <= HOME_BOX && Math.abs(y) <= HOME_BOX) return homeTile(x, y, seed);
@@ -539,8 +552,8 @@
       text: '泉是水從石頭裡出來，像字從筆裡出來。鹿傍晚都會來，牠們不怕我，因為我也是字。' },
     { id: 'mu', ch: '墓', name: '墓', w: 1, h: 1, r: [0.40, 0.72], want: 'grass', effect: 'bricks',
       text: '這裡埋著我寫錯的字。先生說，錯字也能砌磚，別扔。我砌了幾塊磚，你拿去。' },
-    { id: 'dong', ch: '洞', name: '洞', w: 1, h: 1, r: [0.48, 0.86], want: 'mountain', effect: 'dragon',
-      text: '洞裡黑。先生說，黑處藏著龍。我不信。你去看看，看見了，牠就跟你走。' },
+    { id: 'dong', ch: '洞', name: '洞', w: 1, h: 1, r: [0.48, 0.86], want: 'mountain', effect: 'scale',   // v0.42：龍不在洞裡了，留一片青鱗指向東海
+      text: '洞裡黑。先生說，黑處藏過龍，後來牠往日出的地方去了，只留下一片鱗。你拿著鱗往東走，走到海上去找牠。牠不見閒人：先除一頭蜃，帶著蜃珠去。' },
     { id: 'deng', ch: '燈', name: '燈', w: 1, h: 2, islet: true, effect: 'end',
       text: '燈最遠。潮退了才走得到。我把名字寫在這裡，可先生說名字不能寫在紙上，會被風吹走。那就寫在你心裡吧。你來了，就算讀完了這張紙。' }
   ];
@@ -623,5 +636,5 @@
   }
 
   RECIPES.forEach(r => { r.cat = '材料'; for (const c in CAT_OF) if (CAT_OF[c].indexOf(r.id) >= 0) r.cat = c; });
-  root.G = { INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, WORLD_R, HOME_R, HOME_K, isleAt, isleOf, isles, ISLE_CELL, ISLE_NAMES };
+  root.G = { INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, WORLD_R, HOME_R, HOME_K, isleAt, isleOf, isles, ISLE_CELL, ISLE_NAMES, azureAt };
 })();

@@ -68,7 +68,7 @@ const cookRows = Object.entries(COOK).map(([n, c]) => row([n + (c.n > 1 ? ' ×' 
 const cookTable = ['| 放上旺灶 | 得到 | 文案動詞 |', '|---|---|---|', ...cookRows];
 
 // 地標
-const effect = { reveal: '揭示全島', shelter: '屋內', well: '井：每日命 +15', raft: '送竹筏', heal: '泉邊療傷', bricks: '送磚與石子', dragon: '放出龍', end: '結語' };
+const effect = { reveal: '揭示全島', shelter: '屋內', well: '井：每日命 +15', raft: '送竹筏', heal: '泉邊療傷', bricks: '送磚與石子', scale: '留一片青鱗，指向東海青龍', end: '結語' };
 const placeRows = PLACES.map(pl => {
   const size = pl.template ? pl.template[0].length + '×' + pl.template.length + '（模板，井在正中）' : pl.w + '×' + pl.h;
   const where = pl.islet ? '小嶼上' : '半徑 ' + pl.r[0] + '–' + pl.r[1] + '×' + ISLAND_R + '，地形「' + pl.want + '」';
