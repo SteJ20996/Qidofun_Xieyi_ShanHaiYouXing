@@ -1671,13 +1671,28 @@ const result = await page.evaluate(async () => {
     ok('v0.42: …and a parked ship mends too (方舟: a quarter of 420 in half a day)', Math.abs(pk.hp - (20 + 105)) < 1e-3, pk.hp); w.removeShip(U.key(az.x - 12, az.y + 6));
     g.toggleMap(); await sleep(60); const mv = g.renderer.mapView; g.toggleMap();
     ok('v0.42: with the scale (or once taught) the big map reaches out to mark the 青龍', !!mv && az.x >= mv.ox && az.x <= mv.ox + mv.N && az.y >= mv.oy && az.y <= mv.oy + mv.N, mv);
-    // 蜃死留蜃珠
-    const sm = E.add('蜃', p.x + 4, p.y + 3, { moveT: 99, fogT: 999 }), pr0 = g.count('蜃珠'); g.kill(sm);
-    ok('v0.42: a slain 蜃 leaves a 蜃珠', g.count('蜃珠') === pr0 + 1 && /蜃珠/.test(toasts()));
-    g.removeItem('蜃珠', 9);
+    // v0.43：蜃死掉蜃碎片一或二片（64%／36%，真隨機），不再直接掉蜃珠
+    { const tr = U.trueRand; g.removeItem('蜃碎片', 99); g.removeItem('蜃珠', 9);
+      U.trueRand = () => 0.5; g.kill(E.add('蜃', p.x + 4, p.y + 3, { moveT: 99, fogT: 999 })); const one = g.count('蜃碎片');
+      U.trueRand = () => 0.2; g.kill(E.add('蜃', p.x + 4, p.y + 3, { moveT: 99, fogT: 999 })); U.trueRand = tr;
+      ok('v0.43: a slain 蜃 drops one 蜃碎片 (64%) or two (36%), not a whole pearl', one === 1 && g.count('蜃碎片') === 3 && g.count('蜃珠') === 0 && /蜃碎片/.test(toasts()), [one, g.count('蜃碎片')]); }
     p.sailing = false; p.ship = null; E.list = E.list.filter(e => e.type !== '青龍');
-    // 舊存檔：龍跟著、沒求教過、囊滿了、睡過一張床——龍回東海，青鱗用小囊包著擱在床邊
+    // v0.43：九片蜃碎片加海水瓶三，在火旺的鼎裡熬一顆蜃珠，八成三成；不成退碎片（困難只退八片），海水瓶不退
     p.x = p.rx = p0.x; p.y = p.ry = p0.y; E.px = p.x; E.py = p.y;
+    { const tr = U.trueRand, kx = p0.x + 1, ky = p0.y, cnt = () => [g.count('蜃碎片'), g.count('海水瓶'), g.count('蜃珠')].join('/');
+      w.set(kx, ky, '鼎'); w.addFuel(kx, ky, 300); face(1, 0); p.sta = 100;
+      g.removeItem('海水瓶', 99); g.removeItem('蜃碎片', 99); g.addItem('蜃碎片', 8); g.addItem('海水瓶', 3); hold('蜃碎片'); g.pressPlace();
+      ok('v0.43: eight shards are not enough — nothing is used up', cnt() === '8/3/0' && /9/.test(g.msgText), [cnt(), g.msgText]);
+      g.msgUntil = 0; await sleep(80); const hint = document.getElementById('msg').textContent;
+      ok('v0.43: facing a lit 鼎 with shards in hand, the hint says what brewing needs and the odds', /熬蜃珠（碎片 8\/9、海水瓶 3\/3，83%）/.test(hint), hint);
+      g.addItem('蜃碎片', 2); hold('蜃碎片'); U.trueRand = () => 0.9; g.pressPlace();
+      ok('v0.43: a failed brew (17%) gives all nine shards back on normal; the three bottles of brine are gone', cnt() === '10/0/0', cnt());
+      const dk = g.diff; g.diff = XIEYI.DIFF.hard; g.addItem('海水瓶', 3); hold('蜃碎片'); p.sta = 100; g.pressPlace(); g.diff = dk;
+      ok('v0.43: on hard a failed brew gives back only eight', cnt() === '9/0/0', cnt());
+      g.addItem('海水瓶', 3); hold('蜃碎片'); p.sta = 100; U.trueRand = () => 0.5; g.pressPlace(); U.trueRand = tr;
+      ok('v0.43: a successful brew (83%) turns nine shards and three brine into one 蜃珠', cnt() === '0/0/1' && /熬成一顆蜃珠/.test(toasts()), cnt());
+      w.set(kx, ky, w.base(kx, ky)); g.removeItem('蜃珠', 9); }
+    // 舊存檔：龍跟著、沒求教過、囊滿了、睡過一張床——龍回東海，青鱗用小囊包著擱在床邊
     const bx = p0.x + 5, by = p0.y + 5; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) w.set(bx + dx, by + dy, '草'); w.set(bx, by, '床');
     g.save(); const sv = JSON.parse(localStorage.getItem(GK.slotKey(g.slot))), old = JSON.parse(JSON.stringify(sv));
     old.player.azure = undefined; old.player.scaleTaken = undefined; old.player.dragon = true; old.player.bed = { x: bx, y: by };

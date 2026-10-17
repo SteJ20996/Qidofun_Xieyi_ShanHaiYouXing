@@ -76,6 +76,9 @@
   const SHIP_REPAIR_FRAC = 0.25, SWIM_TIME = 60, SWIM_DRAIN = 2, SWIM_DMG = 0.75, SWIM_STEP = 0.32, GOD_SELF = 0.1, SEA_WARN_LEVEL = 31, SEA_PENALTY = 5;
   // 獸首骨：殺虎豹狼有 SKULL_P 的機會掉，掉一個或兩個（SKULL_TWO 的機會兩個）；放在船頭鎮船，日數見 ITEMS 的 ward，各鎮各的、到期風化，船頭格數見 G.SHIPS
   const SKULL_P = 0.16, SKULL_TWO = 0.3;   // v0.21：掉首骨的機會 16%、真隨機（原 35%）
+  // v0.43 蜃珠（使用者定）：斃蜃掉蜃碎片一或二片（SHARD_TWO 的機會兩片，真隨機）；九片加配料在火旺的鼎裡熬一顆蜃珠，PEARL_P 的機會成（真隨機）；
+  // 不成就退回碎片（困難只退八片），配料不退。配料是海水瓶三（PEARL_BRINE）
+  const SHARD_TWO = 0.36, PEARL_SHARDS = 9, PEARL_P = 0.83, PEARL_BRINE = 3, PEARL_STA = 6;
   const SEA_GOD = '燭龍焚溟', SEA_FOLK = '蜃龜';   // 海中之物：燭龍焚溟全傷、九閽鳴雷減半；其餘反過來   // 霧障：不吹散就五樣數值各掉當前的一成（四捨五入，命不低於一）；扇子選中按 V 吹得到三格   // 衣甲損耗倍率封頂；修補後從 1.5 倍起算；燈帽一根蠟燭四百息
   const $ = (id) => document.getElementById(id);
 
@@ -1282,8 +1285,8 @@
       }
       if (e.type === '蜃') {                  // 蜃死，吐出的霧也收回去；留下一顆蜃珠（v0.42，東海青龍要的）
         for (const f of [...this.world.fogs.values()]) if (f.sea) this.world.removeFog(f.id);
-        const at = this.stashItem('蜃珠', 1);
-        this.toast('蜃斃', '海上的霧收了。膽氣 +' + this.shown('cour', got) + '。得蜃珠一顆' + (at ? '（囊滿了，用小囊包著擱在' + at.where + '）' : '') + (this.player.azure ? '。' : '——帶去東海求教青龍。')); SFX.fuse(); return;
+        const n = U.trueRand() < SHARD_TWO ? 2 : 1, at = this.stashItem('蜃碎片', n), have = this.count('蜃碎片');
+        this.toast('蜃斃', '海上的霧收了。膽氣 +' + this.shown('cour', got) + '。得蜃碎片 ' + n + ' 片' + (at ? '（囊滿了，用小囊包著擱在' + at.where + '）' : '（囊裡共 ' + have + ' 片）') + '。九片加海水瓶三，在火旺的鼎裡熬成一顆蜃珠' + (this.player.azure ? '。' : '，帶去東海求教青龍。')); SFX.fuse(); return;
       }
       this.message((({ '鹿': '獵得一鹿，得肉二。', '虎': '虎斃，得肉三。', '豹': '豹斃，得肉二。', '狼': '狼斃，得肉二。', '蛇': '蛇斃，留下屍身。', '蛛': e.venom ? '毒蛛死了。' : '蜘蛛死了，什麼也沒留下。', '蟾': '蟾蜍死了。', '鷹': '鷹落了下來。', '龜': '龜死了，留下龜甲。', '豬': '野豬斃，得肉三' + (fat ? '，還割下一塊油脂' : '') + '。', '牛': '野牛斃，得肉四' + (fat ? '，還割下一塊油脂' : '') + '。' })[e.type] || '斃。') + (hostile ? '膽氣 +' + this.shown('cour', got) + (this.isNight() ? '（夜裡加半成）' : '（白日八成）') : ''));
       if (e.type !== '鹿') SFX.fuse();
@@ -1366,7 +1369,8 @@
       if (base === '鼎') {
         if (this.fuelOf(name)) { const sec = this.fuelOf(name); if (!this.fuelFits(t, sec)) return; w.addFuel(t.x, t.y, sec); this.removeItem(name, 1); this.message('鼎下添' + (name === '煤' || name === '精煤' ? '煤' : '柴') + '。還能燒 ' + Math.round(w.stoveFuel(t.x, t.y)) + ' 息。'); SFX.write(); return; }   // 跟灶同一張燃料表、同一個上限
         if (name === '蟾蜍肉' || name === '毒蟾肉') { this.refinePill(t, name); return; }
-        this.message('鼎裡只煉蟾蜍肉；木或煤是柴。'); fail(); return;
+        if (name === '蜃碎片') { this.brewPearl(t); return; }
+        this.message('鼎裡只煉蟾蜍肉、熬蜃碎片；木或煤是柴。'); fail(); return;
       }
       if ((name === '磚' && base === '墟') || ((name === '窗' || name === '門') && base === name && w.wallHurt(t.x, t.y))) {   // 補：磚直接砌在墟上、新窗新門換掉撞裂的（v0.29 使用者定）
         w.set(t.x, t.y, name); w.wallHp.delete(U.key(t.x, t.y)); this.removeItem(name, 1);
@@ -1511,6 +1515,22 @@
         this.toast('煉成一顆丹', '第 ' + p.pillsMade + ' 顆。選中按 V 服下，命上限 ' + (p.pillsEaten < 50 ? '+3%' : '+0.5%') + '。' + (p.pillsMade === 3 ? '從第四顆起，成功率降為無毒肉 1%、有毒肉 2%。' : '')); SFX.learn();
       } else { this.message('丹沒成，一塊' + name + '化了煙（這次 ' + Math.round(chance * 100) + '%）。'); SFX.fail(); }
       this.fx.push({ type: 'float', x: t.x, y: t.y, text: '丹', color: G.INK.red, t: 0, dur: 1 });
+    }
+    // v0.43 熬蜃珠：蜃碎片九片、海水瓶三，火旺的鼎，耗力六；八成三的機會成（真隨機），不成退碎片（困難只退八片）、海水瓶不退
+    brewPearl(t) {
+      const w = this.world, shards = this.count('蜃碎片'), brine = this.count('海水瓶');
+      if (!w.stoveLit(t.x, t.y)) { this.message('鼎是冷的，先添柴。'); SFX.fail(); return; }
+      if (shards < PEARL_SHARDS || brine < PEARL_BRINE) { this.message('熬一顆蜃珠要蜃碎片 ' + PEARL_SHARDS + ' 片、海水瓶 ' + PEARL_BRINE + ' 瓶，囊裡碎片 ' + shards + '、海水瓶 ' + brine + '。'); SFX.fail(); return; }
+      if (!this.spendSta(PEARL_STA)) return;
+      this.removeItem('蜃碎片', PEARL_SHARDS); this.removeItem('海水瓶', PEARL_BRINE);
+      if (U.trueRand() < PEARL_P) {
+        const at = this.stashItem('蜃珠', 1); this.addCourage(3);
+        this.toast('熬成一顆蜃珠', (at ? '囊滿了，用小囊包著擱在' + at.where + '。' : '') + (this.player.azure ? '青龍已經教過你了，這顆留著。' : '帶去東海，青龍兩格內按 E 求教。')); SFX.learn();
+      } else {
+        const back = this.diff.key === 'hard' ? PEARL_SHARDS - 1 : PEARL_SHARDS; this.stashItem('蜃碎片', back);
+        this.message('珠沒熬成（' + Math.round(PEARL_P * 100) + '%），碎片退回 ' + back + ' 片' + (back < PEARL_SHARDS ? '（困難熬壞一片）' : '') + '，三瓶海水熬乾了。'); SFX.fail();
+      }
+      this.fx.push({ type: 'float', x: t.x, y: t.y, text: '珠', color: G.INK.azure, t: 0, dur: 1 }); this.buildBag();
     }
     eatPill() {
       const p = this.player; p.pillsEaten++;
@@ -1827,7 +1847,7 @@
       if (pl.effect === 'raft' && !p.raftTaken) { if (this.addItem('竹筏', 1) === 0) { p.raftTaken = true; this.toast('船裡有一隻竹筏', '囊中有筏，可行於淺水。'); } else this.message('囊滿了，筏子先留在船裡。'); }
       if (pl.effect === 'scale' && !p.scaleTaken && !p.azure) {   // v0.42：龍不在洞裡了，留一片青鱗指向東海
         p.scaleTaken = true; const at = this.stashItem('青鱗', 1);
-        this.toast('黑處只剩一片鱗', '龍往東海去了。本島往東約六百格的深海上，青龍盤著' + (at ? '（囊滿了，青鱗用小囊包著擱在' + at.where + '）' : '') + '。先除一頭蜃，帶著蜃珠去求教。大地圖上標了牠的所在。', 10000);
+        this.toast('黑處只剩一片鱗', '龍往東海去了。本島往東約六百格的深海上，青龍盤著' + (at ? '（囊滿了，青鱗用小囊包著擱在' + at.where + '）' : '') + '。除蜃得碎片，九片加海水瓶三在鼎裡熬成蜃珠，帶著去求教。大地圖上標了牠的所在。', 10000);
       }
       if (!first) { this.buildBag(); return; }
       this.stats.read++; p.san = Math.min(100, p.san + this.sanUp(10)); this.addCourage(10);
@@ -1845,7 +1865,7 @@
     askAzure() {
       const p = this.player;
       if (p.azure) { this.message('青龍：「去吧。海上有難，我記得你。」'); return; }
-      if (!this.has('蜃珠')) { this.toast('青龍', '「' + (this.has('青鱗') ? '你帶著我的鱗來了。' : '') + '海上的蜃，你一頭也沒除過。拿一顆蜃珠來，我才信你出得了遠海。」', 9000); SFX.fail(); return; }
+      if (!this.has('蜃珠')) { this.toast('青龍', '「' + (this.has('青鱗') ? '你帶著我的鱗來了。' : '') + '拿一顆蜃珠來，我才信你出得了遠海。」除蜃得碎片，九片加海水瓶三，在火旺的鼎裡熬成蜃珠' + (this.has('蜃碎片') ? '（囊裡有碎片 ' + this.count('蜃碎片') + ' 片）' : '') + '。', 9000); SFX.fail(); return; }
       this.removeItem('蜃珠', 1); if (this.has('青鱗')) this.removeItem('青鱗', 1);
       p.azure = true; p.scaleTaken = true;
       if (!this.ents.list.some(e => e.type === '龍')) { const at = this.freeNear(p.x, p.y, true); this.ents.add('龍', at.x, at.y); }
@@ -2220,7 +2240,7 @@
           else if (tl.tile && DB[tl.tile] && DB[tl.tile].net) { const mx = w.netDur(DB[tl.tile].net), cp = this.castPreview(); s += (hs.dur !== undefined && hs.dur <= 0 ? ' · <i class="dim">網破了，製作欄「加固」棉麻各 ' + this.mendCost(hs) + '</i>' : cp ? ' · <kbd>F</kbd> 撒網（淺色網影就是撒得到的地方）' : ' · 走到水邊，網影浮出來再按 <kbd>F</kbd> 撒') + ' · <i class="dim">耐 ' + (hs.dur === undefined ? mx : hs.dur) + '／' + mx + (hs.rf ? '，固過 ' + hs.rf + ' 次' : '') + '</i>'; }
           else if (hs.n === '錦囊') s += p.pouches >= MAX_POUCHES ? ' · <i class="dim">錦囊已用完八個</i>' : ' · <kbd>V</kbd> 用掉（囊多兩格、具欄多一格，已用 ' + p.pouches + '／' + MAX_POUCHES + '）';
           else if (tl.tool && tl.dur) s += ' · <kbd>F</kbd> 移進具欄';
-          else if (ch === '鼎') s += (hs.n === '蟾蜍肉' || hs.n === '毒蟾肉') ? ' · <kbd>F</kbd> 煉丹' : this.fuelOf(hs.n) ? ' · <kbd>F</kbd> 添柴' : '';
+          else if (ch === '鼎') s += (hs.n === '蟾蜍肉' || hs.n === '毒蟾肉') ? ' · <kbd>F</kbd> 煉丹' : hs.n === '蜃碎片' ? ' · <kbd>F</kbd> 熬蜃珠（碎片 ' + this.count('蜃碎片') + '/' + PEARL_SHARDS + '、海水瓶 ' + this.count('海水瓶') + '/' + PEARL_BRINE + '，' + Math.round(PEARL_P * 100) + '%）' : this.fuelOf(hs.n) ? ' · <kbd>F</kbd> 添柴' : '';
           else if (ch === '灶') s += ' · <kbd>F</kbd> 開灶';
           else if ((DB[tl.tile || hs.n] || {}).place) s += ' · <kbd>F</kbd> 放「' + hs.n + '」';
           if (it.food) s += ' · <kbd>V</kbd> ' + (hs.n.indexOf('瓶') >= 0 || hs.n === '果酒' ? '喝' : '吃');
@@ -2228,7 +2248,7 @@
         if (this.bedNear()) s += ' · <kbd>R</kbd> 睡';
         if (this.heldTool() === '弓') { const st = this.slingTarget(); s += ' · 彈弓：' + (st ? '<kbd>E</kbd> 射「' + st.type + '」（' + U.cheb(st.x, st.y, p.x, p.y) + ' 格）' : '面前九格內沒有獸') + ' · 石子 ' + this.count('石子') + (w.get(p.x, p.y) === '台' ? ' · 站在台上，越得過磚' : ''); }
         if (ch === '灶') s += (hs ? '' : ' · <kbd>F</kbd> 開灶') + '<br><span class="dim">灶：按 F 開灶，在灶裡添柴、烤魚肉、燒瓶、蒸餾、煉鐵煉鎢鋼</span>';
-        if (ch === '鼎') s += '<br><span class="dim">鼎：選中木或煤按 F 添柴；火旺時選中蟾蜍肉或毒蟾肉按 F 煉丹（這次 ' + Math.round(this.pillChance('蟾蜍肉') * 100) + '%／' + Math.round(this.pillChance('毒蟾肉') * 100) + '%，已煉 ' + p.pillsMade + ' 顆）</span>';
+        if (ch === '鼎') s += '<br><span class="dim">鼎：選中木或煤按 F 添柴；火旺時選中蜃碎片按 F 熬蜃珠（九片、海水瓶三）；選中蟾蜍肉或毒蟾肉按 F 煉丹（這次 ' + Math.round(this.pillChance('蟾蜍肉') * 100) + '%／' + Math.round(this.pillChance('毒蟾肉') * 100) + '%，已煉 ' + p.pillsMade + ' 顆）</span>';
       }
       if (this.msgUntil && performance.now() < this.msgUntil) s = this.msgText;
       if (s !== this.lastMsg) { this.lastMsg = s; $('msg').innerHTML = s; }
@@ -2293,7 +2313,7 @@
       if (!p.azure && (p.dragon || this.ents.list.some(e => e.type === '龍'))) {
         this.ents.list = this.ents.list.filter(e => e.type !== '龍'); p.dragon = false; p.scaleTaken = true;
         const at = this.stashItem('青鱗', 1);
-        this.toast('龍回東海去了', '洞裡的龍不再跟著你。牠回東海去了，留下一片青鱗' + (at ? '：囊滿了，用小囊包著擱在' + at.where + '。' : '，在囊裡。') + '本島往東約六百格的深海上，青龍盤著；先除一頭蜃，帶著蜃珠去求教，小龍就跟你回來。', 14000);
+        this.toast('龍回東海去了', '洞裡的龍不再跟著你。牠回東海去了，留下一片青鱗' + (at ? '：囊滿了，用小囊包著擱在' + at.where + '。' : '，在囊裡。') + '本島往東約六百格的深海上，青龍盤著；除蜃得碎片，九片加海水瓶三在鼎裡熬成蜃珠，帶著去求教，小龍就跟你回來。', 14000);
       } else if (p.azure && p.dragon && !this.ents.list.some(e => e.type === '龍')) { const at = this.freeNear(p.x, p.y, true); this.ents.add('龍', at.x, at.y); }   // 求教過的小龍走丟了（存檔時離得太遠），回到身邊
       p.rx = p.x; p.ry = p.y; p.moveT = 0;
       Object.assign(this.stats, s.stats || {});
