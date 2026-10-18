@@ -568,6 +568,12 @@
       m.textAlign = 'center'; m.textBaseline = 'middle';
       // 外島：登上過的寫島名（v0.7）
       for (const id in (p.isles || {})) { const [ci, cj] = U.unkey(id), isl = G.isleAt(ci, cj, w.seed); if (!isl) continue; m.font = F(5, 12); m.fillStyle = 'rgba(28,26,23,0.8)'; m.fillText(L(isl.name), X(isl.cx), Y(isl.cy - isl.R * 0.85)); }
+      // 四方地界：到過的寫名字，水的藍字、陸的赭字（v0.8.4）
+      for (const z of G.zones(w.seed)) {
+        if (!(p.zones || {})[z.id]) continue;
+        const wet = z.type === 'deep' || z.type === 'lake', dy = z.type === 'lake' ? 0 : z.type === 'deep' ? -18 : z.type === 'peak' ? -z.r * 0.8 : -(z.r + 16);
+        m.font = F(z.type === 'peak' ? 9 : 6, 13); m.fillStyle = wet ? 'rgba(30,70,110,0.85)' : 'rgba(122,52,34,0.85)'; m.fillText(L(z.name), X(z.x + 0.5), Y(z.y + dy));
+      }
       // 碑
       m.font = F(2.6, 9); m.fillStyle = '#1c1a17';
       for (const s of w.steles.values()) if (w.isSeen(s.x, s.y)) m.fillText('碑', X(s.x + 0.5), Y(s.y + 0.5));

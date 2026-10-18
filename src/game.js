@@ -39,6 +39,17 @@
   // 烤的東西下肚有熱氣：HEAT_PER_MEAL 息內凍不傷命，累積到 HEAT_CAP 為止
   // v0.7 外島的地形：漠白天力不回反掉、夜裡更冷；熔岩一格內燙傷；溫泉泡著回命回愜意；洞窟白天也黑；第一次登上一座外島長膽氣
   const DESERT_STA = 0.4, DESERT_COLD = 0.8, LAVA_BURN = 1.5, SPRING_HP = 1, SPRING_SAN = 0.3, CAVE_DARK = 0.88, ISLE_COUR = 10;
+  // v0.8.4 四方地界：第一次到的時候說的話（地方怎麼種見 glyphs.js 的 ZONE_DEFS）
+  const ZONE_TEXT = {
+    '青龍': '方圓幾十格不見一塊地，水深得發黑。東海青龍就盤在這裡。',
+    '修蛇': '一圈礁石圍著一大片湖，水是淡的，礁上留了四個口子給船進出。《淮南子·本經訓》說羿「斷修蛇於洞庭」。',
+    '封豨': '桑樹成林，林心一塊空地，地上有很深的蹄印。《淮南子·本經訓》：「禽封豨於桑林。」',
+    '大風': '高原草野，島邊一片澤，風颳得人站不穩。《淮南子·本經訓》：「繳大風於青丘之澤。」',
+    '白虎': '白石嶙峋的嶺，嶺上有鐵。夜裡聽得見虎嘯，卻不見虎。',
+    '朱雀': '滿地紅花，外圍有溫泉。〈南山經〉說丹穴之山有鳥，「五采而文，名曰鳳皇」。',
+    '玄武': '北海上的一座洲，林深，水邊有淡水的潭，還有一塊石頭很久沒動。',
+    '共工': '一圈大山圍著一塊盆地，東南缺了一口，像被什麼撞斷的。《淮南子·天文訓》：「怒而觸不周之山，天柱折，地維絕。」',
+  };
   const SNOW_R = 5, SNOW_GRACE = 5, SNOW_RATE = 1, SNOW_RAMP = 0.1, SNOW_MAX = 4, HEAT_PER_MEAL = 90, HEAT_CAP = 150;
   // 魄（v0.5）：手裡的光被吹熄後 SNUFF_TIME 息才點得著；魄兩格內燈帽的蠟燭燒 HAT_GHOST_BURN 倍；
   // 屋裡（covered）沒燈、ROOM_DREAD_R 格內有魄，愜意每息掉 ROOM_DREAD；第 GHOST_FAST_NIGHT 夜起每四夜魄快一成，最多快 GHOST_FAST_MAX 倍
@@ -86,14 +97,14 @@
   // 沒遇過的蓋著，只留一句聽來的話。不寫盡，留點神祕。分四組：小魔王、神獸、大魔王、終極
   const seenIt = (t) => (p) => p.creatures.indexOf(t) >= 0;
   const CODEX = [
-    { id: '蜃', ch: '蜃', ink: '#b4392a', name: '蜃', group: '小魔王', seen: (p) => !!(p.codex && p.codex['蜃']), from: '《史記·天官書》：「海旁蜃氣象樓臺。」', note: ['海上的大蜃，吐氣成霧，霧裡見樓臺。', '撞船；船頭的獸首骨鎮得住牠。', '斃之得碎片，九片在鼎裡熬成蜃珠。'], where: '行船時從深海浮上來', hint: '海上起霧的時候。' },
-    { id: '鑿齒', ch: '齒', ink: '#6b4a2f', name: '鑿齒', group: '小魔王', seen: seenIt('鑿齒'), from: '〈海外南經〉：「羿與鑿齒戰於壽華之野……羿持弓矢，鑿齒持盾。」', note: ['齒長如鑿，手裡一面盾。', '正面打牠只有一成傷，要繞到身側背後。', '斃之得碎片，九片加鐵三、鎢鋼一，鑄成虎符。'], where: '西方的島', hint: '西邊的島上有鑿石頭的聲音，那不是人。' },
-    { id: '蠱雕', ch: '雕', ink: '#4a4f5c', name: '蠱雕', group: '小魔王', seen: seenIt('蠱雕'), from: '〈南山經〉：「其狀如雕而有角，其音如嬰兒之音，是食人。」', note: ['像雕，頭上有角。', '啼聲像嬰兒，聽久了心裡發慌。', '從天上撲下來抓人，抓完回水裡；斃之得羽，九片煉成朱羽。'], where: '南海的岩嶼', hint: '南海上，有嬰兒在哭。' },
+    { id: '蜃', ch: '蜃', ink: '#b4392a', name: '蜃', group: '小魔王', seen: (p) => !!(p.codex && p.codex['蜃']), from: '《史記·天官書》：「海旁蜃氣象樓臺。」', note: ['海上的大蜃，吐氣成霧，霧裡見樓臺。', '撞船；船頭的獸首骨鎮得住牠。', '斃之得蜃殘體，九塊在鼎裡熬成蜃珠。'], where: '行船時從深海浮上來', hint: '海上起霧的時候。' },
+    { id: '鑿齒', ch: '齒', ink: '#6b4a2f', name: '鑿齒', group: '小魔王', seen: seenIt('鑿齒'), from: '〈海外南經〉：「羿與鑿齒戰於壽華之野……羿持弓矢，鑿齒持盾。」', note: ['齒長如鑿，手裡一面盾。', '正面打牠只有一成傷，要繞到身側背後。', '斃之得鑿齒殘體，九塊加鐵三、鎢鋼一，鑄成虎符。'], where: '西方的島', hint: '西邊的島上有鑿石頭的聲音，那不是人。' },
+    { id: '蠱雕', ch: '雕', ink: '#4a4f5c', name: '蠱雕', group: '小魔王', seen: seenIt('蠱雕'), from: '〈南山經〉：「其狀如雕而有角，其音如嬰兒之音，是食人。」', note: ['像雕，頭上有角。', '啼聲像嬰兒，聽久了心裡發慌。', '從天上撲下來抓人，抓完回水裡；斃之得蠱雕殘體，九塊煉成朱羽。'], where: '南海的岩嶼', hint: '南海上，有嬰兒在哭。' },
     { id: '畢方', ch: '畢', ink: '#24766b', name: '畢方', group: '小魔王', seen: seenIt('畢方'), from: '〈西山經〉：「其狀如鶴，一足，赤文青質而白喙……見則其邑有訛火。」', note: ['像鶴，一隻腳，青底朱紋。', '落腳的地方就起火。', '牠的羽毛是對空神兵的料。'], where: '火島', hint: '火島上的火，有時不是熔岩燒的。' },
-    { id: '青龍', ch: '龍', ink: '#24766b', name: '東海青龍', group: '神獸', seen: seenIt('青龍'), from: '《禮記·曲禮上》：「行，前朱鳥而後玄武，左青龍而右白虎。」', note: ['四象之東，盤在東海。', '要一顆蜃珠才肯教。', '教的是水性：船自己回命，落了水撐得久、苦頭減半。'], where: '本島往東約六百格的深海', hint: '洞裡留下的那片青鱗，指著東方。' },
-    { id: '白虎', ch: '虎', ink: '#7f8ea3', name: '西方白虎', group: '神獸', seen: seenIt('白虎'), from: '《禮記·曲禮上》：「左青龍而右白虎。」', note: ['四象之西。', '認的是虎符。', '教的是抗震：從地上傳來的震少四分之一。'], where: '西方', hint: '西邊有一聲嘯，地跟著抖。' },
-    { id: '朱雀', ch: '雀', ink: '#c0392b', name: '南方朱雀', group: '神獸', seen: seenIt('朱雀'), from: '《禮記·曲禮上》：「前朱鳥而後玄武。」朱鳥就是朱雀。', note: ['四象之南。', '認的是朱羽。', '教的是氣順：鎖喉與心慌少四分之一。'], where: '南方的火島', hint: '南邊的火裡，有一團不燙人的紅。' },
-    { id: '玄武', ch: '龜', ink: '#1c1a17', name: '北方玄武', group: '神獸', seen: seenIt('玄武'), from: '《禮記·曲禮上》：「前朱鳥而後玄武。」', note: ['四象之北，龜與蛇。', '不收信物，要你去取經，四次。', '知道這張紙為什麼歪。'], where: '北方的雪島', hint: '北邊，雪裡有東西很久沒動。' },
+    { id: '青龍', ch: '龍', ink: '#24766b', name: '東海青龍', group: '神獸', seen: seenIt('青龍'), from: '《禮記·曲禮上》：「行，前朱鳥而後玄武，左青龍而右白虎。」', note: ['四象之東，盤在東海。', '要一顆蜃珠才肯教。', '教的是水性：船自己回命，落了水撐得久、苦頭減半。'], where: '龍淵，本島往東約六百格的深海', hint: '洞裡留下的那片青鱗，指著東方。' },
+    { id: '白虎', ch: '虎', ink: '#7f8ea3', name: '西方白虎', group: '神獸', seen: seenIt('白虎'), from: '《禮記·曲禮上》：「左青龍而右白虎。」', note: ['四象之西。', '認的是虎符。', '教的是抗震：從地上傳來的震少四分之一。'], where: '西方的虎嶺', hint: '西邊有一聲嘯，地跟著抖。' },
+    { id: '朱雀', ch: '雀', ink: '#c0392b', name: '南方朱雀', group: '神獸', seen: seenIt('朱雀'), from: '《禮記·曲禮上》：「前朱鳥而後玄武。」朱鳥就是朱雀。', note: ['四象之南。', '認的是朱羽。', '教的是氣順：鎖喉與心慌少四分之一。'], where: '南方的丹穴', hint: '南邊的火裡，有一團不燙人的紅。' },
+    { id: '玄武', ch: '龜', ink: '#1c1a17', name: '北方玄武', group: '神獸', seen: seenIt('玄武'), from: '《禮記·曲禮上》：「前朱鳥而後玄武。」', note: ['四象之北，龜與蛇。', '不收信物，要你去取經，四次。', '知道這張紙為什麼歪。'], where: '北海的玄洲', hint: '北海上的洲，水邊有一塊石頭很久沒動。' },
     { id: '修蛇', ch: '蛇', ink: '#2c3b2a', name: '修蛇', group: '大魔王', seen: seenIt('修蛇'), from: '《淮南子·本經訓》：「斷修蛇於洞庭。」', note: ['一個蛇頭，後面拖著一串尾。', '潛下去打不到；冒泡的地方，牠要上來了。', '會纏船，會吞落水的人。'], where: '東極的洞庭', hint: '東極那片大水裡，有東西在纏船。' },
     { id: '封豨', ch: '豨', ink: '#5a3e2b', name: '封豨', group: '大魔王', seen: seenIt('封豨'), from: '《淮南子·本經訓》：「禽封豨於桑林。」', note: ['大豬，頭上一圈鬃，越惱鬃越多。', '直衝撞牆；拱地，震一圈圈傳開。', '吃桑回命。'], where: '西極的桑林', hint: '西極的桑林裡，地在抖。' },
     { id: '大風', ch: '風', ink: '#5b6b7a', name: '大風', group: '大魔王', seen: seenIt('大風'), from: '《淮南子·本經訓》：「繳大風於青丘之澤。」', note: ['在天上是風，撲下來是鳥。', '爪子入木三分：鎖喉、心慌、深懼，一層疊一層。', '吹得垮屋子。'], where: '南方的青丘之澤', hint: '南邊的沼澤上，屋頂一片片掀起來。' },
@@ -103,8 +114,8 @@
   const SHIP_REPAIR_FRAC = 0.25, SWIM_TIME = 60, SWIM_DRAIN = 2, SWIM_DMG = 0.75, SWIM_STEP = 0.32, GOD_SELF = 0.1, SEA_WARN_LEVEL = 31, SEA_PENALTY = 5;
   // 獸首骨：殺虎豹狼有 SKULL_P 的機會掉，掉一個或兩個（SKULL_TWO 的機會兩個）；放在船頭鎮船，日數見 ITEMS 的 ward，各鎮各的、到期風化，船頭格數見 G.SHIPS
   const SKULL_P = 0.16, SKULL_TWO = 0.3;   // v0.5.1：掉首骨的機會 16%、真隨機（原 35%）
-  // v0.8.1 蜃珠（使用者定）：斃蜃掉蜃碎片一或二片（SHARD_TWO 的機會兩片，真隨機）；九片加配料在火旺的鼎裡熬一顆蜃珠，PEARL_P 的機會成（真隨機）；
-  // 不成就退回碎片（困難只退八片），配料不退。v0.8.2：「熬」字底下四點——海水瓶三（PEARL_BRINE）、淡水瓶一（PEARL_FRESH）；
+  // v0.8.1 蜃珠（使用者定）：斃蜃掉蜃殘體一或二塊（SHARD_TWO 的機會兩塊，真隨機）；九塊加配料在火旺的鼎裡熬一顆蜃珠，PEARL_P 的機會成（真隨機）；
+  // 不成就退回殘體（困難只退八塊），配料不退。v0.8.2：「熬」字底下四點——海水瓶三（PEARL_BRINE）、淡水瓶一（PEARL_FRESH）；
   // 成了四個空瓶退回來，不成鼎裡炸了、四個瓶都碎
   const SHARD_TWO = 0.36, PEARL_SHARDS = 9, PEARL_P = 0.83, PEARL_BRINE = 3, PEARL_FRESH = 1, PEARL_STA = 6;
   const SEA_GOD = '燭龍焚溟', SEA_FOLK = '蜃龜';   // 海中之物：燭龍焚溟全傷、九閽鳴雷減半；其餘反過來   // 霧障：不吹散就五樣數值各掉當前的一成（四捨五入，命不低於一）；扇子選中按 V 吹得到三格   // 衣甲損耗倍率封頂；修補後從 1.5 倍起算；燈帽一根蠟燭四百息
@@ -131,7 +142,7 @@
       this.mapAcc = 0;
       this.player = { x: 0, y: 0, rx: 0, ry: 0, fx: 0, fy: 1, fromX: 0, fromY: 0, moveT: 0, stepDur: 0.2,
         hp: 100, hpMax: 100, food: 100, warm: 100, sta: 100, staMax: 100, san: 100, cour: 0, pillsMade: 0, pillsEaten: 0,
-        hurtT: 0, atkT: 0, bag: [], sel: 0, tools: [], tool: -1, worn: { '襯': null, '褲': null, '甲': null, '盔': null, '靴': null, '帽': null }, hitWin: { start: -99, n: 0 }, totemOff: false, craftLog: {}, pouches: 0, noGhostUntil: 0, inFog: 0, ship: null, swimming: false, swimT: 0, home: null, readSteles: [], isles: {}, isleNews: true, places: {}, creatures: [], raftTaken: false, dragon: false, azure: false, scaleTaken: false, bed: null, finished: false,
+        hurtT: 0, atkT: 0, bag: [], sel: 0, tools: [], tool: -1, worn: { '襯': null, '褲': null, '甲': null, '盔': null, '靴': null, '帽': null }, hitWin: { start: -99, n: 0 }, totemOff: false, craftLog: {}, pouches: 0, noGhostUntil: 0, inFog: 0, ship: null, swimming: false, swimT: 0, home: null, readSteles: [], isles: {}, isleNews: true, zones: {}, zoneNews: true, places: {}, creatures: [], raftTaken: false, dragon: false, azure: false, scaleTaken: false, bed: null, finished: false,
         deaths: 0, dead: false, warned: {}, warnLow: {}, burn: {}, lastDay: 1,
         poisonT: 0, poisonPer: 0, heatT: 0, snowT: 0, snuffT: 0, biteN: 0, biteLast: -99, zeroSan: 0, insane: false, ctrl: true, ctrlT: 0, knock: 0, sailing: false, crossed: false, decayAt: 0 };
       this.stats = { gathered: 0, crafted: 0, kills: 0, read: 0, nights: 0, bites: 0 };
@@ -539,7 +550,9 @@
       } else p.decayAt = 0;
       // 渡海：開出這張紙（v0.7 起 2500×2500）
       if (p.sailing && !p.crossed && (p.x < -G.WORLD_R || p.y < -G.WORLD_R || p.x >= G.WORLD_R || p.y >= G.WORLD_R)) this.crossSea();   // v0.7：整張紙 2500×2500，開出方框才是渡海
-      if (!p.sailing && !p.swimming && td.kind !== 'water') { const isl = G.isleOf(p.x, p.y, this.seed); if (isl && !(p.isles || {})[isl.id]) this.landIsle(isl); }
+      { const z = G.zoneAt(p.x, p.y, this.seed), wet = z && (z.type === 'deep' || z.type === 'lake'), onLand = !p.sailing && !p.swimming && td.kind !== 'water';   // v0.8.4 四方地界：水的開進方圓 r 格、陸的登上島就算到了
+        if (z && !(p.zones || {})[z.id] && (wet ? Math.hypot(p.x - z.x, p.y - z.y) <= z.r : onLand)) this.enterZone(z);
+        if (onLand && !(z && !wet)) { const isl = G.isleOf(p.x, p.y, this.seed); if (isl && !(p.isles || {})[isl.id]) this.landIsle(isl); } }
       if (p.hp <= 0) this.die(p.food <= 0 ? '餓' : p.warm <= 0 ? '凍' : p.sta <= 0 ? '累' : p.poisonT > 0 ? '毒' : '傷');
     }
     die(cause) {
@@ -1356,8 +1369,8 @@
         for (const f of [...this.world.fogs.values()]) if (f.sea) this.world.removeFog(f.id);
         const p = this.player, first = !p.codex; p.codex = p.codex || {}; p.codex['蜃'] = (p.codex['蜃'] || 0) + 1;   // 第一頭蜃：翻開魔物誌（v0.8.2）
         if (first) setTimeout(() => this.toast('魔物誌', '斃了第一頭蜃，見聞錄（J）裡多了一冊「魔物誌」：遇過的魔物，寫著牠是什麼、會些什麼。', 9000), 1200);
-        const n = U.trueRand() < SHARD_TWO ? 2 : 1, at = this.stashItem('蜃碎片', n), have = this.count('蜃碎片');
-        this.toast('蜃斃', '海上的霧收了。膽氣 +' + this.shown('cour', got) + '。得蜃碎片 ' + n + ' 片' + (at ? '（囊滿了，用小囊包著擱在' + at.where + '）' : '（囊裡共 ' + have + ' 片）') + '。九片加海水瓶三、淡水瓶一，在火旺的鼎裡熬成一顆蜃珠' + (this.player.azure ? '。' : '，帶去東海求教青龍。')); SFX.fuse(); return;
+        const n = U.trueRand() < SHARD_TWO ? 2 : 1, at = this.stashItem('蜃殘體', n), have = this.count('蜃殘體');
+        this.toast('蜃斃', '海上的霧收了。膽氣 +' + this.shown('cour', got) + '。得蜃殘體 ' + n + ' 塊' + (at ? '（囊滿了，用小囊包著擱在' + at.where + '）' : '（囊裡共 ' + have + ' 塊）') + '。九塊加海水瓶三、淡水瓶一，在火旺的鼎裡熬成一顆蜃珠' + (this.player.azure ? '。' : '，帶去東海求教青龍。')); SFX.fuse(); return;
       }
       this.message((({ '鹿': '獵得一鹿，得肉二。', '虎': '虎斃，得肉三。', '豹': '豹斃，得肉二。', '狼': '狼斃，得肉二。', '蛇': '蛇斃，留下屍身。', '蛛': e.venom ? '毒蛛死了。' : '蜘蛛死了，什麼也沒留下。', '蟾': '蟾蜍死了。', '鷹': '鷹落了下來。', '龜': '龜死了，留下龜甲。', '豬': '野豬斃，得肉三' + fatText + '。', '牛': '野牛斃，得肉四' + fatText + '。' })[e.type] || '斃。') + (hostile ? '膽氣 +' + this.shown('cour', got) + (this.isNight() ? '（夜裡加半成）' : '（白日八成）') : ''));
       if (e.type !== '鹿') SFX.fuse();
@@ -1441,8 +1454,8 @@
       if (base === '鼎') {
         if (this.fuelOf(name)) { const sec = this.fuelOf(name); if (!this.fuelFits(t, sec)) return; w.addFuel(t.x, t.y, sec); this.removeItem(name, 1); this.message('鼎下添' + (name === '煤' || name === '精煤' ? '煤' : '柴') + '。還能燒 ' + Math.round(w.stoveFuel(t.x, t.y)) + ' 息。'); SFX.write(); return; }   // 跟灶同一張燃料表、同一個上限
         if (name === '蟾蜍肉' || name === '毒蟾肉') { this.refinePill(t, name); return; }
-        if (name === '蜃碎片') { this.brewPearl(t); return; }
-        this.message('鼎裡只煉蟾蜍肉、熬蜃碎片；木或煤是柴。'); fail(); return;
+        if (name === '蜃殘體') { this.brewPearl(t); return; }
+        this.message('鼎裡只煉蟾蜍肉、熬蜃殘體；木或煤是柴。'); fail(); return;
       }
       if ((name === '磚' && base === '墟') || ((name === '窗' || name === '門') && base === name && w.wallHurt(t.x, t.y))) {   // 補：磚直接砌在墟上、新窗新門換掉撞裂的（v0.6.2 使用者定）
         w.set(t.x, t.y, name); w.wallHp.delete(U.key(t.x, t.y)); this.removeItem(name, 1);
@@ -1588,20 +1601,20 @@
       } else { this.message('丹沒成，一塊' + name + '化了煙（這次 ' + Math.round(chance * 100) + '%）。'); SFX.fail(); }
       this.fx.push({ type: 'float', x: t.x, y: t.y, text: '丹', color: G.INK.red, t: 0, dur: 1 });
     }
-    // v0.8.1 熬蜃珠：蜃碎片九片、海水瓶三，火旺的鼎，耗力六；八成三的機會成（真隨機），不成退碎片（困難只退八片）、海水瓶不退
+    // v0.8.1 熬蜃珠：蜃殘體九塊、海水瓶三，火旺的鼎，耗力六；八成三的機會成（真隨機），不成退殘體（困難只退八塊）、海水瓶不退
     brewPearl(t) {
-      const w = this.world, shards = this.count('蜃碎片'), brine = this.count('海水瓶'), fresh = this.count('淡水瓶');
+      const w = this.world, shards = this.count('蜃殘體'), brine = this.count('海水瓶'), fresh = this.count('淡水瓶');
       if (!w.stoveLit(t.x, t.y)) { this.message('鼎是冷的，先添柴。'); SFX.fail(); return; }
-      if (shards < PEARL_SHARDS || brine < PEARL_BRINE || fresh < PEARL_FRESH) { this.message('熬一顆蜃珠要蜃碎片 ' + PEARL_SHARDS + ' 片、海水瓶 ' + PEARL_BRINE + '、淡水瓶 ' + PEARL_FRESH + '（「熬」底下四點），囊裡碎片 ' + shards + '、海水瓶 ' + brine + '、淡水瓶 ' + fresh + '。'); SFX.fail(); return; }
+      if (shards < PEARL_SHARDS || brine < PEARL_BRINE || fresh < PEARL_FRESH) { this.message('熬一顆蜃珠要蜃殘體 ' + PEARL_SHARDS + ' 塊、海水瓶 ' + PEARL_BRINE + '、淡水瓶 ' + PEARL_FRESH + '（「熬」底下四點），囊裡殘體 ' + shards + '、海水瓶 ' + brine + '、淡水瓶 ' + fresh + '。'); SFX.fail(); return; }
       if (!this.spendSta(PEARL_STA)) return;
-      this.removeItem('蜃碎片', PEARL_SHARDS); this.removeItem('海水瓶', PEARL_BRINE); this.removeItem('淡水瓶', PEARL_FRESH);
+      this.removeItem('蜃殘體', PEARL_SHARDS); this.removeItem('海水瓶', PEARL_BRINE); this.removeItem('淡水瓶', PEARL_FRESH);
       const jars = PEARL_BRINE + PEARL_FRESH;
       if (U.trueRand() < PEARL_P) {
         const at = this.stashItem('蜃珠', 1); this.addItem('玻璃瓶', jars); this.addCourage(3);
         this.toast('熬成一顆蜃珠', jars + ' 個空瓶退回來了。' + (at ? '囊滿了，蜃珠用小囊包著擱在' + at.where + '。' : '') + (this.player.azure ? '青龍已經教過你了，這顆留著。' : '帶去東海，青龍兩格內按 E 求教。')); SFX.learn();
       } else {
-        const back = this.diff.key === 'hard' ? PEARL_SHARDS - 1 : PEARL_SHARDS; this.stashItem('蜃碎片', back);
-        this.message('鼎裡一聲爆響，珠沒熬成（' + Math.round(PEARL_P * 100) + '%）：' + jars + ' 個瓶子都炸碎了，碎片退回 ' + back + ' 片' + (back < PEARL_SHARDS ? '（困難熬壞一片）' : '') + '。'); SFX.fail();
+        const back = this.diff.key === 'hard' ? PEARL_SHARDS - 1 : PEARL_SHARDS; this.stashItem('蜃殘體', back);
+        this.message('鼎裡一聲爆響，珠沒熬成（' + Math.round(PEARL_P * 100) + '%）：' + jars + ' 個瓶子都炸碎了，殘體退回 ' + back + ' 塊' + (back < PEARL_SHARDS ? '（困難熬壞一塊）' : '') + '。'); SFX.fail();
         this.renderer.shake = 0.4;
       }
       this.fx.push({ type: 'float', x: t.x, y: t.y, text: '珠', color: G.INK.azure, t: 0, dur: 1 }); this.buildBag();
@@ -1903,7 +1916,13 @@
       const what = { '漠': '大漠黃沙：白天力不回、夜裡冷；綠洲有池水椰棗。', '火': '火山：熔岩燙人、兩格內暖；岩裡有黑曜石。', '川': '河湖縱橫，水是淡的，林木茂密。', '雪': '冰雪寒地：山腹有洞窟（要帶光），山腳有溫泉。', '青': '尋常的山林田野。' }[isl.kind];
       this.toast('登上' + isl.name + '（第 ' + n + ' 座）', what + (gain > 0 ? ' 膽氣 +' + fmt(this.shown('isle', gain)) + '。' : ''), 7000); SFX.learn();
     }
-    placeName() { const p = this.player, isl = G.isleOf(p.x, p.y, this.seed); return (isl ? isl.name + ' · ' : '') + G.biomeName(this.world.get(p.x, p.y)); }
+    enterZone(z) {       // 第一次到四方地界的一處（v0.8.4）：記下來、長膽氣、說這是哪裡
+      const p = this.player; p.zones = p.zones || {}; p.zones[z.id] = 1;
+      const gain = this.addCourage(ISLE_COUR, 'isle');
+      this.toast((z.type === 'deep' || z.type === 'lake' ? '到了' : '登上') + z.name, ZONE_TEXT[z.id] + (gain > 0 ? ' 膽氣 +' + fmt(this.shown('isle', gain)) + '。' : ''), 8000); SFX.learn();
+    }
+    zoneName() { const z = G.zoneAt(this.player.x, this.player.y, this.seed); return z ? z.name : ''; }
+    placeName() { const p = this.player, z = G.zoneAt(p.x, p.y, this.seed), isl = z ? null : G.isleOf(p.x, p.y, this.seed); return (z ? z.name + ' · ' : isl ? isl.name + ' · ' : '') + G.biomeName(this.world.get(p.x, p.y)); }
     discover(pl) {
       const p = this.player;
       if (p.places[pl.id]) return;
@@ -1922,7 +1941,7 @@
       if (pl.effect === 'raft' && !p.raftTaken) { if (this.addItem('竹筏', 1) === 0) { p.raftTaken = true; this.toast('船裡有一隻竹筏', '囊中有筏，可行於淺水。'); } else this.message('囊滿了，筏子先留在船裡。'); }
       if (pl.effect === 'scale' && !p.scaleTaken && !p.azure) {   // v0.8：龍不在洞裡了，留一片青鱗指向東海
         p.scaleTaken = true; const at = this.stashItem('青鱗', 1);
-        this.toast('黑處只剩一片鱗', '龍往東海去了。本島往東約六百格的深海上，青龍盤著' + (at ? '（囊滿了，青鱗用小囊包著擱在' + at.where + '）' : '') + '。除蜃得碎片，九片加海水瓶三、淡水瓶一在鼎裡熬成蜃珠，帶著去求教。大地圖上標了牠的所在。', 10000);
+        this.toast('黑處只剩一片鱗', '龍往東海去了。本島往東約六百格的深海上，青龍盤著' + (at ? '（囊滿了，青鱗用小囊包著擱在' + at.where + '）' : '') + '。除蜃得蜃殘體，九塊加海水瓶三、淡水瓶一在鼎裡熬成蜃珠，帶著去求教。大地圖上標了牠的所在。', 10000);
       }
       if (!first) { this.buildBag(); return; }
       this.stats.read++; p.san = Math.min(100, p.san + this.sanUp(10)); this.addCourage(10);
@@ -1940,7 +1959,7 @@
     askAzure() {
       const p = this.player;
       if (p.azure) { this.message('青龍：「去吧。海上有難，我記得你。」'); return; }
-      if (!this.has('蜃珠')) { this.toast('青龍', '「' + (this.has('青鱗') ? '你帶著我的鱗來了。' : '') + '拿一顆蜃珠來，我才信你出得了遠海。」除蜃得碎片，九片加海水瓶三、淡水瓶一，在火旺的鼎裡熬成蜃珠' + (this.has('蜃碎片') ? '（囊裡有碎片 ' + this.count('蜃碎片') + ' 片）' : '') + '。', 9000); SFX.fail(); return; }
+      if (!this.has('蜃珠')) { this.toast('青龍', '「' + (this.has('青鱗') ? '你帶著我的鱗來了。' : '') + '拿一顆蜃珠來，我才信你出得了遠海。」除蜃得蜃殘體，九塊加海水瓶三、淡水瓶一，在火旺的鼎裡熬成蜃珠' + (this.has('蜃殘體') ? '（囊裡有蜃殘體 ' + this.count('蜃殘體') + ' 塊）' : '') + '。', 9000); SFX.fail(); return; }
       this.removeItem('蜃珠', 1); if (this.has('青鱗')) this.removeItem('青鱗', 1);
       p.azure = true; p.scaleTaken = true; p.dragon = false; this.courSig = '';
       this.toast('求教青龍', '青龍收下蜃珠，教你行船的水性：孤帆、方舟從此自己慢慢回命（' + SHIP_MEND_DAYS + ' 日回滿，停著的也回）；落了水也撐得久些（倒數慢四分之一）。右上角膽氣環外面的魂環，亮起了青龍那三分之一。', 12000);
@@ -2309,7 +2328,7 @@
         for (const [k, , v] of this.vitalFracs()) { const el = $(k + 'fill').parentNode; el.classList.toggle('warn', v < WARN_LIGHT); el.classList.toggle('low', v < WARN_POP); }   // 不到五成亮燈，不到四分之一轉紅
         $('hplabel').innerHTML = '命<br>' + Math.round(p.hp) + (p.hpMax > 100 ? '<small>／' + Math.round(p.hpMax) + '</small>' : ''); $('foodlabel').innerHTML = '飽<br>' + Math.round(p.food); $('warmlabel').innerHTML = '暖<br>' + Math.round(p.warm) + (p.heatT > 0 ? '<small>熱 ' + Math.ceil(p.heatT) + '</small>' : ''); $('stalabel').innerHTML = '力<br>' + Math.round(p.sta); $('sanlabel').innerHTML = '愜<br>' + Math.round(p.san);
         const nn = this.nightNo();
-        $('status').innerHTML = '<b>第 ' + this.day() + ' 日</b> &nbsp;' + this.shichen() + ' ' + (this.daylight() > 0.5 ? '日' : '月') + (w.raining() ? '雨' : '') + (this.isNight() ? '<span class="dim">（第 ' + nn + ' 夜' + (nn >= this.diff.ghost ? '，魄夜' : '') + '）</span>' : '') + ' &nbsp;·&nbsp; ' + w.tideName() + ' &nbsp;·&nbsp; ' + (p.sailing ? '船上 · ' + (p.ship ? p.ship.kind + ' ' + Math.round(p.ship.hp) + '/' + this.shipMax(p.ship) : '') + (this.shipWarded() ? ' · 船頭' + this.shipSkullName() + ' ' + this.wardDays() + ' 日' : '') : p.swimming ? '<b style="color:#b4392a">落水 · 還有 ' + Math.ceil(p.swimT) + ' 息</b>' : this.placeName()) + (this.peaceDays() ? ' &nbsp;·&nbsp; <span class="dim">龜卜 · ' + this.peaceDays() + ' 日無魄</span>' : '') + ' &nbsp;·&nbsp; <span class="dim">(' + p.x + ', ' + p.y + ') · ' + this.diff.name + '</span>';
+        $('status').innerHTML = '<b>第 ' + this.day() + ' 日</b> &nbsp;' + this.shichen() + ' ' + (this.daylight() > 0.5 ? '日' : '月') + (w.raining() ? '雨' : '') + (this.isNight() ? '<span class="dim">（第 ' + nn + ' 夜' + (nn >= this.diff.ghost ? '，魄夜' : '') + '）</span>' : '') + ' &nbsp;·&nbsp; ' + w.tideName() + ' &nbsp;·&nbsp; ' + (p.sailing ? '船上 · ' + (this.zoneName() ? this.zoneName() + ' · ' : '') + (p.ship ? p.ship.kind + ' ' + Math.round(p.ship.hp) + '/' + this.shipMax(p.ship) : '') + (this.shipWarded() ? ' · 船頭' + this.shipSkullName() + ' ' + this.wardDays() + ' 日' : '') : p.swimming ? '<b style="color:#b4392a">落水 · 還有 ' + Math.ceil(p.swimT) + ' 息</b>' : this.placeName()) + (this.peaceDays() ? ' &nbsp;·&nbsp; <span class="dim">龜卜 · ' + this.peaceDays() + ' 日無魄</span>' : '') + ' &nbsp;·&nbsp; <span class="dim">(' + p.x + ', ' + p.y + ') · ' + this.diff.name + '</span>';
       }
       const lv = this.level(), daysLeft = p.decayAt ? Math.max(1, Math.ceil((p.decayAt - w.time) / DAY - 1e-6)) : 0;
       const cs = p.cour + '|' + lv + '|' + daysLeft + '|' + (this.hasGod() ? 1 : 0) + '|' + (p.azure ? 1 : 0) + (p.bai ? 1 : 0) + (p.zhu ? 1 : 0) + '|' + (p.jing || []).join(',');
@@ -2368,7 +2387,7 @@
           else if (tl.tile && DB[tl.tile] && DB[tl.tile].net) { const mx = w.netDur(DB[tl.tile].net), cp = this.castPreview(); s += (hs.dur !== undefined && hs.dur <= 0 ? ' · <i class="dim">網破了，製作欄「加固」棉麻各 ' + this.mendCost(hs) + '</i>' : cp ? ' · <kbd>F</kbd> 撒網（淺色網影就是撒得到的地方）' : ' · 走到水邊，網影浮出來再按 <kbd>F</kbd> 撒') + ' · <i class="dim">耐 ' + (hs.dur === undefined ? mx : hs.dur) + '／' + mx + (hs.rf ? '，固過 ' + hs.rf + ' 次' : '') + '</i>'; }
           else if (hs.n === '錦囊') s += p.pouches >= MAX_POUCHES ? ' · <i class="dim">錦囊已用完八個</i>' : ' · <kbd>V</kbd> 用掉（囊多兩格、具欄多一格，已用 ' + p.pouches + '／' + MAX_POUCHES + '）';
           else if (tl.tool && tl.dur) s += ' · <kbd>F</kbd> 移進具欄';
-          else if (ch === '鼎') s += (hs.n === '蟾蜍肉' || hs.n === '毒蟾肉') ? ' · <kbd>F</kbd> 煉丹' : hs.n === '蜃碎片' ? ' · <kbd>F</kbd> 熬蜃珠（碎片 ' + this.count('蜃碎片') + '/' + PEARL_SHARDS + '、海水瓶 ' + this.count('海水瓶') + '/' + PEARL_BRINE + '、淡水瓶 ' + this.count('淡水瓶') + '/' + PEARL_FRESH + '，' + Math.round(PEARL_P * 100) + '%）' : this.fuelOf(hs.n) ? ' · <kbd>F</kbd> 添柴' : '';
+          else if (ch === '鼎') s += (hs.n === '蟾蜍肉' || hs.n === '毒蟾肉') ? ' · <kbd>F</kbd> 煉丹' : hs.n === '蜃殘體' ? ' · <kbd>F</kbd> 熬蜃珠（殘體 ' + this.count('蜃殘體') + '/' + PEARL_SHARDS + '、海水瓶 ' + this.count('海水瓶') + '/' + PEARL_BRINE + '、淡水瓶 ' + this.count('淡水瓶') + '/' + PEARL_FRESH + '，' + Math.round(PEARL_P * 100) + '%）' : this.fuelOf(hs.n) ? ' · <kbd>F</kbd> 添柴' : '';
           else if (ch === '灶') s += ' · <kbd>F</kbd> 開灶';
           else if ((DB[tl.tile || hs.n] || {}).place) s += ' · <kbd>F</kbd> 放「' + hs.n + '」';
           if (it.food) s += ' · <kbd>V</kbd> ' + (hs.n.indexOf('瓶') >= 0 || hs.n === '果酒' ? '喝' : '吃');
@@ -2376,7 +2395,7 @@
         if (this.bedNear()) s += ' · <kbd>R</kbd> 睡';
         if (this.heldTool() === '弓') { const st = this.slingTarget(); s += ' · 彈弓：' + (st ? '<kbd>E</kbd> 射「' + st.type + '」（' + U.cheb(st.x, st.y, p.x, p.y) + ' 格）' : '面前九格內沒有獸') + ' · 石子 ' + this.count('石子') + (w.get(p.x, p.y) === '台' ? ' · 站在台上，越得過磚' : ''); }
         if (ch === '灶') s += (hs ? '' : ' · <kbd>F</kbd> 開灶') + '<br><span class="dim">灶：按 F 開灶，在灶裡添柴、烤魚肉、燒瓶、蒸餾、煉鐵煉鎢鋼</span>';
-        if (ch === '鼎') s += '<br><span class="dim">鼎：選中木或煤按 F 添柴；火旺時選中蜃碎片按 F 熬蜃珠（九片、海水瓶三、淡水瓶一）；選中蟾蜍肉或毒蟾肉按 F 煉丹（這次 ' + Math.round(this.pillChance('蟾蜍肉') * 100) + '%／' + Math.round(this.pillChance('毒蟾肉') * 100) + '%，已煉 ' + p.pillsMade + ' 顆）</span>';
+        if (ch === '鼎') s += '<br><span class="dim">鼎：選中木或煤按 F 添柴；火旺時選中蜃殘體按 F 熬蜃珠（九塊、海水瓶三、淡水瓶一）；選中蟾蜍肉或毒蟾肉按 F 煉丹（這次 ' + Math.round(this.pillChance('蟾蜍肉') * 100) + '%／' + Math.round(this.pillChance('毒蟾肉') * 100) + '%，已煉 ' + p.pillsMade + ' 顆）</span>';
       }
       if (this.msgUntil && performance.now() < this.msgUntil) s = this.msgText;
       if (s !== this.lastMsg) { this.lastMsg = s; $('msg').innerHTML = s; }
@@ -2396,7 +2415,7 @@
       try {
         localStorage.setItem(Game.slotKey(slot || this.slot), JSON.stringify({ v: 5, seed: this.seed, diff: this.diff.key, savedAt: Date.now(), brief: this.brief(), world: this.world.serialize(), ents: this.ents.serialize(),
           player: { x: p.x, y: p.y, fx: p.fx, fy: p.fy, hp: p.hp, food: p.food, warm: p.warm, sta: p.sta, staMax: p.staMax, san: p.san, cour: p.cour, bag: p.bag, sel: p.sel, home: p.home, readSteles: p.readSteles,
-            places: p.places, isles: p.isles, isleNews: p.isleNews, creatures: p.creatures, raftTaken: p.raftTaken, dragon: p.dragon, azure: p.azure, scaleTaken: p.scaleTaken, bed: p.bed, codex: p.codex, finished: p.finished, deaths: p.deaths, burn: p.burn, lastDay: p.lastDay, poisonT: p.poisonT, heatT: p.heatT, poisonPer: p.poisonPer, sailing: p.sailing, tools: p.tools, tool: p.tool, decayAt: p.decayAt, worn: p.worn, hitWin: p.hitWin, totemOff: p.totemOff, pouches: p.pouches, noGhostUntil: p.noGhostUntil, sanBoostUntil: U.r4(p.sanBoostUntil || 0), hpMax: p.hpMax, pillsMade: p.pillsMade, pillsEaten: p.pillsEaten, inFog: p.inFog, ship: p.ship, swimming: p.swimming, swimT: p.swimT, swimShips: p.swimShips || 0 }, stats: this.stats }));
+            places: p.places, isles: p.isles, isleNews: p.isleNews, zones: p.zones, zoneNews: p.zoneNews, creatures: p.creatures, raftTaken: p.raftTaken, dragon: p.dragon, azure: p.azure, scaleTaken: p.scaleTaken, bed: p.bed, codex: p.codex, finished: p.finished, deaths: p.deaths, burn: p.burn, lastDay: p.lastDay, poisonT: p.poisonT, heatT: p.heatT, poisonPer: p.poisonPer, sailing: p.sailing, tools: p.tools, tool: p.tool, decayAt: p.decayAt, worn: p.worn, hitWin: p.hitWin, totemOff: p.totemOff, pouches: p.pouches, noGhostUntil: p.noGhostUntil, sanBoostUntil: U.r4(p.sanBoostUntil || 0), hpMax: p.hpMax, pillsMade: p.pillsMade, pillsEaten: p.pillsEaten, inFog: p.inFog, ship: p.ship, swimming: p.swimming, swimT: p.swimT, swimShips: p.swimShips || 0 }, stats: this.stats }));
       } catch (err) { /* 隱私模式等情況下存不了，就算了 */ }
     }
     load(s) {
@@ -2404,7 +2423,7 @@
       this.world.restore(s.world || {}, s.brief && s.brief.day);
       this.ents.restore(s.ents);
       const sp = s.player || {};
-      for (const k of ['x', 'y', 'fx', 'fy', 'hp', 'food', 'warm', 'sta', 'staMax', 'san', 'cour', 'bag', 'sel', 'home', 'readSteles', 'places', 'isles', 'isleNews', 'creatures', 'raftTaken', 'dragon', 'azure', 'scaleTaken', 'bed', 'codex', 'finished', 'deaths', 'burn', 'lastDay', 'poisonT', 'poisonPer', 'heatT', 'sailing', 'tools', 'tool', 'decayAt', 'worn', 'hitWin', 'totemOff', 'pouches', 'noGhostUntil', 'sanBoostUntil', 'hpMax', 'pillsMade', 'pillsEaten', 'inFog', 'ship', 'swimming', 'swimT', 'swimShips']) if (sp[k] !== undefined) p[k] = sp[k];
+      for (const k of ['x', 'y', 'fx', 'fy', 'hp', 'food', 'warm', 'sta', 'staMax', 'san', 'cour', 'bag', 'sel', 'home', 'readSteles', 'places', 'isles', 'isleNews', 'zones', 'zoneNews', 'creatures', 'raftTaken', 'dragon', 'azure', 'scaleTaken', 'bed', 'codex', 'finished', 'deaths', 'burn', 'lastDay', 'poisonT', 'poisonPer', 'heatT', 'sailing', 'tools', 'tool', 'decayAt', 'worn', 'hitWin', 'totemOff', 'pouches', 'noGhostUntil', 'sanBoostUntil', 'hpMax', 'pillsMade', 'pillsEaten', 'inFog', 'ship', 'swimming', 'swimT', 'swimShips']) if (sp[k] !== undefined) p[k] = sp[k];
       if (p.sailing && !p.ship) p.ship = World.newShip('孤帆');     // 舊存檔在船上：給一條滿命的孤帆
       if (p.ship && !p.ship.kind) p.ship = { kind: '孤帆', hp: Math.min(p.ship.hp, G.SHIPS['孤帆'].hp), skulls: p.ship.skull && p.ship.ward > this.world.time ? [[p.ship.skull, p.ship.ward]] : [], repairs: 0 };   // v0.4 的船
       // v0.7 擴島：存檔時在海上（船上或落水）、那裡現在長成了陸地——落水的就算上了岸，船上的挪到最近的海；新陸地上的魚散了
@@ -2418,10 +2437,14 @@
       this.ents.list = this.ents.list.filter(e => !((e.type === '魚' || e.type === '蜃') && DB[W.get(e.x, e.y)].kind !== 'water'));
       if (!sp.isleNews) {         // 舊存檔第一次讀進 v0.7：說一聲島長大了、海上多了許多島
         p.isleNews = true;
-        this.toast('島長大了', '這座島往外長了一圈新地（原本的地一格沒動），四面海上也浮出了 ' + G.isles(this.seed).length + ' 座外島：漠島、火島、川島、雪島、青島。膽氣八重造船，就能去看看。' + (W.movedShips ? '你的船停的地方長成了陸地，已挪到最近的海上。' : ''), 12000);
+        this.toast('島長大了', '這座島往外長了一圈新地（原本的地一格沒動），四面海上也浮出了 ' + G.isles(this.seed).length + ' 座外島：漠島、火島、川島、雪島、青島；紙的四方另有龍淵、洞庭、虎嶺、桑林、丹穴、青丘、玄洲與西北的不周山。膽氣八重造船，就能去看看。' + (W.movedShips ? '你的船停的地方長成了陸地，已挪到最近的海上。' : ''), 12000);
+      } else if (!sp.zoneNews) {  // 舊存檔第一次讀進 v0.8.4：紙的四方種了地界
+        this.toast('紙的四方', '四方有了去處：東邊龍淵、洞庭，西邊虎嶺、桑林，南邊丹穴、青丘，北邊玄洲，西北一座不周山。原本的地一格沒動，只在海上多了幾座島。' + (W.movedShips ? '你的船停的地方長成了陸地，已挪到最近的海上。' : ''), 12000);
       } else if (W.movedShips) this.toast('船挪了位置', '船停的地方長成了陸地，已挪到最近的海上。', 8000);
-      const rename = (list) => { for (const it of list || []) if (it && it.n === '大船') it.n = '孤帆'; };   // v0.4 的大船就是現在的孤帆
-      rename(p.bag); for (const l of this.world.chests.values()) rename(l); for (const l of this.world.bags.values()) rename(l);
+      p.zoneNews = true;
+      const RENAMED = { '大船': '孤帆', '蜃碎片': '蜃殘體' };   // v0.4 的大船就是現在的孤帆；v0.8.4 蜃碎片改叫蜃殘體
+      const rename = (list) => { for (const it of list || []) if (it) { if (RENAMED[it.n]) it.n = RENAMED[it.n]; if (it.store) rename(it.store); } };   // 櫃與灶裡裝著的也一併改
+      rename(p.bag); for (const l of this.world.chests.values()) rename(l); for (const l of this.world.bags.values()) rename(l); for (const l of this.world.shelves.values()) rename(l);
       if ((s.ents || []).some(e => e.t === '蜃')) {              // 沒解決的蜃：讀檔後牠散了，但膽氣減五重
         const before = this.level(); this.dropLevels(SEA_PENALTY);
         this.toast('蜃沒了結', '讀檔時海上的蜃散了，可你是逃掉的：膽氣第 ' + before + ' 重減到第 ' + this.level() + ' 重。其餘都在。', 10000);
@@ -2450,7 +2473,7 @@
       if (!p.azure && (p.dragon || this.ents.list.some(e => e.type === '龍'))) {
         this.ents.list = this.ents.list.filter(e => e.type !== '龍'); p.dragon = false; p.scaleTaken = true;
         const at = this.stashItem('青鱗', 1);
-        this.toast('龍回東海去了', '洞裡的龍不再跟著你。牠回東海去了，留下一片青鱗' + (at ? '：囊滿了，用小囊包著擱在' + at.where + '。' : '，在囊裡。') + '本島往東約六百格的深海上，青龍盤著；除蜃得碎片，九片加海水瓶三、淡水瓶一在鼎裡熬成蜃珠，帶著去求教，魂環就亮起青龍那一分。', 14000);
+        this.toast('龍回東海去了', '洞裡的龍不再跟著你。牠回東海去了，留下一片青鱗' + (at ? '：囊滿了，用小囊包著擱在' + at.where + '。' : '，在囊裡。') + '本島往東約六百格的深海上，青龍盤著；除蜃得蜃殘體，九塊加海水瓶三、淡水瓶一在鼎裡熬成蜃珠，帶著去求教，魂環就亮起青龍那一分。', 14000);
       } else if (p.azure && (p.dragon || this.ents.list.some(e => e.type === '龍'))) {   // v0.8.2：小龍不再是跟著走的生靈，化進魂環
         this.ents.list = this.ents.list.filter(e => e.type !== '龍'); p.dragon = false;
         this.toast('小龍入了魂環', '跟著你的小龍化進了右上角的魂環（青龍那三分之一）。牠不再照路、驅魄，青龍教的水性與船回命照舊。', 10000);

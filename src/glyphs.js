@@ -112,7 +112,7 @@
     '牛': { s: 4, kind: 'beast', ink: INK.beast, hp: 450, atk: 5, passive: true, name: '野牛', flavor: '草原上的野牛。命是虎的一倍半（四百五十），一頂五滴血，腳程是狼的三分之二。不惹不動；惹了就追著頂，記仇記得遠：追出十八格外或三十息後才消氣；你躲進屋裡，牠就撞磚，三下撞碎一塊。得肉四，四分之一的機會得油脂。' },
     '蜃': { s: 13, kind: 'beast', ink: INK.red, hp: 900, atk: 30, ram: 25, sea: true, flavor: '海中的大蜃，吐氣成霧（蜃樓）。命九百，只在海上：撞船一下二十五，咬落水的人一口三十，所過之處吞吐霧障。船頭有獸首骨鎮著就不敢撞。九閽鳴雷打牠減半，燭龍焚溟專克。' },
     '龍': { s: 16, kind: 'beast', light: 3, ink: INK.red, hp: 500, flavor: '龍。以前洞裡那條，後來是求教青龍後跟著的小龍；v0.8.2 起化進了魂環，不再跟著走。夜能照路、獸與魄不敢近的規則留著，給以後神獸護駕用。' },
-    '青龍': { s: 24, kind: 'beast', light: 4, ink: INK.azure, hp: 9999, name: '青龍', flavor: '東海青龍，盤在本島往東約六百格的深海上，不近人也不避人。帶一顆蜃珠（蜃碎片九片在鼎裡熬成）去求教，牠教你行船的水性：孤帆、方舟從此自己慢慢回命，落了水也撐得久些；右上角的魂環亮起青龍那三分之一。' },
+    '青龍': { s: 24, kind: 'beast', light: 4, ink: INK.azure, hp: 9999, name: '青龍', flavor: '東海青龍，盤在本島往東約六百格的深海上，不近人也不避人。帶一顆蜃珠（蜃殘體九塊在鼎裡熬成）去求教，牠教你行船的水性：孤帆、方舟從此自己慢慢回命，落了水也撐得久些；右上角的魂環亮起青龍那三分之一。' },
   };
   const VIS = { '草': [0.6, 0.42], '花': [0.62, 0.8], '棉': [0.75, 0.85], '麻': [0.72, 0.85], '沙': [0.58, 0.5], '礫': [0.62, 0.6], '田': [0.78, 0.6], '土': [0.6, 0.5], '灰': [0.6, 0.5], '雪': [0.7, 0.55],
     '水': [0.82, 0.8], '淼': [0.95, 0.9], '石': [0.72, 0.85], '山': [1.12, 1], '木': [0.9, 1], '果': [0.9, 1], '竹': [0.85, 0.95], '林': [1.0, 1], '森': [1.08, 1],
@@ -167,9 +167,9 @@
     '大漁網': { s: 17, kind: 'build', tile: '罾', flavor: '三乘三的大撒網。拿著走到水邊按 F 撒，網影裡的魚一網打盡。耐久二百四十。' },
     '錦囊': { s: 16, kind: 'use', flavor: '麻布三棉二織成的錦囊。選中按 V 用掉：囊永久多兩格、具欄多一格。最多八個（已用的加囊裡的湊滿八個就不再織）。' },
     '龜甲': { s: 16, kind: 'use', flavor: '龜甲。選中按 V 灼而卜之：四分之一的機會得吉兆，五日內魄不來；不吉則甲裂無用。' },
-    '青鱗': { s: 31, kind: 'item', flavor: '洞裡留下的一片青鱗。龍往東海去了：本島往東約六百格的深海上，就是青龍盤著的地方（拿到這片鱗，大地圖上就標得出來）。帶一顆蜃珠去求教（蜃碎片九片、海水瓶三、淡水瓶一，在火旺的鼎裡熬成）。' },
-    '蜃碎片': { s: 26, kind: 'item', flavor: '斃蜃掉的碎片，一頭一或二片（約三分之一的機會兩片）。九片加海水瓶三、淡水瓶一（「熬」底下四點），在火旺的鼎裡熬成一顆蜃珠（八成三的機會成，成了四個空瓶退回；不成鼎裡炸了、瓶都碎，碎片退回，困難只退八片）。' },
-    '蜃珠': { s: 23, kind: 'item', flavor: '九片蜃碎片在鼎裡熬成的珠。東海青龍要的就是它：帶去求教，青龍收下就教你行船的水性。' },
+    '青鱗': { s: 31, kind: 'item', flavor: '洞裡留下的一片青鱗。龍往東海去了：本島往東約六百格的深海上，就是青龍盤著的地方（拿到這片鱗，大地圖上就標得出來）。帶一顆蜃珠去求教（蜃殘體九塊、海水瓶三、淡水瓶一，在火旺的鼎裡熬成）。' },
+    '蜃殘體': { s: 26, kind: 'item', flavor: '斃蜃留下的殘體，一頭一或二塊（約三分之一的機會兩塊）。九塊加海水瓶三、淡水瓶一（「熬」底下四點），在火旺的鼎裡熬成一顆蜃珠（八成三的機會成，成了四個空瓶退回；不成鼎裡炸了、瓶都碎，殘體退回，困難只退八塊）。' },
+    '蜃珠': { s: 23, kind: 'item', flavor: '九塊蜃殘體在鼎裡熬成的珠。東海青龍要的就是它：帶去求教，青龍收下就教你行船的水性。' },
     '油脂': { s: 18, kind: 'item', flavor: '野豬野牛身上割下的油脂（斃之 35% 的機會得一份）。要裝在麻布包裡才帶得走。棉一油脂一，做成蠟燭三根。' },
     '麻布包': { s: 16, kind: 'item', single: true, flavor: '麻布二、麻一縫的小包，專裝油脂，一包裝八份。包不會用掉，做東西時從包裡取油；沒有包，斃野豬野牛割下的油脂就帶不走。' },
     '燭龍焚溟': { s: 58, kind: 'tool', tool: '焚', dmg: 120, dur: 199, flavor: '燭龍銜火，焚盡溟海。火屬而克海水，故為神兵。膽氣卅一重方可造、可揮：面向獸按 E，三格內諸獸同受灼燒，海中之物（蜃、龜）一百二十，陸上與天上之物減半。隨身的膽氣減益與九閽鳴雷相同，兩件同帶只算一重。按 L 拿出（手上已是神兵就換另一件）、P 收回。' },
@@ -497,18 +497,142 @@
     }
     return classify(x, y, s, h, m, U.fbm(x / 150 - 700, y / 150 + 700, s + 29, 3));   // 青島：跟本島一樣的尋常地貌
   }
-  // v0.8 東海青龍：本島往東約 AZURE_X 格的深海上（四周四格都是深海，不貼著外島），每座島各算一次
-  const AZURE_X = 600, azureCache = {};
-  function azureAt(seed) {
-    if (azureCache[seed]) return azureCache[seed];
-    const open = (x, y) => { for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) if (baseTile(x + dx, y + dy, seed) !== '淼') return false; return true; };
-    const at = spiralFind(AZURE_X, Math.round((U.rand2(3, 5, seed + 811) - 0.5) * 160), 200, open) || [AZURE_X, 0];
-    return (azureCache[seed] = { x: at[0], y: at[1] });
+  // ---------- v0.8.4：四方地界 ----------
+  // 紙的四方是魔王與神獸住的地方。種子照舊隨機，每個種子都照下面的規則「種」，所以不管哪個島號都合乎要求：
+  //   水（龍淵、洞庭）：在目標附近找一塊外島碰不到的海，方圓 r 格內保證是水；洞庭另種一圈礁，礁裡的水是淡的湖，留四個口子給船進出。
+  //   陸（虎嶺、桑林、丹穴、青丘、玄洲）：在目標附近找一塊外島碰不到的海，種一座島，島心方圓 r 格保證是走得上去的陸地（不長山、不積水）。
+  //   不周山：西北，方圓 r 格的大山地；外島碰到了就併進來（外島的陸地照舊），中間一圈山圍著一塊盆地，東南缺一口。
+  // 位置寫成紙半徑 WORLD_R 的比例（fx、fy），jit 是沿著邊上下挪的幅度，ext 是這塊地界連周圍海面一共佔多大。
+  // 本島（HOME_BOX 方框內）一格不碰；外島的陸地也不削——找地方時就避開（量過五百個種子，從沒找不到），找不到才壓上去（forced）。
+  const ZONE_DEFS = [
+    { id: '共工', name: '不周山', fx: -0.68, fy: -0.68, jit: 0.02, r: 150, ext: 172, type: 'peak', s: 31 },
+    { id: '修蛇', name: '洞庭', fx: 0.8, fy: 0, jit: 0.048, r: 49, ext: 72, type: 'lake', s: 37 },
+    { id: '封豨', name: '桑林', fx: -0.8, fy: 0, jit: 0.048, r: 38, ext: 72, type: 'land', theme: 'mulberry', s: 41 },
+    { id: '大風', name: '青丘', fx: 0, fy: 0.8, jit: 0.048, r: 38, ext: 72, type: 'land', theme: 'qingqiu', s: 43 },
+    { id: '青龍', name: '龍淵', fx: 0.48, fy: 0, jit: 0.064, r: 49, ext: 49, type: 'deep', s: 47 },
+    { id: '白虎', name: '虎嶺', fx: -0.48, fy: 0, jit: 0.064, r: 38, ext: 72, type: 'land', theme: 'tiger', s: 53 },
+    { id: '朱雀', name: '丹穴', fx: 0, fy: 0.48, jit: 0.064, r: 38, ext: 72, type: 'land', theme: 'cinnabar', s: 59 },
+    { id: '玄武', name: '玄洲', fx: 0, fy: -0.48, jit: 0.064, r: 38, ext: 72, type: 'land', theme: 'xuan', s: 61 },
+  ];
+  const ZONE_SEARCH = 200, ZONE_GAP = 12, ZONE_EDGE = 16, PEAK_BASIN = 40, PEAK_RIDGE = 64, LAKE_R = 53, LAKE_GAPS = 4;
+  function isleClear(x, y, rr, seed) {   // (x, y) 方圓 rr 格內碰不碰得到外島（外島的範圍算到島半徑的 1.25 倍）
+    const ci = Math.floor(x / ISLE_CELL), cj = Math.floor(y / ISLE_CELL), k = Math.ceil(rr / ISLE_CELL) + 1;
+    for (let j = cj - k; j <= cj + k; j++) for (let i = ci - k; i <= ci + k; i++) { const isl = isleAt(i, j, seed); if (isl && Math.hypot(x - isl.cx, y - isl.cy) < rr + isl.R * 1.25) return false; }
+    return true;
   }
+  const zoneCache = {};
+  function zones(seed) {
+    if (zoneCache[seed]) return zoneCache[seed];
+    const out = [];
+    ZONE_DEFS.forEach((z, i) => {
+      const along = (U.rand2(i, 7, seed + 901) - 0.5) * 2 * z.jit * WORLD_R, out0 = (U.rand2(i, 11, seed + 903) - 0.5) * 0.04 * WORLD_R;
+      const ux = Math.sign(z.fx), uy = Math.sign(z.fy);   // 往外的方向；沿著邊挪就是垂直於它
+      let tx = z.fx * WORLD_R, ty = z.fy * WORLD_R;
+      if (z.type === 'peak') { tx += along; ty += out0; } else if (uy === 0) { tx += ux * out0; ty += along; } else { tx += along; ty += uy * out0; }
+      const fits = (x, y) => Math.abs(x) + z.ext <= WORLD_R - ZONE_EDGE && Math.abs(y) + z.ext <= WORLD_R - ZONE_EDGE && Math.max(Math.abs(x), Math.abs(y)) - z.ext > HOME_BOX + 30 && out.every(o => Math.hypot(x - o.x, y - o.y) > z.ext + o.ext + ZONE_GAP);
+      let spot = null, forced = false;
+      if (z.type === 'peak') spot = [Math.round(tx), Math.round(ty)];   // 不周山大，外島碰到就併進來，不用另外找
+      else {
+        let first = null;
+        for (let r = 0; r <= ZONE_SEARCH && !spot; r += 4) {
+          const n = r ? Math.ceil(2 * Math.PI * r / 4) : 1;
+          for (let a = 0; a < n && !spot; a++) {
+            const x = Math.round(tx + r * Math.cos(a / n * 2 * Math.PI)), y = Math.round(ty + r * Math.sin(a / n * 2 * Math.PI));
+            if (!fits(x, y)) continue;
+            if (!first) first = [x, y];
+            if (isleClear(x, y, z.ext, seed)) spot = [x, y];
+          }
+        }
+        if (!spot) { spot = first || [Math.round(tx), Math.round(ty)]; forced = true; }
+      }
+      const rot = U.rand2(i, 13, seed + 905) * Math.PI * 2;   // 洞庭四個口子轉多少；不周山缺口在東南，再偏一點
+      out.push({ id: z.id, name: z.name, type: z.type, theme: z.theme, x: spot[0], y: spot[1], r: z.r, ext: z.ext, forced, rot, ns: seed + 960 + z.s * 7,
+        notch: Math.PI / 4 + (U.rand2(i, 17, seed + 907) - 0.5) * 0.35 });
+    });
+    return (zoneCache[seed] = out);
+  }
+  function zoneAt(x, y, seed) {   // 這格在哪塊地界的範圍裡（連周圍的海）
+    for (const z of zones(seed)) { const dx = x - z.x, dy = y - z.y; if (dx * dx + dy * dy <= z.ext * z.ext) return z; }
+    return null;
+  }
+  const ZONE_LAND = (t) => DB[t].kind !== 'water';
+  function zoneTile(x, y, seed, z, nat) {
+    const dx = x - z.x, dy = y - z.y, d = Math.hypot(dx, dy), s = z.ns, rr = U.rand2(x, y, s + 1), n = U.fbm(x / 26, y / 26, s + 3, 3);
+    if (z.type === 'deep') return d <= z.r ? '淼' : nat;   // 龍淵：方圓 r 格都是深水（找到的地方本來就是，只有 forced 才削）
+    if (z.type === 'lake') {      // 洞庭：淡水湖，外面一圈礁，四個口子
+      const lake = Math.max(z.r + 1, LAKE_R + (n - 0.5) * 8), reef = lake + 4 + U.fbm(x / 14, y / 14, s + 5, 2) * 6;
+      if (d <= lake) return '湖';
+      if (d <= reef) {
+        let a = Math.atan2(dy, dx) - z.rot; a = ((a % (Math.PI / 2)) + Math.PI / 2) % (Math.PI / 2);   // 離最近一個口子的角度
+        const gap = Math.min(a, Math.PI / 2 - a) < 0.13;
+        if (gap || U.fbm(x / 7, y / 7, s + 7, 2) < 0.4) return '水';
+        return rr < 0.4 ? '石' : rr < 0.62 ? '沙' : rr < 0.82 ? '礫' : rr < 0.94 ? '草' : '木';
+      }
+      if (d <= reef + 3 && !ZONE_LAND(nat)) return '水';
+      return nat;
+    }
+    if (z.type === 'peak') {      // 不周山：盆地、一圈山（東南缺一口）、山腳林野，外島的陸地照舊
+      const basin = PEAK_BASIN + (n - 0.5) * 8, ridge = PEAK_RIDGE + (U.fbm(x / 18, y / 18, s + 9, 2) - 0.5) * 12;
+      let a = Math.atan2(dy, dx) - z.notch; a = Math.abs(Math.atan2(Math.sin(a), Math.cos(a)));
+      const notch = a < 0.19;
+      if (d <= basin) return rr < 0.38 ? '礫' : rr < 0.58 ? '石' : rr < 0.9 ? '草' : '土';
+      if (d <= ridge) {
+        if (notch) return rr < 0.45 ? '礫' : rr < 0.7 ? '石' : '草';
+        if (d < basin + 2 || d > ridge - 2) return rr < 0.7 ? '石' : '礫';
+        const o = U.rand2(x, y, s + 11);
+        return o < 0.04 ? '煤' : o < 0.07 ? '鐵' : o < 0.1 ? '磊' : '山';
+      }
+      if (ZONE_LAND(nat)) return nat;   // 併進來的外島：陸地照舊
+      const coast = z.r + (U.fbm(x / 70, y / 70, s + 21, 2) - 0.5) * 50 + (n - 0.5) * 16;   // 大的岬灣加小的起伏
+      if (d > Math.max(z.r - 18, coast)) return d > coast + 3 ? nat : '水';
+      if (d > coast - 3) return rr < 0.75 ? '沙' : '礫';
+      const g = U.fbm(x / 30, y / 30, s + 13, 3) + (1 - (d - PEAK_RIDGE) / (z.r - PEAK_RIDGE)) * 0.22, m = U.fbm(x / 40, y / 40, s + 15, 3);
+      if (g > 0.78) { const o = U.rand2(x, y, s + 17); return o < 0.05 ? '鐵' : o < 0.1 ? '煤' : '山'; }
+      if (g > 0.7) return rr < 0.6 ? '石' : rr < 0.8 ? '礫' : '林';
+      if (m > 0.58) return rr < 0.45 ? '林' : rr < 0.7 ? '森' : rr < 0.9 ? '木' : '草';
+      if (m > 0.45) return rr < 0.25 ? '木' : rr < 0.3 ? '果' : rr < 0.36 ? '石' : '草';
+      return rr < 0.06 ? '花' : rr < 0.1 ? '棉' : rr < 0.12 ? '麻' : rr < 0.2 ? '石' : rr < 0.26 ? '木' : '草';
+    }
+    // 陸：島心方圓 r 格保證走得上去；r 以外到岸邊才長山、澤、溫泉
+    const mz = z.theme === 'qingqiu' ? Math.hypot(x - z.x - Math.cos(z.rot) * (z.r + 6), y - z.y - Math.sin(z.rot) * (z.r + 6)) : 99;   // 青丘之澤：島邊一定有一片澤
+    const coast = Math.max(z.r + 12 + (n - 0.5) * 40, mz < 16 ? z.r + 20 : 0), q = d / z.r, core = d <= z.r;
+    if (!core && d > coast) return d <= coast + 3 && !ZONE_LAND(nat) ? '水' : nat;
+    if (!core && d > coast - 2.5) return rr < 0.7 ? '沙' : '礫';
+    const f = U.fbm(x / 11, y / 11, s + 19, 2), w = U.fbm(x / 17, y / 17, s + 23, 2);
+    if (z.theme === 'mulberry') {     // 桑林：林心一塊草地，四周桑樹成林（果是桑葚）
+      if (q < 0.5) return rr < 0.86 ? '草' : rr < 0.93 ? '花' : rr < 0.97 ? '木' : '果';
+      if (f > 0.55) return rr < 0.55 ? '林' : rr < 0.72 ? '森' : rr < 0.92 ? '木' : '果';
+      return rr < 0.3 ? '木' : rr < 0.42 ? '果' : rr < 0.46 ? '麻' : rr < 0.5 ? '棉' : '草';
+    }
+    if (z.theme === 'qingqiu') {      // 青丘之澤：高原草野，邊上有澤
+      if (!core && (mz < 10 + (f - 0.5) * 8 || w > 0.66)) return mz < 5 || w > 0.72 ? '湖' : '沼';
+      if (q < 0.55) return rr < 0.8 ? '草' : rr < 0.92 ? '花' : rr < 0.96 ? '石' : '礫';
+      if (!core && f > 0.66) return rr < 0.6 ? '石' : '山';
+      return rr < 0.12 ? '竹' : rr < 0.24 ? '木' : rr < 0.32 ? '石' : rr < 0.36 ? '花' : '草';
+    }
+    if (z.theme === 'tiger') {        // 虎嶺：白石嶙峋，嶺上有鐵
+      if (q < 0.5) return rr < 0.55 ? '草' : rr < 0.8 ? '礫' : rr < 0.95 ? '石' : '花';
+      if (!core && f > 0.58) { const o = U.rand2(x, y, s + 29); return o < 0.06 ? '鐵' : o < 0.1 ? '煤' : '山'; }
+      return rr < 0.3 ? '石' : rr < 0.5 ? '礫' : rr < 0.65 ? '林' : rr < 0.7 ? '木' : '草';
+    }
+    if (z.theme === 'cinnabar') {     // 丹穴：滿地紅花，外圍岩地、火山灰、溫泉
+      if (q < 0.5) return rr < 0.6 ? '草' : rr < 0.85 ? '花' : '土';
+      if (!core && w > 0.68) return '湯';
+      return rr < 0.3 ? '岩' : rr < 0.42 ? '灰' : rr < 0.65 ? '木' : rr < 0.7 ? '果' : rr < 0.78 ? '花' : '草';
+    }
+    // 玄洲：北海上的洲，林深，水邊有淡水的潭
+    if (q < 0.5) return rr < 0.7 ? '草' : rr < 0.85 ? '石' : rr < 0.95 ? '礫' : '花';
+    if (!core && w > 0.68) return '湖';
+    if (f > 0.5) return rr < 0.45 ? '森' : rr < 0.8 ? '林' : '木';
+    return rr < 0.3 ? '石' : rr < 0.4 ? '木' : rr < 0.45 ? '花' : '草';
+  }
+  // v0.8 東海青龍；v0.8.4 起就是「龍淵」的中心：本島往東約 0.48 紙半徑，方圓四十九格內沒有一塊地
+  function azureAt(seed) { const z = zones(seed).find(o => o.id === '青龍'); return { x: z.x, y: z.y }; }
   function baseTile(x, y, seed) {
     if (x < -WORLD_R || y < -WORLD_R || x >= WORLD_R || y >= WORLD_R) return '淼';
     if (Math.abs(x) <= HOME_BOX && Math.abs(y) <= HOME_BOX) return homeTile(x, y, seed);
-    return isleTile(x, y, seed);
+    const nat = isleTile(x, y, seed), z = zoneAt(x, y, seed);
+    return z ? zoneTile(x, y, seed, z, nat) : nat;
   }
 
   // 五塊碑，由近到遠各講一個活下去的法子；讀碑力氣上限 +10
@@ -556,7 +680,7 @@
     { id: 'mu', ch: '墓', name: '墓', w: 1, h: 1, r: [0.40, 0.72], want: 'grass', effect: 'bricks',
       text: '這裡埋著我寫錯的字。先生說，錯字也能砌磚，別扔。我砌了幾塊磚，你拿去。' },
     { id: 'dong', ch: '洞', name: '洞', w: 1, h: 1, r: [0.48, 0.86], want: 'mountain', effect: 'scale',   // v0.8：龍不在洞裡了，留一片青鱗指向東海
-      text: '洞裡黑。先生說，黑處藏過龍，後來牠往日出的地方去了，只留下一片鱗。你拿著鱗往東走，走到海上去找牠。牠不見閒人：要一顆蜃珠。蜃珠是蜃的碎片在鼎裡熬的，九片才熬得成一顆，熬的時候四個瓶子的水：三瓶海水、一瓶淡水。' },
+      text: '洞裡黑。先生說，黑處藏過龍，後來牠往日出的地方去了，只留下一片鱗。你拿著鱗往東走，走到海上去找牠。牠不見閒人：要一顆蜃珠。蜃珠是蜃的殘體在鼎裡熬的，九塊才熬得成一顆，熬的時候四個瓶子的水：三瓶海水、一瓶淡水。' },
     { id: 'deng', ch: '燈', name: '燈', w: 1, h: 2, islet: true, effect: 'end',
       text: '燈最遠。潮退了才走得到。我把名字寫在這裡，可先生說名字不能寫在紙上，會被風吹走。那就寫在你心裡吧。你來了，就算讀完了這張紙。' }
   ];
@@ -639,5 +763,5 @@
   }
 
   RECIPES.forEach(r => { r.cat = '材料'; for (const c in CAT_OF) if (CAT_OF[c].indexOf(r.id) >= 0) r.cat = c; });
-  root.G = { INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, WORLD_R, HOME_R, HOME_K, isleAt, isleOf, isles, ISLE_CELL, ISLE_NAMES, azureAt };
+  root.G = { INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, WORLD_R, HOME_R, HOME_K, isleAt, isleOf, isles, ISLE_CELL, ISLE_NAMES, azureAt, zones, zoneAt, ZONE_DEFS };
 })();
