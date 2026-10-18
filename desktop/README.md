@@ -2,6 +2,8 @@
 
 把單檔遊戲 `dist/xieyi.html` 用 Electron 包成可以直接執行的程式，為上 Steam 做準備。遊戲本身一行沒改，殼只負責開視窗。
 
+`npm start` 與打包前，`copy-game.mjs` 會把單檔遊戲包成完整的頁面（加上 doctype 與 `<meta charset="utf-8">`）再放進 `app/index.html`。單檔遊戲是給 Artifact 的片段，本身沒宣告編碼；殼直接開本機檔案時，Chromium 只能用猜的，v0.8.3 起猜成了俄文的編碼，畫面上的中文全成亂碼，Actions 的冒煙測試也因此連三次失敗（v0.8.5 修好，冒煙測試多一項查頁面是不是照 UTF-8 讀）。
+
 ## 下載試玩（Windows）
 
 1. 到 GitHub 專案頁的 **Actions** → 左邊選「桌面版（Electron）」→ 點最上面那次執行（綠色勾）。
@@ -27,7 +29,7 @@ npm ci                               # 裝 Electron 與打包工具（只在打�
 npm start                            # 開發版：直接開視窗
 npm run pack:win                     # 打包 Windows 版到 out/（在 Linux／mac 上打 Windows 版要裝 wine，交給 GitHub Actions 比較省事）
 npm run pack:linux                   # 打包 Linux 版
-node smoke.mjs                       # 冒煙測試：開起來、開新島、存檔、關掉重開存檔還在；Linux 沒螢幕用 xvfb-run -a
+node smoke.mjs                       # 冒煙測試：開起來、照 UTF-8 讀、開新島、存檔、關掉重開存檔還在；Linux 沒螢幕用 xvfb-run -a
 XIEYI_EXE=out/ShanHaiYouXing-linux-x64/ShanHaiYouXing node smoke.mjs   # 測打包好的執行檔
 ```
 
