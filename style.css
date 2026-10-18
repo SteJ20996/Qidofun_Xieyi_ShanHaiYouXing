@@ -85,6 +85,7 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 #bossbar.guard { border-color: #24766b; } #bossbar.lock { border-color: var(--red); animation: low-flash 1s infinite; }
 #bossask-text ul { margin: 8px 0 0; padding-left: 20px; text-align: left; } #bossask-text li { margin: 3px 0; }
 #bossask-text li.warn { color: var(--red); }
+#bossbar.away { opacity: .88; border-style: dotted; } #bossbar.away .bb-bar i { background: linear-gradient(90deg, #a89b80, #c2b496); }   /* v0.8.10 戰事掛著、人在地界外 */
 #bossbar.shade { border-style: dashed; background: rgba(224,220,212,.94); } #bossbar.shade .bb-head b { color: #3b3a40; } #bossbar.shade .bb-bar i { background: linear-gradient(90deg, #2b2a30, #55535c); }
 #talk-text { text-align: left; max-height: 52vh; overflow-y: auto; } #talk-text p { margin: 6px 0; line-height: 1.6; }
 #talk-row { flex-wrap: wrap; justify-content: center; } #talk-row button { margin: 4px; } #talk-row button:disabled { opacity: .45; cursor: default; }
@@ -152,6 +153,10 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 .save-card .save-no { font: 22px/1 var(--font); color: var(--red-2); }
 .save-card .save-body { font-size: 13px; line-height: 1.55; min-height: 4.6em; }
 .save-card.empty .save-body { color: var(--dim); }
+.save-card.test { border-style: dashed; border-color: #24766b; background: rgba(226,240,234,.55); }   /* v0.8.10 測試格 */
+.save-card .testmark { display: inline-block; margin-right: 6px; padding: 0 6px; font-size: 12px; color: #f7efe0; background: #24766b; border-radius: 3px; vertical-align: 1px; }
+.panel .saveas button.saveas-slot.test { border-style: dashed; }
+#testtag { position: fixed; left: 50%; top: calc(6px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); padding: 1px 10px; font: 13px var(--font); color: #f7efe0; background: rgba(36,118,107,.85); border-radius: 3px; z-index: 6; pointer-events: none; }
 .save-card .save-btns { display: flex; gap: 8px; margin-top: auto; }
 .panel .save-card .save-btns button { font-size: 15px; padding: 3px 12px; }
 /* 暫停面板的「存到」：八格一排四格 */
@@ -286,6 +291,7 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 .stoverow button:disabled:hover { background: var(--ink); border-color: var(--ink); }
 .stoverow .fuelpair { display: inline-flex; gap: 4px; }
 .stoverow .shelfslot { min-width: 120px; }
+.stoverow button small .lack { color: #f0a08f; font-weight: 600; }   /* 鼎：不夠的料標紅（v0.8.14） */
 .stoverow span.shelfslot.empty { display: inline-flex; align-items: center; justify-content: center; border: 2px dashed rgba(28,26,23,.3); border-radius: 6px; padding: 6px 14px; color: var(--dim); font: 16px var(--font); }
 .panel.fogpanel h2 { margin: 0 0 8px; }
 .panel.fogpanel p { line-height: 1.8; }

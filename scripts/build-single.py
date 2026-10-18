@@ -15,7 +15,11 @@ body = html[html.index('<body>') + 6: html.index('</body>')]
 font_links = '\n'.join(l.strip() for l in head.splitlines() if 'fonts.g' in l)
 body = re.sub(r'<script src="([^"]+)"></script>',
               lambda m: '<script>\n' + (root / m.group(1)).read_text(encoding='utf-8') + '\n</script>', body)
-fragment = ('<title>山海有形</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n' + font_links +
+# v0.8.10：測試服的單檔，標題後面加「測試服」，Artifact 的畫廊裡分得出來（正式服照舊只寫山海有形）
+srv = root / 'src' / 'server.js'
+m = re.search(r"XIEYI_SERVER\s*=\s*\{\s*name:\s*'([^']*)'", srv.read_text(encoding='utf-8')) if srv.exists() else None
+title = '山海有形' + (' · ' + m.group(1) if m and m.group(1) and m.group(1) != '正式服' else '')
+fragment = ('<title>' + title + '</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n' + font_links +
             '\n<style>\n' + css + '\n</style>\n' + body.strip() + '\n')
 
 out_dir = root / 'dist'; out_dir.mkdir(exist_ok=True)

@@ -20,6 +20,7 @@
   const RILE_CALM = 20, RILE_GIVEUP = 12;   // 被惹的蛛、蟾：二十息後或人走出十二格就消氣（v0.7.3；鷹十二息、野牛三十息另算）
   const STAIRS = '台階', STAIR_SLOW = 1.5, FLIERS = '鳥龍鷹魄魚蜃雕朱雀';   // 獸也上得了階與台（v0.6.8 使用者定），一步多花一半時間
   const SMELL = 0.7, RAM_GAP = 1.6, RAMMABLE = '磚門窗墟';
+  const MINI_BOSS = '蜃齒雕';   // 小魔王：命照難度加（v0.8.10 使用者定，見 game.js 的 bigHp）
   // 魄（v0.5 加強）：玩家身上的光（手裡的火把蠟燭、頭上的燈帽）只把魄逼到 GHOST_KEEP 格外，在 GHOST_HOVER 格內徘徊；
   // 地上的光（燈、火、旺灶）GHOST_BURN 格內、龍四格內才煙滅。玩家有光時每 GHOST_DASH_GAP 息，最近那隻撲上來 GHOST_DASH 息；
   // 魄在兩格內（GHOST_SNUFF_R），手裡的光每息有 snuffP 的機會被吹熄（game.ghostTouch）
@@ -85,7 +86,8 @@
     }
     count(type) { let n = 0; for (const e of this.list) if (e.type === type) n++; return n; }
     add(type, x, y, extra) {
-      const e = Object.assign({ type, x, y, rx: x, ry: y, moveT: Math.random(), calm: 0, atk: 0, angry: false, hp: DB[type].hp || 1, bob: Math.random() * 6 }, extra || {});
+      const big = this.bigHp && MINI_BOSS.indexOf(type) >= 0 ? this.bigHp(DB[type].hp) : 0;   // 小魔王的命照難度加、四捨五入到百（v0.8.10，遊戲端給 bigHp）
+      const e = Object.assign({ type, x, y, rx: x, ry: y, moveT: Math.random(), calm: 0, atk: 0, angry: false, hp: big || DB[type].hp || 1, bob: Math.random() * 6 }, big ? { max: big } : {}, extra || {});
       if (type === '蟾' && e.venom === undefined) e.venom = Math.random() < 0.5;
       if (type === '蛛' && e.venom === undefined) e.venom = Math.random() < VENOM_SPIDER;   // 十隻一隻是毒蛛
       if (type === '鷹' && e.sta === undefined) e.sta = 100;

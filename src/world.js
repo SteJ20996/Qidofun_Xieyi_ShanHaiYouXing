@@ -59,7 +59,7 @@
       this.nets = new Map();     // 錨點 "x,y" -> { size, x, y, fish, t }：漁網（一乘一、二乘二、三乘三）
       this.netCells = new Map(); // 每一格 -> 錨點
       this.stoves = new Map();   // "x,y" -> 灶裡剩餘的柴火（秒）
-      this.shelves = new Map();  // "x,y" -> 灶的柴架：最多四格 [{ n, c }]，存著的燃料點一下就燒
+      this.shelves = new Map();  // "x,y" -> 灶、鼎（v0.8.15）的柴架：最多四格 [{ n, c }]，存著的燃料點一下就燒
       this.shelfSlots = SHELF_SLOTS; this.stoveCap = STOVE_CAP;
       this.bags = new Map();     // "x,y" -> 落在地上的囊（物品列表）
       this.weirs = new Map();    // "x,y" -> 魚梁下一次有魚的時間
@@ -145,7 +145,7 @@
       if (ch === this.base(x, y)) this.diff.delete(k); else this.diff.set(k, ch);
       if (DB[ch].flam <= 0) this.burn.delete(k);
       if ((old === '灶' || old === '鼎') && ch !== '灶' && ch !== '鼎') this.stoves.delete(k);
-      if (old === '灶' && ch !== '灶') this.shelves.delete(k);   // 柴架跟著灶走（拆灶時遊戲端先把它記到囊裡那個灶上）
+      if ((old === '灶' || old === '鼎') && ch !== old) this.shelves.delete(k);   // 柴架跟著灶、鼎（v0.8.15）走（拆下時遊戲端先把它記到囊裡那個灶、鼎上）
       if ((ch === '灶' || ch === '鼎') && !this.stoves.has(k)) this.stoves.set(k, 0);
       if ((old === '包' || old === '囊') && ch !== old) this.bags.delete(k);   // 荷包、小囊（v0.8）拿走了，裡面的記錄也清掉
       if (old === '偶' && ch !== '偶') this.scarecrows.delete(k);
