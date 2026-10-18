@@ -87,6 +87,7 @@
     '蛛': (c, o, t, v) => { for (let i = 0; i < 7; i++) swoosh(c, o, t + i * 0.035, 3200, 2400, 0.03, 0.1 * v); },   // 細碎的爬動聲
     '豬': (c, o, t, v) => { growl(c, o, t, 120, 95, 0.16, 0.35 * v, 45, 20, 700, 'square'); growl(c, o, t + 0.2, 110, 85, 0.2, 0.32 * v, 45, 20, 700, 'square'); },   // 兩聲哼哼
     '牛': (c, o, t, v) => growl(c, o, t, 140, 105, 1.1, 0.4 * v, 5, 4, 520),                                    // 長長一聲哞
+    '齒': (c, o, t, v) => { for (let i = 0; i < 3; i++) { tone(c, o, t + i * 0.15, 1500, 0.05, 0.16 * v, 'square', 900); swoosh(c, o, t + i * 0.15, 3200, 1400, 0.05, 0.1 * v); } },   // 鑿齒：叮叮叮鑿石頭（v0.8.5）
   };
   SFX.beastTypes = Object.keys(BEAST);
   SFX.beast = function (type, soft) {

@@ -313,6 +313,20 @@
           this.drawGlyph('龍', d.ink, px, py + Math.sin(now * 0.9 + e.bob) * 4, T * 1.9, Math.sin(now * 0.5 + e.bob) * 0.05, 1);
           continue;
         }
+        if (e.type === '齒') {       // 鑿齒（v0.8.5）：大字「齒」，面朝的那邊一面「盾」；盾跟著轉身
+          const kk = Math.min(1, dt * 8); e.rfx = e.rfx === undefined ? (e.fx || 1) : e.rfx + ((e.fx || 0) - e.rfx) * kk; e.rfy = e.rfy === undefined ? (e.fy || 0) : e.rfy + ((e.fy || 0) - e.rfy) * kk;
+          const fl = Math.hypot(e.rfx, e.rfy) || 1, sx = e.rfx / fl, sy = e.rfy / fl, bob = Math.sin(now * 2 + e.bob) * 1.5;
+          this.drawGlyph('齒', d.ink, px - sx * T * 0.1, py + bob, T * 1.3, 0, 1);
+          this.drawGlyph('盾', '#8a6a3c', px + sx * T * 0.62, py + sy * T * 0.62 + bob, T * 0.72, Math.atan2(sy, sx) * 0.15, 0.95);
+          continue;
+        }
+        if (e.type === '白虎') {     // 西方白虎（v0.8.5）：比青龍還大的白字，墨線描邊，背上幾個「斑」字
+          const bob = Math.sin(now * 0.8 + e.bob) * 3, S = T * 1.9;
+          for (const [ox2, oy2] of [[-2, 0], [2, 0], [0, -2], [0, 2], [-1.4, -1.4], [1.4, 1.4], [-1.4, 1.4], [1.4, -1.4]]) this.drawGlyph('虎', '#2f2a24', px + ox2, py + bob + oy2, S, 0, 0.85);
+          this.drawGlyph('虎', d.ink, px, py + bob, S, 0, 1);
+          for (const [bx, by, k] of [[-0.55, -0.85, 0.42], [0.1, -1.0, 0.36], [0.62, -0.78, 0.4]]) this.drawGlyph('斑', '#3a332b', px + bx * T, py + by * T + bob + Math.sin(now * 1.3 + bx * 4) * 1.5, T * k, 0, 0.8);
+          continue;
+        }
         if (e.type === '蜃') {       // 蜃：一個大字，身下一圈暗水旋著
           ctx.save(); ctx.strokeStyle = 'rgba(34,63,90,0.35)'; ctx.lineWidth = 2;
           for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(px, py, T * (0.7 + i * 0.25), now * (1 + i * 0.3) + i, now * (1 + i * 0.3) + i + 4); ctx.stroke(); }
@@ -520,6 +534,8 @@
         else if (e.type === '魄') { m.fillStyle = '#3b3550'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
         else if (e.type === '蜃') { m.fillStyle = '#223f5a'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '青龍') { m.fillStyle = '#24766b'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
+        else if (e.type === '白虎') { m.fillStyle = '#f6f1e4'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); m.strokeStyle = '#2f2a24'; m.strokeRect(i * px - 2, j * px - 2, px + 4, px + 4); }
+        else if (e.type === '齒') { m.fillStyle = '#6b4a2f'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
         else if (e.type === '豹' || e.type === '狼' || e.type === '蛇') { m.fillStyle = '#8a2a1a'; m.fillRect(i * px, j * px, px + 1, px + 1); }
       }
       m.fillStyle = '#1c1a17'; m.beginPath(); m.arc(half * px + px / 2, half * px + px / 2, 3, 0, 7); m.fill();
