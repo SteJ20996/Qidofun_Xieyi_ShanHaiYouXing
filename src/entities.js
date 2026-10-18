@@ -18,13 +18,16 @@
   // 惹惱的野牛記仇比別的獸遠（十八格、三十息），擋在路上的人造磚、門、窗與墟（村裡的殘垣也算）都撞，一下隔 RAM_GAP 息；耐久在 world.js 的 WALL_HP
   const FISH_RATE = 1.8, EAGLE_RATE = 1.25;   // 魚出現得多八成、鷹多兩成五（v0.6.10 使用者定）：附近的上限與刷新的機會一起放大
   const RILE_CALM = 20, RILE_GIVEUP = 12;   // 被惹的蛛、蟾：二十息後或人走出十二格就消氣（v0.7.3；鷹十二息、野牛三十息另算）
-  const STAIRS = '台階', STAIR_SLOW = 1.5, FLIERS = '鳥龍鷹魄魚蜃';   // 獸也上得了階與台（v0.6.8 使用者定），一步多花一半時間
+  const STAIRS = '台階', STAIR_SLOW = 1.5, FLIERS = '鳥龍鷹魄魚蜃雕朱雀';   // 獸也上得了階與台（v0.6.8 使用者定），一步多花一半時間
   const SMELL = 0.7, RAM_GAP = 1.6, RAMMABLE = '磚門窗墟';
   // 魄（v0.5 加強）：玩家身上的光（手裡的火把蠟燭、頭上的燈帽）只把魄逼到 GHOST_KEEP 格外，在 GHOST_HOVER 格內徘徊；
   // 地上的光（燈、火、旺灶）GHOST_BURN 格內、龍四格內才煙滅。玩家有光時每 GHOST_DASH_GAP 息，最近那隻撲上來 GHOST_DASH 息；
   // 魄在兩格內（GHOST_SNUFF_R），手裡的光每息有 snuffP 的機會被吹熄（game.ghostTouch）
   // 鑿齒（v0.8.5，小魔王）：盾在面朝的那邊，TOOTH_TURN 息才轉一回身；人在牠正面（夾角約六十七度內，就是面前三格）牠才撞得到，也只有正面打牠吃一成傷。
   // 白虎（v0.8.5，神獸）：伏在虎嶺，四十格內現身；沒帶虎符的人進了 TIGER_ROAR_R 格，每 TIGER_ROAR_GAP 息一聲嘯（震，遊戲端結算）
+  // 蠱雕（v0.8.6，小魔王）：在人五到八格外盤旋；每 HARPY_DIVE 息撲下來抓一下（力），貼著停 HARPY_LINGER 息（出手的時候），再飛回六格外；
+  // 十格內每 HARPY_CRY_GAP 息一聲啼（心，遊戲端結算）。朱雀（v0.8.6，神獸）：棲在丹穴，沒帶朱羽的人走進 PHOENIX_AWAY 格，牠就飛開
+  const HARPY_RING = [5, 8], HARPY_DIVE = [6, 9], HARPY_LINGER = 0.9, HARPY_CRY_GAP = 9, HARPY_CRY_R = 10, HARPY_DIVE_STEP = 0.16, HARPY_RISE_STEP = 0.2, HARPY_SENSE = 16, PHOENIX_AWAY = 5;
   const TOOTH_TURN = 1.2, TOOTH_STEP = 0.36, TOOTH_GAP = 1.8, TOOTH_FRONT = 0.38, TOOTH_SENSE = 12, TIGER_SEE = 40, TIGER_ROAR_R = 6, TIGER_ROAR_GAP = 10;
   const GHOST_KEEP = 6, GHOST_HOVER = 9, GHOST_BURN = 3, GHOST_DASH = 2.5, GHOST_DASH_GAP = [8, 14], GHOST_DASH_STEP = 0.22, GHOST_SNUFF_R = 2;
 
@@ -36,6 +39,7 @@
       this.ghostAcc = 0;
       this.seaP = 1 / 160;       // 行船時每一點五息有這麼點機會浮上一頭蜃（平均約二百四十息一頭）
       this.toothP = 1 / 100;     // 人在西邊的外島上，每一點五息有這麼點機會走出一頭鑿齒（平均約一百五十息一頭，v0.8.5）
+      this.harpyP = 1 / 100;     // 人在南邊的海上或外島上，每一點五息有這麼點機會飛來一頭蠱雕（v0.8.6）
       this.snuffP = 0.1;         // 魄兩格內，手裡的光每息被吹熄的機會
       this.dashT = GHOST_DASH_GAP[0];   // 下一次撲燈還有幾息（玩家身上有光的夜裡才倒數）
     }
@@ -61,7 +65,7 @@
     rammable(x, y) { const ch = this.world.get(x, y); return RAMMABLE.indexOf(ch) >= 0 && (ch === '墟' || this.world.base(x, y) !== ch); }   // 人造的磚門窗，與所有的墟
     riled(e) { return !!e.angry && (e.type === '蛛' || e.type === '蟾' || e.type === '牛' || (e.type === '鷹' && !e.tame)); }   // 半友好的被惹了（v0.7.3：畫面上發紅變大）
     isHostile(o) {           // 會主動找人的：虎豹狼蛇、野豬、毒蛛；惹了才找人的：無毒蛛、蟾、野牛、沒馴的鷹
-      return '虎豹狼蛇豬齒'.indexOf(o.type) >= 0 || (o.type === '蛛' && o.venom) || (o.angry && (o.type === '蛛' || o.type === '蟾' || o.type === '牛' || (o.type === '鷹' && !o.tame)));
+      return '虎豹狼蛇豬齒雕'.indexOf(o.type) >= 0 || (o.type === '蛛' && o.venom) || (o.angry && (o.type === '蛛' || o.type === '蟾' || o.type === '牛' || (o.type === '鷹' && !o.tame)));
     }
     hostileNear(p, r) {      // 玩家 r 格內最近的敵對獸（鷹替你打的對象）
       let best = null, bd = Infinity;
@@ -94,6 +98,7 @@
       if (this.world.sheltered(x, y, type)) return false;                  // 小屋裡不生生靈（多小才算看難度，魄另一個門檻）
       if (type === '蜃') return ch === '淼';                                // 蜃只從深海浮上來
       if (type === '齒') return d.walk > 0 && d.kind !== 'object' && d.kind !== 'water' && !d.bog;   // 鑿齒：外島的陸地上（哪座島由遊戲端判斷）
+      if (type === '雕') return d.kind !== 'fire';                          // 蠱雕在天上：海上陸上都來得
       if (type === '鹿') return '林木草竹棉麻果'.indexOf(ch) >= 0;
       if (type === '虎') return ch === '森' || (night && ch === '林');
       if (type === '豹') return ch === '森' || ch === '林';
@@ -112,7 +117,8 @@
       const ch = this.world.get(x, y), d = DB[ch];
       if (this.world.sheltered(x, y, type)) return false;                  // 小屋裡除了玩家誰也進不去；魄看難度（困難擋不住）
       if (type === '魄') return d.kind !== 'fire';
-      if (type === '鳥' || type === '龍' || type === '鷹') return d.kind !== 'fire';
+      if (type === '鳥' || type === '龍' || type === '鷹' || type === '雕') return d.kind !== 'fire';
+      if (type === '朱雀') return d.kind !== 'water' && d.kind !== 'fire';   // 朱雀不離丹穴的陸地（v0.8.6）
       if (type === '魚' || type === '蜃') return d.kind === 'water';
       if (type === '青龍') return ch === '淼';   // 東海青龍只在深海上盤著（v0.8）
       if (type === '白虎' && d.kind === 'water') return false;
@@ -253,6 +259,13 @@
         const az = g.azure; if (az && U.cheb(p.x, p.y, az.x, az.y) <= 40 && !this.list.some(e => e.type === '青龍')) this.add('青龍', az.x, az.y, { moveT: 2 });
         // 白虎（v0.8.5）：人到虎嶺四十格內，就在島心現身；走遠了散去
         const tz = g.tigerAt; if (tz && U.cheb(p.x, p.y, tz.x, tz.y) <= TIGER_SEE && !this.list.some(e => e.type === '白虎')) { const sp = this.canStand('白虎', tz.x, tz.y, night) ? [tz.x, tz.y] : null; if (sp) this.add('白虎', sp[0], sp[1], { moveT: 2, roarT: 2 }); }
+        // 朱雀（v0.8.6）：人到丹穴四十格內，就在島心現身
+        const bz = g.birdAt; if (bz && U.cheb(p.x, p.y, bz.x, bz.y) <= TIGER_SEE && !this.list.some(e => e.type === '朱雀') && this.canStand('朱雀', bz.x, bz.y, night)) this.add('朱雀', bz.x, bz.y, { moveT: 2 });
+        // 蠱雕（v0.8.6）：人在南邊的海上或外島上，從十到十四格外的天上飛來；一次只一隻
+        if (this.count('雕') === 0 && Math.random() < this.harpyP && g.harpySky && g.harpySky()) {
+          const m = this.spawnNear('雕', p, 10, 14, night, { moveT: 1, mode: 'circle', diveT: HARPY_DIVE[0] + Math.random() * (HARPY_DIVE[1] - HARPY_DIVE[0]), cryT: 3 });
+          if (m && g.harpyRose) g.harpyRose(m);
+        }
         // 鑿齒（v0.8.5）：人在西邊的外島上，從八到十四格外的陸地走出來；一次只一隻
         if (!p.sailing && !p.swimming && this.count('齒') === 0 && Math.random() < this.toothP && g.toothLand && g.toothLand()) {
           const m = this.spawnNear('齒', p, 8, 14, night, { moveT: 1.5, turnT: TOOTH_TURN });
@@ -303,6 +316,10 @@
           e.fogT = (e.fogT === undefined ? 6 : e.fogT) - dt;
           if (e.fogT <= 0) { e.fogT = 16 + Math.random() * 10; if (d <= 16 && (p.sailing || p.swimming)) w.spawnSeaFog(e.x, e.y, p.x, p.y); }
         }
+        if (e.type === '雕') {   // 啼聲與撲下來的倒數不跟著步子走
+          e.cryT = (e.cryT === undefined ? 3 : e.cryT) - dt; if (e.cryT <= 0 && d <= HARPY_CRY_R) { e.cryT = HARPY_CRY_GAP + Math.random() * 2; if (g.harpyCry) g.harpyCry(e); }
+          if (e.mode === 'circle') e.diveT = (e.diveT === undefined ? HARPY_DIVE[0] : e.diveT) - dt;
+        }
         if (e.type === '齒') { e.turnT = (e.turnT === undefined ? TOOTH_TURN : e.turnT) - dt; if (e.turnT <= 0) { e.turnT = TOOTH_TURN; this.faceTo(e, p.x, p.y); } }   // 一息多才轉一回身
         if (e.type === '白虎') {   // 沒帶虎符的人進了六格：一聲嘯，地跟著抖
           e.roarT = (e.roarT === undefined ? 2 : e.roarT) - dt;
@@ -348,6 +365,30 @@
           if (d <= 1 && !sheltered) { if (this.inFront(e, p.x, p.y) && e.atk <= 0) { g.hit(e, DB['齒'].atk); e.atk = TOOTH_GAP; } e.moveT = 0.3; }
           else if (d <= this.sense(e, p, TOOTH_SENSE) && !sheltered) { e.moveT = TOOTH_STEP; const ox = e.x, oy = e.y; if (this.stepTo(e, p.x, p.y, false, night)) this.faceTo(e, e.x + (e.x - ox), e.y + (e.y - oy)); }
           else { e.moveT = 1 + Math.random() * 1.5; if (Math.random() < 0.5) this.wander(e, night, null); }
+          continue;
+        }
+        if (e.type === '雕') {     // 蠱雕：盤旋 → 撲下來抓一下、貼著停一會兒 → 飛回高處
+          if (e.mode === 'dive') {
+            if (d <= 1) { if (e.atk <= 0) { g.hit(e, DB['雕'].atk); e.atk = 1.2; } e.mode = 'rise'; e.moveT = HARPY_LINGER; }
+            else if (sheltered || d > HARPY_SENSE) { e.mode = 'circle'; e.moveT = 0.4; }
+            else { e.moveT = HARPY_DIVE_STEP; this.stepTo(e, p.x, p.y, false, night); }
+          } else if (e.mode === 'rise') {
+            e.moveT = HARPY_RISE_STEP; this.stepTo(e, p.x, p.y, true, night);
+            if (U.cheb(e.x, e.y, p.x, p.y) >= HARPY_RING[0] + 1) { e.mode = 'circle'; e.diveT = HARPY_DIVE[0] + Math.random() * (HARPY_DIVE[1] - HARPY_DIVE[0]); }
+          } else {
+            if (e.diveT <= 0 && d <= HARPY_SENSE && !sheltered) { e.mode = 'dive'; e.moveT = 0.1; }
+            else if (d > HARPY_RING[1]) { e.moveT = 0.3; this.stepTo(e, p.x, p.y, false, night); }
+            else if (d < HARPY_RING[0]) { e.moveT = 0.3; this.stepTo(e, p.x, p.y, true, night); }
+            else { e.moveT = 0.35 + Math.random() * 0.25; this.hover(e, p, HARPY_RING[0], HARPY_RING[1]); }
+          }
+          continue;
+        }
+        if (e.type === '朱雀') {   // 朱雀：沒帶朱羽、沒求教過的人走進五格，就飛開；否則在丹穴島心三格內，人來了四格內就落下來等
+          const calm = g.phoenixCalm && g.phoenixCalm(), bz = g.birdAt;
+          if (!calm && d < PHOENIX_AWAY) { e.moveT = 0.28; this.stepTo(e, p.x, p.y, true, night); if (g.phoenixShy) g.phoenixShy(e); continue; }
+          e.moveT = 1.2 + Math.random() * 1.4;
+          if (d <= 4) { continue; }
+          if (bz && U.cheb(e.x, e.y, bz.x, bz.y) > 3) this.stepTo(e, bz.x, bz.y, false, night); else if (Math.random() < 0.4) this.wander(e, night, null);
           continue;
         }
         if (e.type === '白虎') {   // 伏在虎嶺島心三格內，不近人也不避人；人來了四格內就停下來
