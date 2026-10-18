@@ -67,6 +67,7 @@
       this.explored = new Map(); // "cx,cy" -> 位圖：哪些格子被看見過
       this.steles = new Map();   // "x,y" -> { teach, hint }
       for (const s of G.stelePlan(this.seed)) this.steles.set(U.key(s.x, s.y), s);
+      this.stelePaths = G.stelePaths(this.seed, [...this.steles.values()]);   // 走不到的碑，開一條路接上（v0.8.9）
       // 地標：大字佔地若干格；村按模板蓋印，只有井可讀
       const taken = new Set(this.steles.keys());
       this.places = G.placePlan(this.seed, taken);
@@ -112,6 +113,7 @@
       const ox = cx * CH, oy = cy * CH;
       for (let j = 0; j < CH; j++) for (let i = 0; i < CH; i++) c[j * CH + i] = G.baseTile(ox + i, oy + j, this.seed);
       const put = (x, y, ch) => { if (x >= ox && x < ox + CH && y >= oy && y < oy + CH) c[(y - oy) * CH + (x - ox)] = ch; };
+      for (const [x, y, ch] of this.stelePaths) put(x, y, ch);
       for (const s of this.steles.values()) put(s.x, s.y, '碑');
       for (const pl of this.places) {
         if (pl.template) pl.template.forEach((row, j) => Array.from(row).forEach((ch, i) => put(pl.x + i, pl.y + j, ch)));

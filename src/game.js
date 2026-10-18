@@ -106,7 +106,7 @@
     { id: '朱雀', ch: '雀', ink: '#c0392b', name: '南方朱雀', group: '神獸', seen: seenIt('朱雀'), from: '《禮記·曲禮上》：「前朱鳥而後玄武。」朱鳥就是朱雀。', note: ['四象之南，棲在丹穴。', '認的是朱羽；沒帶朱羽，牠就飛開，總離人五格以上。', '教的是氣順：窒與心的傷害少四分之一；魂環亮起鳳翎。'], where: '南方的丹穴', hint: '南邊的火裡，有一團不燙人的紅。' },
     { id: '玄武', ch: '龜', ink: '#1c1a17', name: '北方玄武', group: '神獸', seen: seenIt('玄武'), from: '《禮記·曲禮上》：「前朱鳥而後玄武。」', note: ['四象之北，龜與蛇。', '不收信物，要你去取經，四次。', '知道這張紙為什麼歪。'], where: '北海的玄洲', hint: '北海上的洲，島心有一塊石頭很久沒動。' },
     { id: '修蛇', ch: '蛇', ink: '#2c3b2a', name: '修蛇', group: '大魔王', seen: seenIt('修蛇'), from: '《淮南子·本經訓》：「斷修蛇於洞庭。」', note: ['一個蛇頭，後面拖著一串尾。', '潛下去打不到；冒泡的地方，牠要上來了。', '會纏船，會吞落水的人。'], where: '東極的洞庭', hint: '東極那片大水裡，有東西在纏船。' },
-    { id: '封豨', ch: '豨', ink: '#5a3e2b', name: '封豨', group: '大魔王', seen: (p) => p.creatures.indexOf('豨') >= 0 || !!(p.codex && p.codex['封豨']), from: '《淮南子·本經訓》：「禽封豨於桑林。」', note: ['二乘二的大豬，命三千，頭上一圈鬃，越惱鬃越多（三、五、六個，剩三成全紅）。', '豕突：蓄一息多、直衝十格（力四十），撞到台邊會暈；拱地：震一圈圈傳開（震二十二，台橋棧上不受）；貼著撞（力二十）。', '命剩六成去吃桑回命，吃的時候打牠就吃不成；剩一半起叫野豬（群豕）。'], where: '西極的桑林（地界方圓一百格）', hint: '西極的桑林裡，地在抖。' },
+    { id: '封豨', ch: '豨', ink: '#5a3e2b', name: '封豨', group: '大魔王', seen: (p) => p.creatures.indexOf('豨') >= 0 || !!(p.codex && p.codex['封豨']), from: '《淮南子·本經訓》：「禽封豨於桑林。」', note: ['二乘二的大豬，命三千，頭上一圈鬃，越惱鬃越多（三、五、六個，剩三成全紅）。', '豕突：蓄一息多、直衝十格（力四十）；拱地：震一圈圈傳開（震二十二，橋棧船上不受）；貼著撞（力二十）。台擋不住牠：牠拱得動台。', '命剩六成去吃桑回命，吃的時候打牠就吃不成；剩一半起叫野豬（群豕）。'], where: '西極的桑林（地界方圓一百格）', hint: '西極的桑林裡，地在抖。' },
     { id: '大風', ch: '風', ink: '#5b6b7a', name: '大風', group: '大魔王', seen: seenIt('大風'), from: '《淮南子·本經訓》：「繳大風於青丘之澤。」', note: ['在天上是風，撲下來是鳥。', '爪子入木三分：鎖喉、心慌、深懼，一層疊一層。', '吹得垮屋子。'], where: '南方的青丘之澤', hint: '南邊的沼澤上，屋頂一片片掀起來。' },
     { id: '共工', ch: '共', ink: '#b4392a', name: '共工', group: '終極', seen: seenIt('共工'), from: '《淮南子·天文訓》：「怒而觸不周之山，天柱折，地維絕。」', note: ['人面蛇身，朱髮。三副樣子：入地如水、扛柱吸人、壓天亂心。', '古書各記一段，誰因誰果說不準；這張紙上，玄武說紙是他撞歪的。', '凡鐵傷不了他。'], where: '西北的不周山', hint: '紙往西北翹起來了。' }
   ];
@@ -126,25 +126,29 @@
   const TOOTH_WEST = 300, TOOTH_SHIELD = 0.1, TALLY_IRON = 3, TALLY_TUNG = 1, TALLY_STA = 6, TIGER_ROAR = { easy: 4, normal: 6, hard: 8 };
   // v0.8.6 朱雀這一路：蠱雕在南邊（人在本島以南 HARPY_SOUTH 格外）的海上與外島上空；啼一聲是心（愜意掉、懼 HARPY_FEAR 息出不了手）；
   // 鑿石頭 FLINT_P 的機會出燧石；殘體九塊加料在火旺的鼎裡煉信物（TOKENS，成不成同蜃珠）
-  // v0.8.7 大魔王與戰鬥的規矩（設計稿〈三〉〈四〉）：走進魔王的地界（BOSSES[].r）先問一聲；戰中鎖難度；逃跑（暫停面板按兩次，或走出地界 BOSS_EXIT 格外）
-  // 膽氣減 FLEE_LEVELS 重、魔王回滿命；護駕：簡單、一般命只剩一點時鎖血 GUARD.lock 息（一場一次，只認魔王打的），鎖完求教過的神獸擋 GUARD.guard 息
-  // （魔王打不到你，命每息回 GUARD_REGEN）——靠了神獸就不算獨力；獨力斃大魔王記成就（寫明難度），將來的共工照獨力斃了幾隻加強 SOLO_BUFF
-  const BOSSES = { '封豨': { zone: '封豨', glyph: '豨', r: 100, cour: 200, place: '桑林', feat: '禽封豨於桑林', line: '「禽封豨於桑林。」（《淮南子·本經訓》）' } };
-  const BOSS_EXIT = 6, FLEE_LEVELS = 3, GUARD = { easy: { lock: 3, guard: 10 }, normal: { lock: 1.5, guard: 6 } }, GUARD_REGEN = 4, SOLO_BUFF = [0, 6, 15, 30];
-  const GUARDS = [['azure', '青龍', '龍'], ['bai', '白虎', '虎'], ['zhu', '朱雀', '雀']];
+  // v0.8.7 大魔王與戰鬥的規矩（設計稿〈三〉〈四〉）：走進魔王的地界（BOSSES[].r）先問一聲；戰中鎖難度；護駕：簡單、一般命只剩一點時鎖血 GUARD.lock 息
+  // （一場一次，只認魔王打的），鎖完同一屬性、求教過的神獸（BOSSES[].guard）擋 GUARD.guard 息（魔王打不到你，命每息回 GUARD_REGEN）——靠了神獸就不算獨力；
+  // 獨力斃大魔王記成就（寫明難度與加成），將來的共工照獨力斃了幾隻加強 SOLO_BUFF。
+  // v0.8.9 使用者定：取經只是不讓大魔王變強。這一輪沒取經就闖地界（按「進去」），剩下的大魔王都加 BUFF_STEP（照最初的數值加，不連乘；這一輪只加一次，永久累積），
+  // 指定要先斃這一隻：別的大魔王打不死（命鎖在一點）、玄武也不給取經；只有認輸（暫停面板按兩次）才取消這一層——認輸膽氣剩 SURRENDER_KEEP、神兵耐久掉 GOD_WEAR，
+  // 送回地界外。走出地界不算認輸：魔王回窩養傷，戰事還掛著（難度照樣鎖著）。斃了大魔王得戰利品（BOSSES[].trophy，不佔囊，帶給玄武看）
+  const BOSSES = { '封豨': { zone: '封豨', glyph: '豨', r: 100, cour: 200, place: '桑林', feat: '禽封豨於桑林', line: '「禽封豨於桑林。」（《淮南子·本經訓》）', guard: 'bai', noPlatform: true, trophy: '豨牙', trophyUnit: '枚', trophyText: '封豨的一枚獠牙，比人的手臂還長。' } };
+  const BOSS_EXIT = 6, BUFF_STEP = 0.1, SURRENDER_KEEP = 0.8, GOD_WEAR = 0.2, GUARD = { easy: { lock: 3, guard: 10 }, normal: { lock: 1.5, guard: 6 } }, GUARD_REGEN = 4, SOLO_BUFF = [0, 6, 15, 30];
+  const GUARD_NAMES = { azure: ['青龍', '龍'], bai: ['白虎', '虎'], zhu: ['朱雀', '雀'] };   // 修蛇是青龍、封豨是白虎、大風是朱雀（v0.8.9：同一屬性的才護駕）
   // v0.8.8 玄武取經（設計稿〈五〉）：玄武伏在玄洲島心，兩格內按 E 取經。四顆珠照順序用：斃了幾隻大魔王就輪到第幾顆；斃之前取過這一卷是朱紅，
   // 沒取就打叉，將來的玄武偶多一重（p.puppet）。取經是一場試煉：照你要去打的那隻，玄武吐一個墨寫的影子（命是真身的 JING[].hp、傷人 JING[].k，招式照真身），
   // 斃了影子這一卷才算取到；死在影子手上膽氣減半；走出玄洲 JING_EXIT 格外就算沒取成，不罰。第一次見玄武，牠說紙在歪，叫你回出生的地方許願：
   // 出生點 PAVILION_R 格內立起一座惜字亭（照原本的底稿找平地、四周八格都走得過，不擋路），面向它按 E 許願
   const JING = { '封豨': { scroll: '封豨卷', shade: '豨影', glyph: '豨', hp: 0.3, k: 0.5, lines: [
-    '豕突：腳下揚塵一息多，地上畫出要衝的那條路，就往旁邊讓。站在台上，牠撞在台邊，暈一息半。',
-    '拱地：蓄一息，震一圈圈傳到七格。站上台、橋、棧就不受；白虎教的抗震再少四分之一。',
+    '豕突：腳下揚塵一息多，地上畫出要衝的那條路，就往旁邊讓。台擋不住牠：站在台上照樣撞上。',
+    '拱地：蓄一息，震一圈圈傳到七格。牠拱得動台，站在台上照樣挨震；橋、棧、船上不受；白虎教的抗震再少四分之一。',
     '荐食：命剩六成以下去啃樹回命。牠吃的時候，打掉牠命上限的百分之三就吃不成；先把附近的林子砍稀了，牠就沒得吃。',
     '群豕：命剩一半起叫野豬來，最多四頭。',
     '牠上不了台階、進不了屋；擋路的磚，牠會撞。'] } };
+  const SHARD_KINDS = ['蜃殘體', '鑿齒殘體', '蠱雕殘體'], BURN_SHARDS = 9, BURN_TUNG = 2;   // 惜字亭：九塊殘體換兩塊鎢鋼（v0.8.9 使用者定）
   const JING_LATER = { '修蛇': '修蛇卷', '大風': '大風卷' }, JING_EXIT = 6, JING_COUR = 60, WISH_COUR = 20, PAVILION_R = [3, 12], WISH_TEXT = '「這張紙上的字，一個也不讓它化掉。」';
   const NTH = '一二三四';
-  const HARPY_SOUTH = 300, HARPY_CRY = { easy: 4, normal: 6, hard: 8 }, HARPY_FEAR = 1.5, FLINT_P = 1 / 50;
+  const HARPY_SOUTH = 300, HARPY_CRY = { easy: 3, normal: 5, hard: 7 }, HARPY_FEAR = { easy: 1.5, normal: 2.5, hard: 4 }, FLINT_P = 1 / 50;   // v0.8.9 使用者定：啼 3／5／7、懼 1.5／2.5／4 息
   const TOKENS = {
     '鑿齒殘體': { out: '虎符', need: { '鐵': TALLY_IRON, '鎢鋼': TALLY_TUNG }, verb: '鑄', unit: '枚', mark: '符', god: '白虎', place: '虎嶺', learned: 'bai', look: '一隻伏著的虎。', fail: '鼎裡的鐵水翻了，符沒鑄成', lost: '鐵與鎢鋼都熔掉了', hard: '熔壞' },
     '蠱雕殘體': { out: '朱羽', need: { '精煤': 1, '火蝕': 1 }, verb: '煉', unit: '根', mark: '羽', god: '朱雀', place: '丹穴', learned: 'zhu', look: '一根朱紅的羽，摸上去是溫的。', fail: '鼎裡騰起一團火，羽沒煉成', lost: '精煤與火蝕都燒掉了', hard: '燒壞' },
@@ -299,17 +303,17 @@
     dmgMult() { const k = this.ladder(); return (k < 0 ? 1 : Math.pow(1.15, k + 1)) * this.ironAtk() * this.diff.dmg * (this.player.swimming ? 1 - (1 - SWIM_DMG) * this.swimK() : 1); }        // 造成的傷害
     baseTaken() { const k = this.ladder(); return (k < 0 ? 1 : Math.pow(1.15, -k)) * this.diff.taken; }   // 受到的傷害：山海衣的階、難度（不算衣甲）
     takenMult() { return this.baseTaken() * (1 - this.armorRed()); }  // 受到的「力」：再算衣甲
-    quakeSafe() { const p = this.player; return p.sailing || QUAKE_SAFE.indexOf(this.world.get(p.x, p.y)) >= 0; }   // 震傳不上台、橋、棧與船
-    kindMult(kind) {     // 各質的傷害打幾折（v0.8.5）
+    quakeSafe(noPlat) { const p = this.player, t = this.world.get(p.x, p.y); return p.sailing || (QUAKE_SAFE.indexOf(t) >= 0 && !(noPlat && t === '台')); }   // 震傳不上台、橋、棧與船；封豨拱得動台（noPlat，v0.8.9）
+    kindMult(kind, noPlat) {   // 各質的傷害打幾折（v0.8.5）
       const p = this.player;
       if (kind === '力') return this.takenMult();
-      if (kind === '震') return this.quakeSafe() ? 0 : this.baseTaken() * (p.bai ? 1 - RESIST : 1);
+      if (kind === '震') return this.quakeSafe(noPlat) ? 0 : this.baseTaken() * (p.bai ? 1 - RESIST : 1);
       if (kind === '窒' || kind === '心') return this.baseTaken() * (p.zhu ? 1 - RESIST : 1);
       if (kind === '溺') return this.baseTaken() * (p.azure ? 1 - RESIST : 1);
       return 1;            // 灼：熔岩照舊，不打折（以後玄甲減一成五）
     }
     hurt(dmg, kind, src) {   // 一切打在人身上、會掉命的傷害都走這裡（v0.8.5）；src = { name, big }，big 是神獸、魔王、共工
-      const p = this.player, d = U.r4(dmg * this.kindMult(kind));
+      const p = this.player, d = U.r4(dmg * this.kindMult(kind, src && src.noPlat));
       if (d <= 0) return 0;
       if (kind === '心') { p.san = Math.max(0, p.san - d); return d; }   // 心直接打愜意，不掉命（v0.8.6）
       p.hp = Math.max(0, p.hp - d);
@@ -625,7 +629,7 @@
       p.dead = true; p.deaths++; p.knock = 0; $('knock').classList.add('hidden');
       const lh = p.lastHit, big = !!(lh && lh.big && w.time - lh.t <= LAST_HIT_T && cause === '傷');   // 死在神獸、魔王、共工手上：膽氣只掉一半（v0.8.5）
       p.deathKeep = big ? BIG_DEATH : DEATH_KEEP;
-      const fought = p.fight ? BOSSES[p.fight.id] : null; if (fought) this.endFight();   // 魔王戰中死了：戰事散了，魔王回窩養好傷（v0.8.7）
+      const fought = p.fight && !p.fight.away ? BOSSES[p.fight.id] : null; if (p.fight) this.endFight();   // 魔王戰中死了：戰事散了，魔王回窩養好傷（v0.8.7）；走出地界掛著的戰事也散了
       if (p.trial) this.endTrial();   // 試煉中死了：影子散了（v0.8.8）
       const drop = p.bag.concat(p.tools, this.wornList()); let dropFar = false, bossSack = null;
       for (const s of drop) if (s.dur !== undefined) s.dur = Math.max(1, U.r4(s.dur / 2));   // 留下的東西，有耐久的全打對折（可修）
@@ -722,42 +726,69 @@
       for (const rec of this.world.ships.values()) mend(rec);
     }
     hintOnce(text) { if (this.msgText.indexOf(text) < 0) this.message(text); }
-    // ---------- 大魔王與戰鬥的規矩（v0.8.7） ----------
+    // ---------- 大魔王與戰鬥的規矩（v0.8.7；v0.8.9 使用者定：沒取經的加成、指定、認輸） ----------
     bossZone(id) { return G.zones(this.seed).find(z => z.id === BOSSES[id].zone); }
     bossEnt() { const f = this.player.fight; return f ? this.ents.list.find(o => o.type === BOSSES[f.id].glyph && !o.shade) || null : null; }
-    guardOf() { const p = this.player; return GUARDS.find(([k]) => p[k]) || null; }   // 先來的是青龍，再來白虎、朱雀（求教過的才來）
+    guardOf(id) { const p = this.player, k = BOSSES[id || (p.fight && p.fight.id) || '封豨'].guard; return k && p[k] ? [k].concat(GUARD_NAMES[k]) : null; }   // 只有同一屬性的神獸來護駕（v0.8.9：封豨是白虎）
+    buffK() { return 1 + BUFF_STEP * (this.player.bossBuff || 0); }   // 沒取經闖地界的加成：照最初的數值，一層加一成（+10%、+20%……，不連乘）
+    gotJing() { const p = this.player, s = this.jingSlot(); return s < 3 && (p.jing || [])[s] === 'got'; }   // 這一輪取過經沒有
     bossTick(dt) {
       const p = this.player; if (p.dead) return;
       const f = p.fight;
-      if (f) {
-        const z = this.bossZone(f.id);
-        if (Math.hypot(p.x - z.x, p.y - z.y) > BOSSES[f.id].r + BOSS_EXIT) { this.flee('出了地界'); return; }
-        if (!this.bossEnt()) this.spawnBoss(f);
-        if (p.lockT > 0) { p.lockT = Math.max(0, p.lockT - dt); if (!p.lockT) this.callGuard(); }
-        else if (p.guardT > 0) { p.guardT = Math.max(0, p.guardT - dt); p.hp = Math.min(p.hpMax, U.r4(p.hp + GUARD_REGEN * dt)); if (!p.guardT) this.message(f.guardBy + '回去了。接下來靠你自己。'); }
-        return;
-      }
       p.inBoss = p.inBoss || {};
+      if (f) {
+        const z = this.bossZone(f.id), d = Math.hypot(p.x - z.x, p.y - z.y);
+        if (d > BOSSES[f.id].r + BOSS_EXIT) { if (!f.away) this.leaveGround(f); }   // 走出地界：魔王回窩養傷，戰事還掛著（難度照樣鎖著；要散只能認輸）
+        else if (f.away) { if (d <= BOSSES[f.id].r) { f.away = false; this.spawnBoss(f); this.bossSig = ''; this.toast(BOSSES[f.id].zone, '你又回到了' + BOSSES[f.id].place + '。' + BOSSES[f.id].zone + '聞到你了。', 6000); SFX.beast(BOSSES[f.id].glyph); } }
+        else if (!this.bossEnt()) this.spawnBoss(f);
+        if (!f.away) {
+          if (p.lockT > 0) { p.lockT = Math.max(0, p.lockT - dt); if (!p.lockT) this.callGuard(); }
+          else if (p.guardT > 0) { p.guardT = Math.max(0, p.guardT - dt); p.hp = Math.min(p.hpMax, U.r4(p.hp + GUARD_REGEN * dt)); if (!p.guardT) this.message(f.guardBy + '回去了。接下來靠你自己。'); }
+          return;
+        }
+      }
       for (const id in BOSSES) {
-        if ((p.bosses || {})[id]) continue;
+        if ((p.bosses || {})[id] || (f && f.id === id)) continue;
         const z = this.bossZone(id), inside = Math.hypot(p.x - z.x, p.y - z.y) <= BOSSES[id].r;
-        if (!inside) { p.inBoss[id] = false; p.bossOut = { x: p.x, y: p.y }; }   // 地界外最後一格，存進檔（v0.8.8：先前沒存，地界裡讀檔就退不出去）
+        if (!inside) { p.inBoss[id] = false; p.bossOut = { x: p.x, y: p.y, sail: !!p.sailing }; }   // 地界外最後一格，存進檔（v0.8.8）；記著那時在不在船上（v0.8.9 認輸送回去用）
         else if (!p.inBoss[id] && !this.bossAsk && !this.talking) this.askBoss(id);
       }
     }
-    askBoss(id) {        // 走進地界先問一聲（以後還沒請教玄武也在這裡提醒）
-      const p = this.player, b = BOSSES[id], g2 = GUARD[this.diff.key], gd = GUARDS.filter(([k]) => p[k]).map(x => x[1]);
+    leaveGround(f) {     // 走出地界（v0.8.9）：不算認輸——魔王回窩、養回滿命；沒取經的加成與指定照樣留著
+      const p = this.player, b = BOSSES[f.id], e = this.bossEnt(); if (e) this.ents.remove(e);
+      this.ents.list = this.ents.list.filter(o => !(o.type === '豬' && o.callBy === f.id));
+      f.away = true; f.hp = undefined; f.x = undefined; f.y = undefined; p.lockT = 0; p.guardT = 0; this.bossSig = '';
+      this.toast(b.zone + '回' + b.place + '養傷去了', '你走出了地界，' + b.zone + '養回滿命。戰事還掛著：難度照樣鎖著' + (p.roundPenal ? '，沒取經的加成也還在' : '') + '；要散，暫停面板「認輸」（膽氣減兩成、神兵耐久掉兩成）。', 9000);
+    }
+    jingWarn(id) {       // 進地界的視窗裡，取經與加成的那幾句（v0.8.9）
+      const p = this.player, s = this.jingSlot(), k = Math.round(BUFF_STEP * 100), now = Math.round((p.bossBuff || 0) * k);
+      if (p.bound && p.bound !== id) return '<li class="warn">你沒取經就闖過' + p.bound + '的地界，還沒斃牠：這一隻<b>打不死</b>，命剩一點就鎖住。要先斃了' + p.bound + '，才能再去取經、再來挑戰牠；不然就認輸。</li>';
+      if (p.bound === id) return '<li class="warn">你沒取經就闖過這裡：' + BOSSES[id].zone + '帶著加成（+' + now + '%）。斃了牠才能再去取經。</li>';
+      if (this.gotJing() || s >= 3) return now ? '<li>先前沒取經闖過地界，大魔王都帶著 +' + now + '% 的加成（取了經，不再往上加）。</li>' : '';
+      return '<li class="warn">' + (p.xuan ? '你還沒向玄武取這一卷經' : '北海的玄洲有一塊石頭很久沒動——你還沒去向玄武取經') + '。<b>確定要進去？</b>進去了，剩下的大魔王都加' + (k === 10 ? '一成' : k + '%') + '的命與傷害（照最初的數值加，這一輪只加一次；' + (now ? '加上先前的，成了 +' + (now + k) + '%；' : '') + '只有認輸才取消），而且要先斃了' + BOSSES[id].zone + '，才能再去取經。第' + NTH[s] + '顆珠會打上問號。</li>';
+    }
+    askBoss(id) {        // 走進地界先問一聲；還沒取經的，問「確定要進去？」
+      const p = this.player, b = BOSSES[id], g2 = GUARD[this.diff.key], gd = this.guardOf(id), gn = GUARD_NAMES[b.guard][0];
       this.bossAsk = id; this.paused = true; this.keys.clear(); this.action = null; if (this.stopWalk) this.stopWalk();
-      $('bossask-title').textContent = b.zone + '的地界';
+      const warn = this.jingWarn(id);
+      $('bossask-title').textContent = b.zone + '的地界' + (/確定要進去/.test(warn) ? '：確定要進去？' : '');
       $('bossask-text').innerHTML = '前面是<b>' + b.zone + '</b>的地界（' + b.place + '方圓 ' + b.r + ' 格）。' + b.line + '<br>進去就是一場硬仗：<ul>'
-        + '<li>戰中不能換難度。</li><li>要走只能逃跑（暫停面板的「逃跑」，或走出地界）：膽氣減 ' + FLEE_LEVELS + ' 重，牠回滿命。</li>'
+        + '<li>戰中不能換難度。走出地界，牠回' + b.place + '養傷，戰事還掛著。</li><li>要散只能認輸（暫停面板「認輸」）：膽氣減兩成，神兵耐久掉兩成。</li>'
         + '<li>死在牠手上，膽氣只減一半；牠回' + b.place + '養好傷。</li>'
-        + '<li>' + (g2 ? '命只剩一點時鎖住 ' + g2.lock + ' 息（一場一次）；' + (gd.length ? '鎖完' + gd[0] + '來護駕 ' + g2.guard + ' 息，可靠了神獸就不算獨力。' : '你還沒求教過神獸，鎖完沒有誰來護駕。') : '困難：不鎖血，也沒有神獸護駕。') + '</li>'
-        + '<li>獨力斃牠，記一筆成就。</li>' + this.jingNote(id) + '</ul>';
+        + (b.noPlatform ? '<li>牠拱得動台：站在台上照樣挨震、挨撞。</li>' : '')
+        + '<li>' + (g2 ? '命只剩一點時鎖住 ' + g2.lock + ' 息（一場一次）；' + (gd ? '鎖完' + gn + '來護駕 ' + g2.guard + ' 息，可靠了神獸就不算獨力。' : '只有' + gn + '會來護駕，你還沒求教過牠。') : '困難：不鎖血，也沒有神獸護駕。') + '</li>'
+        + '<li>獨力斃牠，記一筆成就。</li>' + warn + '</ul>';
       $('bossask').classList.remove('hidden');
     }
     closeBossAsk() { $('bossask').classList.add('hidden'); this.bossAsk = null; this.paused = false; }
-    bossYes() { const id = this.bossAsk; if (!id) return; this.closeBossAsk(); this.player.inBoss[id] = true; this.startFight(id); }
+    bossYes() {
+      const id = this.bossAsk; if (!id) return; this.closeBossAsk(); const p = this.player; p.inBoss[id] = true;
+      if (!this.gotJing() && this.jingSlot() < 3 && !p.roundPenal) {   // 沒取經就闖地界（v0.8.9）：剩下的大魔王都加一層；這一輪只加一次；指定先斃這一隻
+        p.bossBuff = (p.bossBuff || 0) + 1; p.roundPenal = true; p.bound = id; p.jing = p.jing || []; p.jing[this.jingSlot()] = 'ask'; this.courSig = '';
+        this.toast('沒取經就闖了進來', '剩下的大魔王都 +' + Math.round(p.bossBuff * BUFF_STEP * 100) + '%（命與傷害，照最初的數值加）。第' + NTH[this.jingSlot()] + '顆珠打上了問號。要先斃了' + BOSSES[id].zone + '，才能再去取經；認輸才取消這一層。', 10000);
+      }
+      this.startFight(id);
+    }
     bossNo() {
       const id = this.bossAsk; if (!id) return; this.closeBossAsk(); const p = this.player, o = p.bossOut;
       if (o) { p.x = p.rx = o.x; p.y = p.ry = o.y; this.ents.px = p.x; this.ents.py = p.y; p.moveT = 0; this.message('還是先不了。退回地界外。'); }
@@ -766,61 +797,81 @@
     startFight(id) {
       const p = this.player, b = BOSSES[id]; p.fight = { id, solo: true, locked: false, guarded: false, at: U.r4(this.world.time) }; p.lockT = 0; p.guardT = 0;
       this.spawnBoss(p.fight); this.bossSig = '';
-      this.toast(b.zone, '你走進了' + b.place + '。地在抖，林子深處有東西在刨土。' + b.line, 8000); SFX.beast(b.glyph);
+      this.toast(b.zone, '你走進了' + b.place + '。地在抖，林子深處有東西在刨土。' + b.line + (p.bossBuff ? '牠帶著 +' + Math.round(p.bossBuff * BUFF_STEP * 100) + '% 的加成。' : ''), 8000); SFX.beast(b.glyph);
     }
-    spawnBoss(f) {       // 魔王在窩裡（或讀檔時存著的地方）現身
-      const z = this.bossZone(f.id), E = this.ents, glyph = BOSSES[f.id].glyph;
+    spawnBoss(f) {       // 魔王在窩裡（或讀檔時存著的地方）現身；命上限照加成算
+      const z = this.bossZone(f.id), E = this.ents, glyph = BOSSES[f.id].glyph, max = U.r4(DB[glyph].hp * this.buffK());
       const at = [[f.x, f.y], [z.x - 1, z.y - 1]].find(([x, y]) => x !== undefined && E.hogFits({ type: glyph }, x, y)) || (() => { for (let r = 1; r < 20; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (E.hogFits({ type: glyph }, z.x + dx, z.y + dy)) return [z.x + dx, z.y + dy]; return [z.x, z.y]; })();
-      return E.add(glyph, at[0], at[1], { hp: f.hp || DB[glyph].hp, state: 'chase', chargeCD: 3, quakeCD: 6, eatCD: 10, callCD: 0, moveT: 1 });
+      return E.add(glyph, at[0], at[1], { hp: Math.min(max, f.hp || max), max, state: 'chase', chargeCD: 3, quakeCD: 6, eatCD: 10, callCD: 0, moveT: 1 });
     }
     bossHit(e, dmg, kind, move) {   // 魔王打到人：護駕中打不到、鎖血中打不到；會打死人的那一下，簡單一般改成鎖血
       const p = this.player, shade = e && e.shade, f = shade ? null : p.fight, name = shade || BOSSES[f ? f.id : '封豨'].zone; if (p.dead) return 0;
-      if (shade) dmg = U.r4(dmg * (e.k || 1));   // 玄武的墨影（v0.8.8）：傷人照真身打折，不鎖血、沒有神獸護駕
+      if (shade) dmg = U.r4(dmg * (e.k || 1));   // 玄武的墨影（v0.8.8）：傷人照真身打折，不鎖血、沒有神獸護駕；不吃加成
+      else dmg = U.r4(dmg * this.buffK());       // 沒取經闖地界的加成（v0.8.9）
+      const bd = e && Object.values(BOSSES).find(o => o.glyph === e.type), noPlat = !!(bd && bd.noPlatform);   // 封豨拱得動台（v0.8.9 使用者定：台不管用；墨影也一樣）
       if (f && p.guardT > 0) { this.fx.push({ type: 'float', x: p.x, y: p.y, text: '擋', color: G.INK.azure, t: 0, dur: 0.6 }); this.message(f.guardBy + '擋下了' + name + '的' + move + '。'); return 0; }
       if (f && p.lockT > 0) return 0;
-      const d = U.r4(dmg * this.kindMult(kind));
+      const d = U.r4(dmg * this.kindMult(kind, noPlat));
       if (d <= 0) { this.message(name + move + '，地跟著抖——你站在' + (p.sailing ? '船' : this.world.get(p.x, p.y)) + '上，震不上來。'); return 0; }
       const g2 = GUARD[this.diff.key];
       if (f && g2 && !f.locked && p.hp - d < 1) {
         p.hp = 1; p.lastHit = { kind, by: name, big: true, t: this.world.time }; f.locked = true; p.lockT = g2.lock; p.hurtT = 6; this.renderer.shake = 0.8; SFX.beast(e.type);
-        const gd = this.guardOf();
-        this.toast('命懸一線', name + move + '，命只剩一點——鎖住了 ' + g2.lock + ' 息，這段時間牠打不到你。' + (gd ? '鎖完' + gd[1] + '來護駕。' : '你沒有求教過的神獸，鎖完就靠自己了。'), 6000);
+        const gd = this.guardOf(f.id);
+        this.toast('命懸一線', name + move + '，命只剩一點——鎖住了 ' + g2.lock + ' 息，這段時間牠打不到你。' + (gd ? '鎖完' + gd[1] + '來護駕。' : '只有' + GUARD_NAMES[BOSSES[f.id].guard][0] + '會來護駕，你還沒求教過牠；鎖完就靠自己了。'), 6000);
         return d;
       }
-      const dd = this.hurt(dmg, kind, { name, big: true }); p.hurtT = 6; this.renderer.shake = kind === '震' ? 0.7 : 0.5; SFX.beast(e.type); this.armorHit();
+      const dd = this.hurt(dmg, kind, { name, big: true, noPlat }); p.hurtT = 6; this.renderer.shake = kind === '震' ? 0.7 : 0.5; SFX.beast(e.type); this.armorHit();
       this.message(name + move + '（' + kind + '）！命 −' + this.shown('hurt', dd) + '。');
       return dd;
     }
-    callGuard() {        // 鎖完血：求教過的神獸來擋
+    callGuard() {        // 鎖完血：同一屬性、求教過的神獸來擋（v0.8.9：封豨只有白虎）
       const p = this.player, f = p.fight, g2 = GUARD[this.diff.key]; if (!f || !g2 || f.guarded) return;
-      const gd = this.guardOf(); if (!gd) { this.message('鎖住的那一刻過去了。沒有神獸來——小心。'); return; }
+      const gd = this.guardOf(f.id); if (!gd) { this.message('鎖住的那一刻過去了。' + GUARD_NAMES[BOSSES[f.id].guard][0] + '沒來——小心。'); return; }
       f.guarded = true; f.solo = false; f.guardBy = gd[1]; p.guardT = g2.guard;
       this.toast(gd[1] + '護駕', gd[1] + '擋在你前面 ' + g2.guard + ' 息：' + BOSSES[f.id].zone + '打不到你，命每息回 ' + GUARD_REGEN + '。靠了神獸，這一場就不算獨力。', 8000); SFX.learn();
     }
     endFight() { const p = this.player, e = this.bossEnt(); if (e) this.ents.remove(e); p.fight = null; p.lockT = 0; p.guardT = 0; this.bossSig = ''; this.fleeArm = 0; }
-    flee(reason) {       // 逃跑：膽氣減三重，魔王回窩、回滿命
-      const p = this.player, f = p.fight; if (!f) return;
-      const b = BOSSES[f.id], before = this.level(); this.endFight(); this.dropLevels(FLEE_LEVELS);
-      this.toast('逃出' + b.zone + '的地界', reason + '：膽氣減 ' + FLEE_LEVELS + ' 重（第 ' + before + ' 重 → 第 ' + this.level() + ' 重）。' + b.zone + '回' + b.place + '，養回滿命。', 9000); SFX.fail();
-      if (this.userPaused) this.togglePause();
+    surrender() {        // 認輸（v0.8.9 使用者定）：膽氣減兩成、神兵耐久掉兩成；這一輪沒取經的加成與指定一併取消，可以回玄武那邊補取經；送回地界外
+      const p = this.player, f = p.fight; if (!f && !p.bound) return;
+      const id = f ? f.id : p.bound, b = BOSSES[id] || { zone: id, place: '' }, c0 = p.cour; if (f) this.endFight();
+      this.ents.list = this.ents.list.filter(o => !(o.type === '豬' && o.callBy));
+      p.cour = U.r4(p.cour * SURRENDER_KEEP); this.courSig = '';
+      let worn = 0; for (const s of p.tools.concat(p.bag)) if (s && GODS.indexOf(s.n) >= 0 && s.dur !== undefined) { const mx = ITEMS[s.n].dur; s.dur = Math.max(1, U.r4(s.dur - mx * GOD_WEAR)); worn++; }
+      let cancel = '';
+      if (p.roundPenal) { p.bossBuff = Math.max(0, (p.bossBuff || 0) - 1); p.roundPenal = false; p.bound = null; const s = this.jingSlot(); if ((p.jing || [])[s] === 'ask') p.jing[s] = undefined; cancel = '這一輪沒取經的加成取消了，問號也抹掉了；回玄武那邊補取經吧。'; }
+      const o = p.bossOut, zz = BOSSES[id] && this.bossZone(id), inGround = zz && Math.hypot(p.x - zz.x, p.y - zz.y) <= BOSSES[id].r + BOSS_EXIT; let moved = false;
+      // 還在地界裡、跟進來時一樣（都在船上或都在陸上），才送回地界外最後一格
+      if (o && inGround && !!o.sail === !!p.sailing && !p.swimming) { p.x = p.rx = o.x; p.y = p.ry = o.y; this.ents.px = p.x; this.ents.py = p.y; p.moveT = 0; moved = true; }
+      if (f) p.inBoss[id] = moved ? false : true;
+      this.toast('認輸', '膽氣減兩成（' + fmt(c0) + ' → ' + fmt(p.cour) + '）' + (worn ? '，神兵耐久各掉兩成' : '') + '。' + (f ? b.zone + '回' + b.place + '，養回滿命。' : '') + cancel + (moved ? '你退回了地界外。' : ''), 10000); SFX.fail();
+      this.buildBag(); if (this.userPaused) this.togglePause();
     }
-    fleeButton() {       // 暫停面板的「逃跑」：按兩次
-      if (!this.player.fight) return;
-      if (!this.fleeArm || performance.now() - this.fleeArm > 3000) { this.fleeArm = performance.now(); $('pause-flee').textContent = '再按一次逃跑（膽氣減 ' + FLEE_LEVELS + ' 重）'; return; }
-      this.fleeArm = 0; this.flee('從暫停面板逃跑');
+    fleeButton() {       // 暫停面板的「認輸」：按兩次
+      const p = this.player; if (!p.fight && !p.bound) return;
+      if (!this.fleeArm || performance.now() - this.fleeArm > 3000) { this.fleeArm = performance.now(); $('pause-flee').textContent = '再按一次認輸（膽氣減兩成、神兵耐久掉兩成）'; return; }
+      this.fleeArm = 0; this.surrender();
     }
-    bossDown(e) {        // 斃了大魔王：記下、膽氣、獨力的記成就
+    wrongBoss(e, f) {    // 沒取經又走錯地界（v0.8.9）：這一隻打不死，命剩一點就鎖住
+      const p = this.player; e.hp = 1;
+      if (!f.wrongShown) { f.wrongShown = true; this.toast('走錯了地界', '你還沒取經，又走錯了地界：要先斃了' + p.bound + '，才能再去取經，然後來挑戰' + BOSSES[f.id].zone + '。' + BOSSES[f.id].zone + '的命鎖在一點，打不死。不然就認輸（暫停面板）。', 12000); SFX.fail(); }
+    }
+    bossDown(e) {        // 斃了大魔王：記下、膽氣、獨力的記成就、戰利品
       const p = this.player, f = p.fight || { id: '封豨', solo: true }, b = BOSSES[f.id];
+      if (p.bound && p.bound !== f.id) { this.wrongBoss(e, f); return; }
       this.ents.remove(e); this.stats.kills++;
-      const slot = this.jingSlot(); p.jing = p.jing || []; let jingText = '';   // 玄武的珠（v0.8.8）：這一隻用掉第幾顆；斃之前沒取經就打叉
+      const slot = this.jingSlot(); p.jing = p.jing || []; let jingText = '';   // 玄武的珠：取過經是朱紅；沒取經闖了地界是問號，頂著加成斃了就打叉（玄武偶多一重）
       if (slot < 3) { if (p.jing[slot] === 'got') jingText = '第' + NTH[slot] + '卷經取過了，那顆朱紅的珠用上了。'; else { p.jing[slot] = 'miss'; p.puppet = (p.puppet || 0) + 1; jingText = '這一卷沒向玄武取經就打了：第' + NTH[slot] + '顆珠打叉，將來的玄武偶多一重。'; } }
-      p.bosses = p.bosses || {}; p.bosses[f.id] = { diff: this.diff.key, solo: !!f.solo, day: this.day() };
+      const layers = p.bossBuff || 0; p.roundPenal = false; p.bound = null;
+      p.bosses = p.bosses || {}; p.bosses[f.id] = { diff: this.diff.key, solo: !!f.solo, day: this.day(), buff: layers };
       p.codex = p.codex || {}; p.codex[f.id] = (p.codex[f.id] || 0) + 1;
+      p.trophies = p.trophies || {}; p.trophies[f.id] = { n: b.trophy, day: this.day() };   // 戰利品（v0.8.9）：不佔囊，帶給玄武看
       const got = this.addCourage(b.cour * (this.isNight() ? KILL_NIGHT : KILL_DAY), 'kill'), meatAt = this.giveNear('肉', 8);
-      if (f.solo) { p.feats = p.feats || []; p.feats.push({ id: f.id, text: b.feat + ' · ' + this.diff.name + ' · 獨力', day: this.day() }); }
+      const buffText = layers ? ' · 大魔王 +' + Math.round(layers * BUFF_STEP * 100) + '%' : '';
+      if (f.solo) { p.feats = p.feats || []; p.feats.push({ id: f.id, text: b.feat + ' · ' + this.diff.name + ' · 獨力' + buffText, day: this.day() }); }
       const solos = Object.values(p.bosses).filter(x => x.solo).length;
-      p.fight = null; p.lockT = 0; p.guardT = 0; this.bossSig = '';
-      this.toast(b.feat, b.line + '膽氣 +' + fmt(this.shown('cour', got)) + '，得肉八' + (meatAt ? '（囊滿了，用小囊包著擱在' + meatAt.where + '）' : '') + '。' + (f.solo ? '獨力斃之，記一筆成就（' + this.diff.name + '）。自傲是有代價的：獨力斃的大魔王越多，將來的共工越強（現在 +' + SOLO_BUFF[Math.min(3, solos)] + '%）。' : f.guardBy + '護駕過，這一場不算獨力。') + (jingText ? '<br>' + jingText : ''), 16000);
+      this.ents.list = this.ents.list.filter(o => !(o.type === '豬' && o.callBy));
+      p.fight = null; p.lockT = 0; p.guardT = 0; this.bossSig = ''; this.courSig = '';
+      this.toast(b.feat, b.line + '膽氣 +' + fmt(this.shown('cour', got)) + '，得肉八' + (meatAt ? '（囊滿了，用小囊包著擱在' + meatAt.where + '）' : '') + '，還有一' + b.trophyUnit + '<b>' + b.trophy + '</b>（不佔囊，帶去給玄武看）。' + (f.solo ? '獨力斃之，記一筆成就（' + this.diff.name + buffText + '）。自傲是有代價的：獨力斃的大魔王越多，將來的共工越強（現在 +' + SOLO_BUFF[Math.min(3, solos)] + '%）。' : f.guardBy + '護駕過，這一場不算獨力。') + (jingText ? '<br>' + jingText : ''), 16000);
       SFX.learn(); this.renderer.shake = 0.6; this.save();
     }
     hogWind(e) { this.fx.push({ type: 'write', x: e.x + 0.5, y: e.y + 1.2, ch: '塵', color: G.INK.brown, t: 0, dur: 0.9 }); }
@@ -831,13 +882,8 @@
       else this.message('打斷了！' + this.beastName(e) + '沒吃成。');
     }
     hogCall(e, n) { SFX.beast('豬'); this.message(this.beastName(e) + '一聲吼，' + (e.shade ? '墨裡又聚出 ' + n + ' 頭豕影' : '林子裡衝出 ' + n + ' 頭野豬') + '（群豕）。'); }
-    hogStun(e) { this.renderer.shake = 0.5; SFX.ram(); this.fx.push({ type: 'float', x: e.x + 0.5, y: e.y, text: '暈', color: G.INK.red, t: 0, dur: 1.2 }); this.message(this.beastName(e) + '一頭撞在台邊，暈了一下。'); }
     // ---------- 玄武取經、惜字亭與許願（v0.8.8） ----------
     jingSlot() { return Math.min(3, Object.keys(this.player.bosses || {}).length); }   // 輪到第幾顆珠：斃了幾隻大魔王，就是第幾顆（從零算）
-    jingNote(id) {       // 進魔王地界的視窗裡提醒：這一卷取過沒有
-      const p = this.player, s = this.jingSlot(); if (s >= 3 || (p.jing || [])[s] === 'got') return '';
-      return '<li class="warn">' + (p.xuan ? '你還沒向玄武取這一卷經' : '北海的玄洲有一塊石頭很久沒動——你還沒去向玄武取經') + '。照樣進去、執意打敗' + BOSSES[id].zone + '，這一卷就錯過了：第' + NTH[s] + '顆珠打叉，將來的玄武偶多一重。</li>';
-    }
     talk(title, paras, choices) {   // 說話的視窗：幾段話、幾個選項（數字鍵選，Enter 是第一個能選的，Esc 是最後一個）
       this.talking = { choices }; this.paused = true; this.keys.clear(); this.action = null; if (this.stopWalk) this.stopWalk();
       $('talk-title').textContent = title; $('talk-text').innerHTML = paras.map(x => '<p>' + x + '</p>').join('');
@@ -875,12 +921,15 @@
     }
     jingTalk() {         // 取經：輪到哪一卷、選要去打哪一隻
       const p = this.player, s = this.jingSlot(), bs = p.bosses || {};
-      if (s >= 3) { this.talk('北方玄武', ['「三隻都斃了。第四卷是究極練習課，還沒寫成。」'], [{ label: '好', fn: null }]); return; }
-      if ((p.jing || [])[s] === 'got') { const sc = (p.scrolls || []).find(x => x.slot === s); this.talk('北方玄武', ['「第' + NTH[s] + '卷你取過了' + (sc ? '（' + JING[sc.id].scroll + '）' : '') + '。去吧，斃了一隻再來取下一卷。」'], [{ label: '好', fn: null }]); return; }
+      const pre = Object.keys(p.trophies || {}).filter(id => !p.trophies[id].shown).map(id => { p.trophies[id].shown = true; return '你把' + p.trophies[id].n + '拿給玄武看。玄武看了很久：「' + BOSSES[id].zone + '斃了。紙的一角，壓平了一點。」'; });   // 戰利品帶給玄武看（v0.8.9）
+      const say = (paras, choices) => this.talk('北方玄武', pre.concat(paras), choices);
+      if (p.bound) { say(['「你沒取經就闖了' + p.bound + '的地界。先去斃了牠，再來取下一卷；不然就認輸（暫停面板），回來補。」'], [{ label: '好', fn: null }]); return; }   // v0.8.9：指定了一隻，斃牠之前不給取經
+      if (s >= 3) { say(['「三隻都斃了。第四卷是究極練習課，還沒寫成。」'], [{ label: '好', fn: null }]); return; }
+      if ((p.jing || [])[s] === 'got') { const sc = (p.scrolls || []).find(x => x.slot === s); say(['「第' + NTH[s] + '卷你取過了' + (sc ? '（' + JING[sc.id].scroll + '）' : '') + '。去吧，斃了一隻再來取下一卷。」'], [{ label: '好', fn: null }]); return; }
       const ids = Object.keys(JING).filter(id => !bs[id]);
       const later = Object.keys(JING_LATER).map(id => ({ label: JING_LATER[id] + '（還沒寫成）', off: true }));
-      if (!ids.length) { this.talk('北方玄武', ['「第' + NTH[s] + '卷還沒寫成——修蛇、大風還沒醒。」'], [{ label: '好', fn: null }]); return; }
-      this.talk('北方玄武', ['「第' + NTH[s] + '卷。你先要去打誰？」',
+      if (!ids.length) { say(['「第' + NTH[s] + '卷還沒寫成——修蛇、大風還沒醒。」'], [{ label: '好', fn: null }]); return; }
+      say(['「第' + NTH[s] + '卷。你先要去打誰？」',
         '玄武吐一口氣，墨聚成那隻的影子：命是真身的 ' + Math.round(JING[ids[0]].hp * 100) + '%、傷人只有' + (JING[ids[0]].k === 0.5 ? '一半' : Math.round(JING[ids[0]].k * 100) + '%') + '，招式跟真身一樣。斃了影子，這一卷才算取到；走出玄洲就算沒取成，不罰，回來再試。打得死人：死在影子手上，膽氣減半。'],
         ids.map(id => ({ label: JING[id].scroll + '（' + BOSSES[id].place + '的' + BOSSES[id].zone + '）', fn: () => this.startTrial(id) })).concat(later, [{ label: '先不', fn: null }]));
     }
@@ -932,9 +981,30 @@
     wishAt() {           // 惜字亭前按 E：許願（一次）；許過了就說一聲，還願等斃了共工
       const p = this.player;
       if (!p.xuan) { this.talk('惜字亭', ['一座小小的磚亭，亭裡有一爐灰。'], [{ label: '好', fn: null }]); return; }
-      if (p.wish) { this.talk('惜字亭', ['亭裡那爐灰還溫著。你在第 ' + p.wish.day + ' 日許過願：' + WISH_TEXT, '還願要等紙平了：斃了共工，再回來。'], [{ label: '好', fn: null }]); return; }
+      if (p.wish) {   // 許過願：可以把殘體送進亭裡焚化，九塊換兩塊鎢鋼（v0.8.9）
+        const n = this.shardCount();
+        this.talk('惜字亭', ['亭裡那爐灰還溫著。你在第 ' + p.wish.day + ' 日許過願：' + WISH_TEXT, '還願要等紙平了：斃了共工，再回來。', '小魔王留下的殘體，也是寫壞了的字。送進亭裡焚化，九塊（哪一種都行，混著也行）換兩塊鎢鋼。囊裡殘體共 ' + n + ' 塊。'],
+          [{ label: '焚九塊殘體，換兩塊鎢鋼', off: n < BURN_SHARDS, fn: () => this.burnAsk() }, { label: '好', fn: null }]); return; }
       this.talk('惜字亭', ['一座小小的磚亭，亭裡有一爐灰。寫過字的紙不隨便丟，送到這裡焚化，叫敬惜字紙。', '玄武要你在這裡許個願。保自己：你也是墨寫的。保那孩子的話：你一路讀過來的。守信：願是你自己許的。'],
         [{ label: '許願：' + WISH_TEXT, fn: () => this.makeWish() }, { label: '先不', fn: null }]);
+    }
+    shardCount() { return SHARD_KINDS.reduce((a, k) => a + this.count(k), 0); }
+    burnPlan() {         // 先燒哪幾塊：求教過那隻神獸的殘體先燒（信物用不著了），再燒多的那種
+      const p = this.player, used = { '蜃殘體': p.azure, '鑿齒殘體': p.bai, '蠱雕殘體': p.zhu }, order = SHARD_KINDS.slice().sort((a, b) => (used[b] ? 1 : 0) - (used[a] ? 1 : 0) || this.count(b) - this.count(a));
+      const plan = {}; let left = BURN_SHARDS; for (const k of order) { const t = Math.min(left, this.count(k)); if (t) { plan[k] = t; left -= t; } }
+      return left ? null : plan;
+    }
+    burnAsk() {          // 焚之前問一聲：寫明燒哪幾塊、各剩幾塊（熬蜃珠、鑄虎符、煉朱羽各要九塊）
+      const plan = this.burnPlan(); if (!plan) { this.message('殘體不夠九塊。'); return; }
+      const lines = Object.keys(plan).map(k => k + ' ' + plan[k] + ' 塊（燒完剩 ' + (this.count(k) - plan[k]) + '）');
+      this.talk('惜字亭', ['要焚：' + lines.join('、') + '。', '熬蜃珠、鑄虎符、煉朱羽各要同一種殘體九塊；焚了就沒了。'], [{ label: '焚', fn: () => this.burnShards() }, { label: '先不', fn: null }]);
+    }
+    burnShards() {
+      const plan = this.burnPlan(); if (!plan) { this.message('殘體不夠九塊。'); return; }
+      for (const k in plan) this.removeItem(k, plan[k]);
+      const at = this.giveNear('鎢鋼', BURN_TUNG);
+      this.fx.push({ type: 'float', x: this.player.x, y: this.player.y, text: '焚', color: G.INK.red, t: 0, dur: 1.2 });
+      this.toast('敬惜字紙', '九塊殘體在亭裡化成灰，灰裡剩下兩塊鎢鋼' + (at ? '（囊滿了，用小囊包著擱在' + at.where + '）' : '') + '。', 8000); SFX.fuse(); this.buildBag(); this.save();
     }
     makeWish() {
       const p = this.player; p.wish = { day: this.day(), diff: this.diff.key }; const got = this.addCourage(WISH_COUR, 'other');
@@ -953,7 +1023,7 @@
     harpyCry(e) {        // 蠱雕的啼（v0.8.6）：心——愜意掉（朱雀的氣順少四分之一），懼一息多出不了手
       const p = this.player; if (p.dead) return;
       const d = this.hurt(HARPY_CRY[this.diff.key] || HARPY_CRY.normal, '心', { name: '蠱雕' });
-      p.fearT = Math.max(p.fearT || 0, HARPY_FEAR); SFX.beast('雕');
+      p.fearT = Math.max(p.fearT || 0, HARPY_FEAR[this.diff.key] || HARPY_FEAR.normal); SFX.beast('雕');
       this.fx.push({ type: 'float', x: e.x, y: e.y, text: '哇', color: G.INK.red, t: 0, dur: 1.1 });
       this.message('蠱雕一聲啼，像嬰兒在哭——心裡一慌（心）：愜意 −' + this.shown('san', d) + '，懼得一時出不了手。');
     }
@@ -2439,11 +2509,11 @@
       h += '</ul><h3>生靈</h3><p>' + (p.creatures.length ? p.creatures.map(t => (DB[t] && DB[t].name) || t).join('　') : '<span class="dim">還沒見過</span>') + '</p>';
       if (p.codex) h += '<p class="dim small">魔物誌在上面另一頁。</p>';
       { const bs = p.bosses || {}, ids = Object.keys(BOSSES).filter(id => bs[id]), feats = p.feats || [];   // 大魔王與成就（v0.8.7）
-        if (ids.length || p.fight) h += '<h3>大魔王</h3><ul>' + Object.keys(BOSSES).map(id => '<li>' + (bs[id] ? '<b>' + BOSSES[id].feat + '</b>　第 ' + bs[id].day + ' 日 · ' + DIFF[bs[id].diff].name + ' · ' + (bs[id].solo ? '獨力' : '有神獸護駕') : p.fight && p.fight.id === id ? '<b>' + BOSSES[id].zone + '</b>　正在打' : '<span class="dim">＿＿</span>') + '</li>').join('') + '</ul>';
+        if (ids.length || p.fight || p.bossBuff) h += '<h3>大魔王</h3>' + (p.bossBuff ? '<p class="small">沒取經闖過地界 ' + p.bossBuff + ' 回：剩下的大魔王都 +' + Math.round(p.bossBuff * BUFF_STEP * 100) + '%（命與傷害）' + (p.bound ? '；要先斃了' + p.bound + '（或認輸）' : '') + '。</p>' : '') + '<ul>' + Object.keys(BOSSES).map(id => '<li>' + (bs[id] ? '<b>' + BOSSES[id].feat + '</b>　第 ' + bs[id].day + ' 日 · ' + DIFF[bs[id].diff].name + ' · ' + (bs[id].solo ? '獨力' : '有神獸護駕') + (bs[id].buff ? ' · +' + Math.round(bs[id].buff * BUFF_STEP * 100) + '%' : '') + ((p.trophies || {})[id] ? ' · 得' + p.trophies[id].n : '') : p.fight && p.fight.id === id ? '<b>' + BOSSES[id].zone + '</b>　正在打' : '<span class="dim">＿＿</span>') + '</li>').join('') + '</ul>';
         if (feats.length) h += '<h3>成就</h3><ul>' + feats.map(x => '<li>' + esc(x.text) + '　<span class="dim">第 ' + x.day + ' 日</span></li>').join('') + '</ul><p class="dim small">獨力斃的大魔王越多，將來的共工越強：現在 +' + SOLO_BUFF[Math.min(3, Object.values(bs).filter(b => b.solo).length)] + '%。</p>'; }
       if (p.xuan) {   // 玄武的經卷與惜字亭的願（v0.8.8）
         const sc = p.scrolls || [], jing = p.jing || [];
-        h += '<h3>經卷</h3><p class="dim small">四顆珠：' + [0, 1, 2, 3].map(i => '第' + NTH[i] + '顆' + (jing[i] === 'got' ? '取過' : jing[i] === 'miss' ? '錯過' : '還沒到')).join('、') + (p.puppet ? '；錯過 ' + p.puppet + ' 卷，將來的玄武偶多 ' + p.puppet + ' 重' : '') + (p.jingOld ? '；玄武出來之前斃的大魔王，那一卷不算錯過' : '') + '。</p>';
+        h += '<h3>經卷</h3><p class="dim small">四顆珠：' + [0, 1, 2, 3].map(i => '第' + NTH[i] + '顆' + (jing[i] === 'got' ? '取過' : jing[i] === 'miss' ? '錯過' : jing[i] === 'ask' ? '沒取經闖了地界' : '還沒到')).join('、') + (p.puppet ? '；錯過 ' + p.puppet + ' 卷，將來的玄武偶多 ' + p.puppet + ' 重' : '') + (p.jingOld ? '；玄武出來之前斃的大魔王，那一卷不算錯過' : '') + '。</p>';
         h += sc.length ? sc.map(x => '<p><b>第' + NTH[x.slot] + '卷 · ' + JING[x.id].scroll + '</b>　<span class="dim">第 ' + x.day + ' 日取</span></p><ul>' + JING[x.id].lines.map(l => '<li>' + l + '</li>').join('') + '</ul>').join('') : '<p class="dim">還沒取到經卷。玄武在北海的玄洲。</p>';
         h += '<h3>願</h3><p>' + (p.wish ? '第 ' + p.wish.day + ' 日在惜字亭許願：' + WISH_TEXT + '<span class="dim">　還願要等斃了共工。</span>' : '<span class="dim">還沒許願。惜字亭在你被寫出來的地方附近。</span>') + '</p>';
       }
@@ -2573,8 +2643,8 @@
       this.userPaused = !this.userPaused; this.paused = this.userPaused;
       $('pause').classList.toggle('hidden', !this.userPaused); this.keys.clear(); this.action = null;
       if (this.userPaused) { this.saveArm = 0; this.diffArm = null; $('saveas-note').textContent = ''; this.renderSaveAs(); this.renderDiffRow(); }
-      this.fleeArm = 0; $('pause-flee').textContent = '逃跑'; $('pause-flee').classList.toggle('hidden', !this.player.fight);   // 魔王戰中才有「逃跑」（v0.8.7）
-      $('pause-diff-note').textContent = this.player.fight ? '正在跟' + BOSSES[this.player.fight.id].zone + '打，換不了難度；要換先逃跑。' : '換難度只換數值（一日多長、餓得多快、魄多凶、受傷與攻擊的倍率），東西、配方、兵器三種難度都一樣。第幾日、幾時都不變；按兩次才換，換的時候會存檔、重新讀進來。';
+      this.fleeArm = 0; $('pause-flee').textContent = '認輸'; $('pause-flee').classList.toggle('hidden', !this.player.fight && !this.player.bound);   // 魔王戰中（或沒取經闖了地界、還沒斃那一隻）才有「認輸」（v0.8.9，原本叫逃跑）
+      $('pause-diff-note').textContent = this.player.fight ? '正在跟' + BOSSES[this.player.fight.id].zone + '打（走出地界也還掛著），換不了難度；要換先認輸。' : '換難度只換數值（一日多長、餓得多快、魄多凶、受傷與攻擊的倍率），東西、配方、兵器三種難度都一樣。第幾日、幾時都不變；按兩次才換，換的時候會存檔、重新讀進來。';
     }
     // 遊戲裡換難度（v0.8.2 使用者定）：三種難度只差數值，東西、配方、兵器都一樣；魔王戰中不能換（以後的魔王戰會讓 inBossFight() 回真）。
     // 按兩次才換：存檔、把這格的難度改掉、記下「時刻照舊」，重新讀進來——一日多長、以日計的倒數都照新難度算
@@ -2588,7 +2658,7 @@
     }
     changeDiff(k) {
       if (!DIFF[k] || k === this.diff.key) return;
-      if (this.inBossFight()) { this.message('正在跟魔王打，換不了難度；要換先逃跑。'); SFX.fail(); return; }
+      if (this.inBossFight()) { this.message('正在跟魔王打，換不了難度；要換先認輸。'); SFX.fail(); return; }
       clearTimeout(this.diffArmT);
       if (this.diffArm !== k) { this.diffArm = k; this.renderDiffRow(); this.diffArmT = setTimeout(() => { this.diffArm = null; if (this.userPaused) this.renderDiffRow(); }, 3000); return; }
       this.save(); const s = Game.readSave(this.slot); if (!s) return;
@@ -2746,9 +2816,9 @@
         $('mapwrap').style.setProperty('--cour', Math.round(100 * this.levelFrac()) + '%');
         const ring = $('soulring'); ring.classList.toggle('q', !!p.azure); ring.classList.toggle('b', !!p.bai); ring.classList.toggle('z', !!p.zhu);   // 魂環：青龍、白虎、朱雀各三分之一（v0.8.2）
         ring.title = '魂環：' + [['龍魂', '青龍', p.azure], ['鳳翎', '朱雀', p.zhu], ['虎魄', '白虎', p.bai]].map(([n, g, on]) => n + '（' + g + '，' + (on ? '已求教' : '未求教') + '）').join('、') + '。內圈金色是膽氣，滿一圈升一重。';
-        const jing = p.jing || [];   // 玄武的四次取經：'got' 取過、'miss' 錯過、其餘還沒到（v0.8.3 先畫出來，取經以後才有）
-        $('jingbeads').querySelectorAll('i').forEach((b, i) => { b.className = jing[i] === 'got' ? 'got' : jing[i] === 'miss' ? 'miss' : ''; });
-        $('jingbeads').title = '玄武的四次取經：' + [0, 1, 2, 3].map(i => '第' + '一二三四'[i] + '次' + (jing[i] === 'got' ? '取過' : jing[i] === 'miss' ? '錯過' : '還沒到')).join('、') + '。空心是還沒到，朱紅是取過，墨黑打叉是錯過。';
+        const jing = p.jing || [];   // 玄武的四次取經：'got' 取過（朱紅）、'ask' 沒取經闖了地界（墨黑問號，v0.8.9）、'miss' 頂著加成斃了（墨黑打叉）、其餘還沒到
+        $('jingbeads').querySelectorAll('i').forEach((b, i) => { b.className = jing[i] === 'got' ? 'got' : jing[i] === 'miss' ? 'miss' : jing[i] === 'ask' ? 'ask' : ''; });
+        $('jingbeads').title = '玄武的四次取經：' + [0, 1, 2, 3].map(i => '第' + '一二三四'[i] + '次' + (jing[i] === 'got' ? '取過' : jing[i] === 'miss' ? '錯過' : jing[i] === 'ask' ? '沒取經就闖了地界' : '還沒到')).join('、') + '。空心是還沒到，朱紅是取過，墨黑問號是沒取經就闖了地界，墨黑打叉是頂著加成斃了。' + (p.bossBuff ? '大魔王現在 +' + Math.round(p.bossBuff * BUFF_STEP * 100) + '%。' : '');
         $('courlabel').textContent = (lv === 0 ? '膽氣 · 初' : '膽氣 · 第 ' + lv + ' 重') + (this.totemOn() ? ' · 山海衣' : '');
         const dec = $('courdecay');
         if (lv > this.decayFloor() && daysLeft) { dec.classList.remove('hidden'); dec.textContent = (this.hasGod() ? this.godText() : '卅一重以上三日一減') + ' · 還有 ' + daysLeft + ' 日'; }
@@ -2830,7 +2900,7 @@
       try {
         localStorage.setItem(Game.slotKey(slot || this.slot), JSON.stringify({ v: 5, seed: this.seed, diff: this.diff.key, savedAt: Date.now(), brief: this.brief(), world: this.world.serialize(), ents: this.ents.serialize(),
           player: { x: p.x, y: p.y, fx: p.fx, fy: p.fy, hp: p.hp, food: p.food, warm: p.warm, sta: p.sta, staMax: p.staMax, san: p.san, cour: p.cour, bag: p.bag, sel: p.sel, home: p.home, readSteles: p.readSteles,
-            places: p.places, isles: p.isles, isleNews: p.isleNews, zones: p.zones, zoneNews: p.zoneNews, creatures: p.creatures, raftTaken: p.raftTaken, dragon: p.dragon, azure: p.azure, bai: p.bai, zhu: p.zhu, deathKeep: p.deathKeep, fight: p.fight, bosses: p.bosses, feats: p.feats, inBoss: p.inBoss, bossOut: p.bossOut, dead: p.dead, deadText: p.deadText, xuan: p.xuan, jing: p.jing, scrolls: p.scrolls, wish: p.wish, pavilion: p.pavilion, puppet: p.puppet, jingOld: p.jingOld, scaleTaken: p.scaleTaken, bed: p.bed, codex: p.codex, finished: p.finished, deaths: p.deaths, burn: p.burn, lastDay: p.lastDay, poisonT: p.poisonT, heatT: p.heatT, poisonPer: p.poisonPer, sailing: p.sailing, tools: p.tools, tool: p.tool, decayAt: p.decayAt, worn: p.worn, hitWin: p.hitWin, totemOff: p.totemOff, pouches: p.pouches, noGhostUntil: p.noGhostUntil, sanBoostUntil: U.r4(p.sanBoostUntil || 0), hpMax: p.hpMax, pillsMade: p.pillsMade, pillsEaten: p.pillsEaten, inFog: p.inFog, ship: p.ship, swimming: p.swimming, swimT: p.swimT, swimShips: p.swimShips || 0 }, stats: this.stats }));
+            places: p.places, isles: p.isles, isleNews: p.isleNews, zones: p.zones, zoneNews: p.zoneNews, creatures: p.creatures, raftTaken: p.raftTaken, dragon: p.dragon, azure: p.azure, bai: p.bai, zhu: p.zhu, deathKeep: p.deathKeep, fight: p.fight, bosses: p.bosses, feats: p.feats, inBoss: p.inBoss, bossOut: p.bossOut, bossBuff: p.bossBuff, roundPenal: p.roundPenal, bound: p.bound, trophies: p.trophies, dead: p.dead, deadText: p.deadText, xuan: p.xuan, jing: p.jing, scrolls: p.scrolls, wish: p.wish, pavilion: p.pavilion, puppet: p.puppet, jingOld: p.jingOld, scaleTaken: p.scaleTaken, bed: p.bed, codex: p.codex, finished: p.finished, deaths: p.deaths, burn: p.burn, lastDay: p.lastDay, poisonT: p.poisonT, heatT: p.heatT, poisonPer: p.poisonPer, sailing: p.sailing, tools: p.tools, tool: p.tool, decayAt: p.decayAt, worn: p.worn, hitWin: p.hitWin, totemOff: p.totemOff, pouches: p.pouches, noGhostUntil: p.noGhostUntil, sanBoostUntil: U.r4(p.sanBoostUntil || 0), hpMax: p.hpMax, pillsMade: p.pillsMade, pillsEaten: p.pillsEaten, inFog: p.inFog, ship: p.ship, swimming: p.swimming, swimT: p.swimT, swimShips: p.swimShips || 0 }, stats: this.stats }));
       } catch (err) { /* 隱私模式等情況下存不了，就算了 */ }
     }
     load(s) {
@@ -2838,7 +2908,7 @@
       this.world.restore(s.world || {}, s.brief && s.brief.day);
       this.ents.restore(s.ents);
       const sp = s.player || {};
-      for (const k of ['x', 'y', 'fx', 'fy', 'hp', 'food', 'warm', 'sta', 'staMax', 'san', 'cour', 'bag', 'sel', 'home', 'readSteles', 'places', 'isles', 'isleNews', 'zones', 'zoneNews', 'creatures', 'raftTaken', 'dragon', 'azure', 'bai', 'zhu', 'deathKeep', 'fight', 'bosses', 'feats', 'inBoss', 'bossOut', 'dead', 'deadText', 'xuan', 'jing', 'scrolls', 'wish', 'pavilion', 'puppet', 'jingOld', 'scaleTaken', 'bed', 'codex', 'finished', 'deaths', 'burn', 'lastDay', 'poisonT', 'poisonPer', 'heatT', 'sailing', 'tools', 'tool', 'decayAt', 'worn', 'hitWin', 'totemOff', 'pouches', 'noGhostUntil', 'sanBoostUntil', 'hpMax', 'pillsMade', 'pillsEaten', 'inFog', 'ship', 'swimming', 'swimT', 'swimShips']) if (sp[k] !== undefined) p[k] = sp[k];
+      for (const k of ['x', 'y', 'fx', 'fy', 'hp', 'food', 'warm', 'sta', 'staMax', 'san', 'cour', 'bag', 'sel', 'home', 'readSteles', 'places', 'isles', 'isleNews', 'zones', 'zoneNews', 'creatures', 'raftTaken', 'dragon', 'azure', 'bai', 'zhu', 'deathKeep', 'fight', 'bosses', 'feats', 'inBoss', 'bossOut', 'bossBuff', 'roundPenal', 'bound', 'trophies', 'dead', 'deadText', 'xuan', 'jing', 'scrolls', 'wish', 'pavilion', 'puppet', 'jingOld', 'scaleTaken', 'bed', 'codex', 'finished', 'deaths', 'burn', 'lastDay', 'poisonT', 'poisonPer', 'heatT', 'sailing', 'tools', 'tool', 'decayAt', 'worn', 'hitWin', 'totemOff', 'pouches', 'noGhostUntil', 'sanBoostUntil', 'hpMax', 'pillsMade', 'pillsEaten', 'inFog', 'ship', 'swimming', 'swimT', 'swimShips']) if (sp[k] !== undefined) p[k] = sp[k];
       if (p.sailing && !p.ship) p.ship = World.newShip('孤帆');     // 舊存檔在船上：給一條滿命的孤帆
       { const n = Math.min(3, Object.keys(p.bosses || {}).length); p.jing = p.jing || []; for (let i = 0; i < n; i++) if (!p.jing[i]) { p.jing[i] = 'got'; p.jingOld = true; } }   // v0.8.8 以前斃的大魔王：那時還沒有玄武，那一卷不算錯過
       p.trial = null;   // 試煉不存檔：讀進來影子散了，回玄武那裡再取

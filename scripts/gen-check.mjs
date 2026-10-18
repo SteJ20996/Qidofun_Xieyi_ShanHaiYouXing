@@ -1,4 +1,4 @@
-// 多種子生成檢查：每座島都要「玩得下去」——出生點走得到基本資源、八處地標都在且走得到、
+// 多種子生成檢查：每座島都要「玩得下去」——出生點走得到基本資源、八處地標都在且走得到、五塊碑漲潮也走得到（v0.8.9）、漠島有綠洲雪島有溫泉（v0.8.9）、
 // 山裡有煤有鐵、燈塔只有退潮走得到；v0.7 起另查：原本的陸地一格不動、陸地平均多四成五、外島五種都有。
 // v0.8.4 起另查四方地界：陸的島心方圓 r 格都走得上去、上得了岸；水的方圓 r 格都是水、洞庭開得進船；不周山方圓 solid 格（v0.8.5 起 102）都是陸地、盆地走得出缺口。
 // 不用瀏覽器，直接在 Node 裡載入 util／glyphs／world。
@@ -81,6 +81,9 @@ for (let seed = S0; seed < S0 + N; seed++) {
     if (!ok) probs.push(pl.id === 'deng' ? '燈塔不是「只有退潮走得到」（退潮 ' + touches(low, pl.x, pl.y, pl.w, pl.h) + '，漲潮 ' + touches(high, pl.x, pl.y, pl.w, pl.h) + '）' : '地標「' + pl.name + '」走不到');
   }
   if (w.steles.size !== 5) probs.push('碑只有 ' + w.steles.size + ' 塊');
+  // v0.8.9：五塊碑漲潮時也走得到（走不到的開了一條路）；每座漠島有綠洲的池、每座雪島有溫泉
+  for (const st of w.steles.values()) if (![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => high.has((st.x + dx) + ',' + (st.y + dy)))) probs.push('碑（' + st.x + ', ' + st.y + '）漲潮時走不到');
+  for (const isl of G.isles(seed)) if ((isl.kind === '漠' || isl.kind === '雪') && !G.zoneAt(isl.cx, isl.cy, seed)) { const wl = G.isleWell(isl, seed), t = G.baseTile(wl.x, wl.y, seed); if (G.zoneAt(wl.x, wl.y, seed)) continue; if (t !== (isl.kind === '漠' ? '池' : '湯')) probs.push((isl.kind === '漠' ? '漠島沒有綠洲' : '雪島沒有溫泉') + '（' + wl.x + ', ' + wl.y + ' 是「' + t + '」）'); }
   // v0.7：原本的陸地一格不動；擴出去的陸地；外島
   let oldLand = 0, newLand = 0, moved = 0;
   for (let y = -140; y <= 140; y++) for (let x = -140; x <= 140; x++) { const a = G.oldTile(x, y, seed), b = G.baseTile(x, y, seed); if (DB[a].kind !== 'water') { oldLand++; if (a !== b) moved++; } if (DB[b].kind !== 'water') newLand++; }

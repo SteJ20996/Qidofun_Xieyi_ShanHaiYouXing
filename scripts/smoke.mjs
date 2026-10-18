@@ -1648,6 +1648,66 @@ const result = await page.evaluate(async () => {
     const r0 = U.trueRand, cb = w.onWeather, ra = w.rainUntil, rn = w.nextRainAt; w.onWeather = null; U.trueRand = () => 0; w.rainUntil = 0; w.nextRainAt = w.time; w.step(p.x, p.y); const rainLen = w.rainUntil - w.time;
     U.trueRand = r0; w.onWeather = cb; w.rainUntil = ra; w.nextRainAt = rn;
     ok('v0.6.10: things counted in days follow the longer day (the shortest rain is a quarter of 360 = 90 s)', Math.abs(rainLen - 90) <= 0.5, rainLen); }
+  // ============ v0.8.9：沒取經闖地界的加成、指定先斃哪一隻、認輸；同屬性護駕；台擋不住封豨；戰利品；惜字亭換鎢鋼；碑的路、綠洲溫泉 ============
+  { const E = g.ents, p0 = { x: p.x, y: p.y }, z = G.zones(g.seed).find(o => o.id === '封豨'), put = (x, y) => { p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; };
+    const keep = { cour: p.cour, bag: p.bag.slice(), tools: p.tools.slice(), tool: p.tool, azure: p.azure, bai: p.bai, zhu: p.zhu }, hog = () => E.list.find(o => o.type === '豨' && !o.shade);
+    const reset = () => { p.fight = null; p.bosses = {}; p.feats = []; p.inBoss = {}; p.jing = []; p.puppet = 0; p.bossBuff = 0; p.roundPenal = false; p.bound = null; p.trophies = {}; p.lockT = 0; p.guardT = 0; E.list = E.list.filter(o => o.type !== '豨' && o.type !== '豬'); };
+    const enter = () => { p.sailing = true; p.ship = World.newShip('孤帆'); put(z.x + 103, z.y); g.updateStats(0.05); put(z.x + 99, z.y); g.updateStats(0.05); };
+    reset(); p.xuan = { day: 1 }; enter(); const t1 = document.getElementById('bossask-title').textContent, a1 = document.getElementById('bossask-text').textContent;
+    ok('v0.8.9: without the scroll the window asks 確定要進去？ and says what it costs', /確定要進去/.test(t1) && /加一成/.test(a1) && /只有認輸才取消/.test(a1) && /先斃了封豨/.test(a1), t1);
+    g.bossYes(); const h = hog();
+    ok('v0.8.9: going in without the scroll: +10% on every boss left (base-additive), this boss is the one to slay first, the bead shows a question mark', p.bossBuff === 1 && p.roundPenal && p.bound === '封豨' && p.jing[0] === 'ask' && h && h.max === 3300 && h.hp === 3300, [p.bossBuff, h && h.max]);
+    g.courSig = ''; await sleep(150); ok('v0.8.9: …a black question-mark bead', document.querySelectorAll('#jingbeads i')[0].className === 'ask');
+    p.sailing = false; p.ship = null; put(h.x + 2, h.y); w.set(p.x, p.y, '草'); p.hp = 100; p.bai = false; p.azure = false; p.zhu = false;
+    const d1 = g.bossHit(h, 20, '力', '撞'); ok('v0.8.9: its blows carry the +10% too (20 → 22, then armour)', Math.abs(d1 - U.r4(22 * g.takenMult())) < 1e-6, d1);
+    p.hp = 100; w.set(p.x, p.y, '台'); h.state = 'charge'; h.cdx = 1; h.cdy = 0; h.chargeHit = false; h.x = p.x - 3; h.y = p.y; h.moveT = 0; for (let i = 0; i < 4 && h.state === 'charge'; i++) { h.moveT = 0; E.hogAct(h, g, p, false, false); }
+    ok('v0.8.9: a 台 does not stop the charge — no stun, you take it', p.hp < 100 && !(h.stunT > 0), [100 - p.hp]); w.set(p.x, p.y, '草'); p.hp = 100;
+    // 走出去再進來：加成不再加；玄武不給取經
+    p.sailing = true; p.ship = World.newShip('孤帆'); put(z.x + 120, z.y); g.updateStats(0.05); g.jingTalk(); const jt = document.getElementById('talk-text').textContent; g.talkPick('last');
+    ok('v0.8.9: while 封豨 is the one to slay, 玄武 will not hand out the next scroll', /先去斃了牠/.test(jt) && /認輸/.test(jt), jt);
+    put(z.x + 99, z.y); g.updateStats(0.05); ok('v0.8.9: going back in the same round adds no second layer', p.bossBuff === 1 && hog() && hog().max === 3300);
+    // 走錯地界：別的大魔王打不死（這裡借用：假裝指定的是修蛇）
+    p.bound = '修蛇'; const hb = hog(); hb.hp = 0; g.kill(hb);
+    ok('v0.8.9: a boss that is not the one you must slay first locks at one life, with a banner (not taken the scroll, wrong ground)', hb.hp === 1 && E.list.includes(hb) && /走錯了地界/.test(toasts()) && /先斃了修蛇/.test(toasts()), hb.hp);
+    p.bound = '封豨';
+    // 認輸：膽氣減兩成、神兵耐久掉兩成；這一輪的加成取消、問號抹掉；送回地界外
+    p.cour = 1000; p.tools = [{ n: '九閽鳴雷', c: 1, dur: 199 }]; p.tool = 0; g.fleeButton(); g.fleeButton();
+    ok('v0.8.9: 認輸 — courage down by a fifth, a god weapon loses a fifth of its durability (199 → 159), the layer and the question mark are gone, back outside the ground', p.cour === 800 && Math.abs(p.tools[0].dur - U.r4(199 - 39.8)) < 1e-6 && p.bossBuff === 0 && !p.roundPenal && !p.bound && !p.jing[0] && !p.fight && p.x === z.x + 103, [p.cour, p.tools[0].dur, p.bossBuff, p.x - z.x]);
+    // 取了經再進去：不加；斃之得豨牙，給玄武看
+    p.jing[0] = 'got'; p.inBoss = {}; put(z.x + 99, z.y); g.updateStats(0.05); const a3 = document.getElementById('bossask-text').textContent; g.bossYes();
+    ok('v0.8.9: with the scroll taken there is no question and no layer', !/確定要進去/.test(a3) && p.bossBuff === 0 && hog().max === 3000);
+    g.kill(hog()); ok('v0.8.9: slaying 封豨 gives a 豨牙 that takes no bag slot, kept for 玄武; the bead stays vermilion', p.trophies['封豨'] && p.trophies['封豨'].n === '豨牙' && !g.has('豨牙') && p.jing[0] === 'got' && /豨牙/.test(toasts()), p.trophies);
+    g.jingTalk(); const jt2 = document.getElementById('talk-text').textContent; g.talkPick('last');
+    ok('v0.8.9: 玄武 looks at the 豨牙 the next time you come', /豨牙/.test(jt2) && p.trophies['封豨'].shown, jt2.slice(0, 60));
+    // 加成照最初的數值加、不連乘；頂著加成斃了就打叉、玄武偶多一重、成就寫明加成
+    reset(); p.bossBuff = 1; enter(); g.bossYes();
+    ok('v0.8.9: layers add on the base, not multiply — two layers is 3000 × 1.2 = 3600, not 3630', p.bossBuff === 2 && hog().max === 3600, hog() && hog().max);
+    g.kill(hog()); ok('v0.8.9: slain while carrying the layer — crossed bead, the 玄武偶 grows, the feat writes +20%', p.jing[0] === 'miss' && p.puppet === 1 && /\+20%/.test(p.feats[0].text) && p.bossBuff === 2 && !p.bound, p.feats[0] && p.feats[0].text);
+    // 護駕：只有同一屬性的（封豨是白虎）
+    reset(); p.jing = ['got']; enter(); g.bossYes(); const h4 = hog(); p.sailing = false; p.ship = null; put(h4.x + 2, h4.y); p.azure = true; p.zhu = true; p.bai = false; g.diff = XIEYI.DIFF.normal; p.hp = 5; g.bossHit(h4, 40, '力', '豕突'); g.bossTick(1.6);
+    ok('v0.8.9: only the guardian of the same quarter comes — 青龍 and 朱雀 do not guard against 封豨', !(p.guardT > 0) && !p.fight.guarded && /白虎沒來/.test(g.msgText), g.msgText);
+    p.hp = 100; reset();
+    // 存讀檔
+    p.bossBuff = 2; p.roundPenal = true; p.bound = '封豨'; p.trophies = { '封豨': { n: '豨牙', day: 3 } }; g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot))); p.bossBuff = 0; p.bound = null; p.trophies = {}; g.load(sv);
+    ok('v0.8.9: the layers, the boss to slay first and the trophies are saved and read back', p.bossBuff === 2 && p.roundPenal && p.bound === '封豨' && p.trophies['封豨'].n === '豨牙');
+    reset();
+    // 惜字亭：九塊殘體換兩塊鎢鋼（先燒求教過那隻的殘體）
+    { const pv = { x: p0.x + 3, y: p0.y }, t0 = w.get(pv.x, pv.y); w.set(pv.x, pv.y, '亭'); put(pv.x - 1, pv.y); p.fx = 1; p.fy = 0; p.xuan = { day: 1 }; p.wish = { day: 2 };
+      g.removeItem('蜃殘體', 99); g.removeItem('鑿齒殘體', 99); g.removeItem('蠱雕殘體', 99); g.removeItem('鎢鋼', 99); g.addItem('蜃殘體', 5); g.addItem('鑿齒殘體', 6); p.azure = true; p.bai = false;
+      g.pressGather(); const offOk = !document.querySelector('#talk-row button').disabled; g.talkPick(0); const bt = document.getElementById('talk-text').textContent; g.talkPick(0);
+      ok('v0.8.9: at the 惜字亭, nine 殘體 of any kind burn into two 鎢鋼 — the kind whose guardian you already met burns first, and it asks with the counts', offOk && /蜃殘體 5 塊/.test(bt) && /鑿齒殘體 4 塊（燒完剩 2）/.test(bt) && g.count('鎢鋼') === 2 && g.count('蜃殘體') === 0 && g.count('鑿齒殘體') === 2, bt);
+      g.pressGather(); const dis = document.querySelector('#talk-row button').disabled; g.talkPick('last');
+      ok('v0.8.9: with fewer than nine left, the burning cannot be chosen', dis);
+      g.removeItem('鎢鋼', 99); g.removeItem('鑿齒殘體', 99); w.set(pv.x, pv.y, t0); p.wish = undefined; p.xuan = undefined; }
+    // 馴好的鷹：從正面啄鑿齒也只吃一成；天上盤旋的蠱雕追不上
+    { const th = E.add('齒', p.x + 3, p.y, { moveT: 99, fx: -1, fy: 0 }), eg = E.add('鷹', p.x + 2, p.y, { tame: true, sta: 50, moveT: 0, atk: 0 }), hp0 = th.hp; E.update(0.01, g);
+      ok('v0.8.9: a tame eagle pecking a 鑿齒 from the front does a tenth (2)', hp0 - th.hp === 2, hp0 - th.hp); E.remove(th);
+      const hr = E.add('雕', p.x + 4, p.y, { mode: 'circle', moveT: 99, cryT: 99, diveT: 99 }); ok('v0.8.9: a 蠱雕 circling high is not a target for the eagle', E.hostileNear(p, 6) !== hr); E.remove(hr); E.remove(eg); }
+    // 生成：碑的路、綠洲、溫泉
+    { const wl = G.isles(g.seed).filter(i => (i.kind === '漠' || i.kind === '雪') && !G.zoneAt(i.cx, i.cy, g.seed)).map(i => [i.kind, G.baseTile(G.isleWell(i, g.seed).x, G.isleWell(i, g.seed).y, g.seed)]);
+      ok('v0.8.9: every desert isle has an oasis pool and every snow isle a hot spring at its well', wl.length > 0 && wl.every(([k, t]) => t === (k === '漠' ? '池' : '湯')), wl.filter(([k, t]) => t !== (k === '漠' ? '池' : '湯')));
+      ok('v0.8.9: the world knows the paths opened to out-of-reach steles (stamped like the steles)', Array.isArray(w.stelePaths)); }
+    p.cour = keep.cour; p.bag = keep.bag; p.tools = keep.tools; p.tool = keep.tool; p.azure = keep.azure; p.bai = keep.bai; p.zhu = keep.zhu; p.hp = 100; p.sailing = false; p.ship = null; reset(); g.barSig = ''; g.courSig = ''; put(p0.x, p0.y); }
   // ============ v0.8.8：自查修掉的錯；玄武取經（第一卷、豨影的試煉）、惜字亭與許願 ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, DB = G.DB, put = (x, y) => { p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; };
     const keep = { cour: p.cour, bag: p.bag.slice(), tools: p.tools.slice(), tool: p.tool, hp: p.hp, deaths: p.deaths, home: p.home, bed: p.bed };
@@ -1755,7 +1815,7 @@ const result = await page.evaluate(async () => {
     { const z = G.zones(g.seed).find(o => o.id === '封豨'); p.sailing = true; p.ship = World.newShip('孤帆'); put(z.x + 103, z.y); g.updateStats(0.05); put(z.x + 99, z.y); g.updateStats(0.05);
       const a1 = document.getElementById('bossask-text').textContent; g.bossNo();
       p.jing = []; put(z.x + 99, z.y); g.updateStats(0.05); const a2 = document.getElementById('bossask-text').textContent; g.bossNo();
-      ok('v0.8.8: entering 桑林 with the scroll taken there is no warning; without it, the window warns the scroll will be missed', !/錯過/.test(a1) && /還沒向玄武取這一卷經/.test(a2) && /打叉/.test(a2), a2.slice(-80));
+      ok('v0.8.8: entering 桑林 with the scroll taken there is no warning; without it, the window asks 確定要進去 (v0.8.9: the bead turns to a question mark)', !/確定要進去/.test(a1) && /還沒向玄武取這一卷經/.test(a2) && /確定要進去/.test(a2) && /問號/.test(a2), a2.slice(-80));
       put(z.x + 99, z.y); g.updateStats(0.05); g.bossYes(); const hh = E.list.find(o => o.type === '豨' && !o.shade); g.kill(hh);
       ok('v0.8.8: slay 封豨 without the scroll — the first bead is crossed out, the 玄武偶 grows a level', p.jing[0] === 'miss' && p.puppet === 1 && /打叉/.test(toasts()), [p.jing, p.puppet]);
       p.bosses = {}; p.feats = []; p.jing = ['got']; p.puppet = 0; p.inBoss = {}; put(z.x + 99, z.y); g.updateStats(0.05); g.bossYes(); g.kill(E.list.find(o => o.type === '豨' && !o.shade));
@@ -1773,18 +1833,18 @@ const result = await page.evaluate(async () => {
       ok('v0.8.8: an older save where 封豨 fell before 玄武 existed: that scroll is not counted as missed', p.jing[0] === 'got' && p.jingOld === true, p.jing); }
     // 收拾
     w.set(pv.x, pv.y, '草'); E.list = E.list.filter(o => o.type !== '玄武' && !o.shade && o.type !== '豨' && o.type !== '豬');
-    p.bosses = {}; p.feats = []; p.inBoss = {}; p.jing = []; p.puppet = 0; p.scrolls = []; p.xuan = undefined; p.wish = undefined; p.pavilion = undefined; p.trial = null; p.jingOld = undefined; p.fight = null;
+    p.bosses = {}; p.feats = []; p.inBoss = {}; p.jing = []; p.puppet = 0; p.scrolls = []; p.xuan = undefined; p.wish = undefined; p.pavilion = undefined; p.trial = null; p.jingOld = undefined; p.fight = null; p.bossBuff = 0; p.roundPenal = false; p.bound = null; p.trophies = {};
     p.creatures = p.creatures.filter(c => c !== '豨' && c !== '玄武'); if (p.codex) { delete p.codex['封豨']; delete p.codex['玄武']; }
     p.cour = keep.cour; p.bag = keep.bag; p.tools = keep.tools; p.tool = keep.tool; p.hp = 100; p.home = keep.home; p.bed = keep.bed; g.barSig = ''; g.courSig = ''; g.hudSig = ''; put(p0.x, p0.y); }
   // ============ v0.8.7：封豨（大魔王）與戰鬥的規矩：進地界先問、鎖難度、逃跑、鎖血與神獸護駕、存讀檔接著打、獨力記成就 ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, DB = G.DB, DIFF = XIEYI.DIFF, z = G.zones(g.seed).find(o => o.id === '封豨'), put = (x, y) => { p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; };
     const keep = { azure: p.azure, bai: p.bai, zhu: p.zhu, cour: p.cour, bag: p.bag.slice(), tools: p.tools.slice(), tool: p.tool }, dk = g.diff;
     const hog = () => E.list.find(o => o.type === '豨');
-    p.fight = null; p.bosses = {}; p.feats = []; p.inBoss = {}; p.lockT = 0; p.guardT = 0; E.list = E.list.filter(o => o.type !== '豨' && o.type !== '豬');
+    p.fight = null; p.bosses = {}; p.feats = []; p.inBoss = {}; p.lockT = 0; p.guardT = 0; p.jing = ['got']; p.bossBuff = 0; p.roundPenal = false; p.bound = null; E.list = E.list.filter(o => o.type !== '豨' && o.type !== '豬');
     // 進地界先問
     p.sailing = true; p.ship = World.newShip('孤帆'); put(z.x + 103, z.y); g.updateStats(0.05); put(z.x + 98, z.y); g.updateStats(0.05);
     const ask = document.getElementById('bossask-text').textContent;
-    ok('v0.8.7: sailing into 封豨\'s ground (桑林, radius 100) asks first — locked difficulty, the cost of fleeing, half courage on death, the guard', !hidden('bossask') && /封豨/.test(ask) && /逃跑/.test(ask) && /膽氣只減一半/.test(ask) && /獨力/.test(ask), ask);
+    ok('v0.8.7: sailing into 封豨\'s ground (桑林, radius 100) asks first — locked difficulty, the cost of giving up (認輸, v0.8.9), half courage on death, the guard', !hidden('bossask') && /封豨/.test(ask) && /認輸/.test(ask) && /膽氣只減一半/.test(ask) && /獨力/.test(ask) && /白虎/.test(ask), ask);
     g.bossNo(); ok('v0.8.7: 先不 steps you back out', p.x === z.x + 103 && !p.fight && hidden('bossask'), [p.x, z.x]);
     put(z.x + 98, z.y); g.updateStats(0.05); g.bossYes(); const h = hog();
     ok('v0.8.7: 進去 starts the fight; 封豨 stands in its den, a two-by-two body with 3000 life', !!p.fight && !!h && E.at(h.x + 1, h.y + 1) === h && E.at(h.x, h.y + 1) === h && E.at(h.x + 1, h.y) === h && h.hp === 3000 && U.dist(h.x + 1, h.y + 1, z.x, z.y) < 6, h && [h.x, h.y, z.x, z.y]);
@@ -1794,16 +1854,17 @@ const result = await page.evaluate(async () => {
     const d1 = g.bossHit(h, 20, '力', '撞'); ok('v0.8.7: its blows are 力 — armour counts', Math.abs(d1 - U.r4(20 * g.takenMult())) < 1e-6 && /封豨撞（力）/.test(g.msgText), [d1, g.msgText]);
     const ringTo = () => { h.ring = { r: 0, hit: false, cx: p.x + 0.5 - 3, cy: p.y + 0.5 }; h.state = 'chase'; for (let k = 0; k < 40 && h.ring; k++) E.hogTimers(h, g, p, 0.05); };
     p.hp = 100; ringTo(); ok('v0.8.7: rooting the ground sends out a ring of 震 (22, armour does not count)', Math.abs(100 - p.hp - U.r4(22 * g.baseTaken())) < 1e-6, 100 - p.hp);
-    w.set(p.x, p.y, '台'); p.hp = 100; ringTo(); ok('v0.8.7: …which does not reach you on a 台', p.hp === 100 && /震不上來/.test(g.msgText), g.msgText); w.set(p.x, p.y, '草');
+    w.set(p.x, p.y, '台'); p.hp = 100; ringTo(); ok('v0.8.9: 封豨 roots up a 台 too — the 震 reaches you on it (使用者定：台不管用)', Math.abs(100 - p.hp - U.r4(22 * g.baseTaken())) < 1e-6, g.msgText);
+    w.set(p.x, p.y, '橋'); p.hp = 100; ringTo(); ok('v0.8.9: …a 橋 still carries you over it', p.hp === 100 && /震不上來/.test(g.msgText), g.msgText); w.set(p.x, p.y, '草');
     p.hp = 100; for (let i = 3; i <= 7; i++) for (const dy of [0, 1]) w.set(h.x + i, h.y + dy, '草'); put(h.x + 7, h.y); h.state = 'chase'; h.chargeCD = 0; h.quakeCD = 99; h.callCD = 99; h.eatCD = 99; h.moveT = 0; h.atk = 9; E.update(0.01, g);
     ok('v0.8.7: from three to ten tiles off it winds up a charge (豕突), the path marked', h.state === 'wind' && h.cdx === 1 && h.cdy === 0, [h.state, h.cdx, h.cdy]);
     h.windT = 0; E.hogTimers(h, g, p, 0.01); for (let i = 0; i < 14 && h.state === 'charge'; i++) { h.moveT = 0; E.update(0.01, g); }
     ok('v0.8.7: …then charges straight in — 40, 力', Math.abs(100 - p.hp - U.r4(40 * g.takenMult())) < 1e-6 && /豕突/.test(g.msgText), [100 - p.hp, g.msgText]);
     // 護駕：一般命只剩一點時鎖血一息半，之後求教過的神獸擋六息；一場只一次；困難不鎖
-    g.diff = DIFF.normal; p.azure = true; p.hp = 5; p.fight.locked = false; g.bossHit(h, 40, '力', '豕突');
+    g.diff = DIFF.normal; p.bai = true; p.hp = 5; p.fight.locked = false; g.bossHit(h, 40, '力', '豕突');
     ok('v0.8.7: a killing blow on normal leaves you at 1 and locks you for 1.5 breaths', p.hp === 1 && p.lockT === 1.5 && /命懸一線/.test(toasts()), [p.hp, p.lockT]);
     ok('v0.8.7: while locked it cannot hurt you', g.bossHit(h, 40, '力', '撞') === 0 && p.hp === 1);
-    g.bossTick(1.6); ok('v0.8.7: then 青龍 comes to guard for 6 breaths, and the fight is no longer solo', p.guardT === 6 && !p.fight.solo && p.fight.guardBy === '青龍' && /青龍護駕/.test(toasts()), [p.guardT, p.fight.guardBy]);
+    g.bossTick(1.6); ok('v0.8.7: then 白虎 (the guard of the west, v0.8.9) comes to guard for 6 breaths, and the fight is no longer solo', p.guardT === 6 && !p.fight.solo && p.fight.guardBy === '白虎' && /白虎護駕/.test(toasts()), [p.guardT, p.fight.guardBy]);
     const hg = p.hp; ok('v0.8.7: …blocking 封豨 entirely', g.bossHit(h, 40, '力', '撞') === 0 && /擋下/.test(g.msgText));
     g.bossTick(1); ok('v0.8.7: …while your life comes back 4 a breath', Math.abs(p.hp - hg - 4) < 1e-6, p.hp - hg);
     p.guardT = 0; p.hp = 5; g.bossHit(h, 40, '力', '撞'); const once = p.hp; p.hp = 100;
@@ -1826,13 +1887,14 @@ const result = await page.evaluate(async () => {
       ok('v0.8.7: below six tenths it goes for a tree', h2.state === 'goeat' && !!h2.food, h2.state);
       h2.state = 'chase'; h2.eatCD = 99; h2.hp = 1400; h2.callCD = 0; E.list = E.list.filter(o => o.type !== '豬'); E.hogAct(h2, g, p, false, false);
       ok('v0.8.7: from half its life it calls boars (群豕)', E.count('豬') === 2 && /群豕/.test(g.msgText), E.count('豬')); }
-    // 逃跑：暫停面板按兩次；走出地界也算
-    p.cour = g.levelAt(10) + 1; g.togglePause(); const fb = document.getElementById('pause-flee');
-    ok('v0.8.7: in a fight the pause panel has a 逃跑 button, and says the difficulty is locked', !fb.classList.contains('hidden') && /換不了難度/.test(document.getElementById('pause-diff-note').textContent));
+    // 認輸（v0.8.9，原本叫逃跑）：暫停面板按兩次——膽氣減兩成；走出地界不算認輸：魔王回窩養傷，戰事還掛著
+    p.cour = 1000; g.togglePause(); const fb = document.getElementById('pause-flee');
+    ok('v0.8.7: in a fight the pause panel has a 認輸 button, and says the difficulty is locked', !fb.classList.contains('hidden') && /認輸/.test(fb.textContent) && /換不了難度/.test(document.getElementById('pause-diff-note').textContent));
     fb.click(); ok('v0.8.7: the first press only arms it', !!p.fight && /再按一次/.test(fb.textContent));
-    fb.click(); ok('v0.8.7: the second press flees — three levels of courage, 封豨 goes home to heal', !p.fight && g.level() === 7 && !hog() && hidden('pause') && /逃出封豨的地界/.test(toasts()), g.level());
+    fb.click(); ok('v0.8.9: the second press gives up — courage down by a fifth, 封豨 goes home to heal', !p.fight && p.cour === 800 && !hog() && hidden('pause') && /認輸/.test(toasts()), p.cour);
     p.inBoss = {}; put(z.x + 98, z.y); g.updateStats(0.05); g.bossYes(); put(z.x + 120, z.y); g.updateStats(0.05);
-    ok('v0.8.7: walking out of the ground is fleeing too', !p.fight && /出了地界/.test(toasts()));
+    ok('v0.8.9: walking out of the ground is not giving up — 封豨 goes home to heal, the fight stays on (difficulty still locked)', !!p.fight && p.fight.away && !hog() && g.inBossFight() && p.cour === 800 && /養傷去了/.test(toasts()));
+    put(z.x + 98, z.y); g.updateStats(0.05); ok('v0.8.9: walking back in, 封豨 comes out again at full life, no question asked', !!hog() && hog().hp === 3000 && !p.fight.away && hidden('bossask'));
     // 死在戰中：膽氣減半，戰事散了
     p.inBoss = {}; put(z.x + 98, z.y); g.updateStats(0.05); g.bossYes(); p.cour = 100; p.lastHit = { kind: '力', by: '封豨', big: true, t: w.time }; p.hp = 0; g.die('傷');
     ok('v0.8.7: dying in the fight ends it; 封豨 goes home; half the courage is kept', !p.fight && !hog() && /封豨回桑林去了/.test(document.getElementById('dead-text').textContent) && p.deathKeep === 0.5, document.getElementById('dead-text').textContent);
@@ -1845,7 +1907,7 @@ const result = await page.evaluate(async () => {
     p.inBoss = {}; put(z.x + 98, z.y); g.updateStats(0.05); ok('v0.8.7: once slain, its ground no longer asks', hidden('bossask') && !p.fight);
     // 收拾
     p.azure = keep.azure; p.bai = keep.bai; p.zhu = keep.zhu; p.cour = keep.cour; p.bag = keep.bag; p.tools = keep.tools; p.tool = keep.tool; g.barSig = ''; g.courSig = '';
-    p.bosses = {}; p.feats = []; p.inBoss = {}; p.fight = null; p.lockT = 0; p.guardT = 0; p.hp = 100; p.jing = []; p.puppet = 0; E.list = E.list.filter(o => o.type !== '豨' && o.type !== '豬');
+    p.bosses = {}; p.feats = []; p.inBoss = {}; p.fight = null; p.lockT = 0; p.guardT = 0; p.hp = 100; p.jing = []; p.puppet = 0; p.bossBuff = 0; p.roundPenal = false; p.bound = null; p.trophies = {}; E.list = E.list.filter(o => o.type !== '豨' && o.type !== '豬');
     p.creatures = p.creatures.filter(c => c !== '豨'); if (p.codex) delete p.codex['封豨']; p.sailing = false; p.ship = null; put(p0.x, p0.y); }
   // ============ v0.8.6：心打愜意、懼；燧石、火蝕；蠱雕（啼、撲）、朱羽、朱雀（氣順、鳳翎） ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, DB = G.DB, zhu0 = p.zhu, put = (x, y) => { p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; };
@@ -1876,7 +1938,7 @@ const result = await page.evaluate(async () => {
     const hp = E.list.find(o => o.type === '雕');
     ok('v0.8.6: over the southern sea a 蠱雕 comes, crying like a baby', !!hp && /蠱雕！/.test(toasts()), !!hp);
     p.san = 80; p.fearT = 0; hp.cryT = 0; hp.x = p.x + 6; hp.y = p.y; hp.moveT = 99; E.update(0.01, g);
-    ok('v0.8.6: its cry is 心 — sanity −6 on normal — and 懼 for a breath and a half', Math.abs(80 - p.san - U.r4(6 * g.baseTaken())) < 1e-6 && p.fearT >= 1.4 && /嬰兒/.test(g.msgText), [80 - p.san, p.fearT]);
+    ok('v0.8.6: its cry is 心 — sanity −5 on normal (v0.8.9: 3／5／7) — and 懼 for two and a half breaths (1.5／2.5／4)', Math.abs(80 - p.san - U.r4(5 * g.baseTaken())) < 1e-6 && p.fearT >= 2.4 && /嬰兒/.test(g.msgText), [80 - p.san, p.fearT]);
     p.fearT = 0; hp.x = p.x + 1; hp.y = p.y; hp.mode = 'dive'; hp.moveT = 0; hp.atk = 0; hp.cryT = 99; p.hp = 100; E.update(0.01, g);
     ok('v0.8.6: diving down it claws (16, 力), then lingers before it rises', Math.abs(100 - p.hp - U.r4(16 * g.takenMult())) < 1e-6 && hp.mode === 'rise' && hp.moveT > 0.5, [100 - p.hp, hp.mode]);
     { const tr = U.trueRand; g.removeItem('蠱雕殘體', 99); U.trueRand = () => 0.5; g.kill(hp); U.trueRand = tr;
