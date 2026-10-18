@@ -1645,6 +1645,34 @@ const result = await page.evaluate(async () => {
     const r0 = U.trueRand, cb = w.onWeather, ra = w.rainUntil, rn = w.nextRainAt; w.onWeather = null; U.trueRand = () => 0; w.rainUntil = 0; w.nextRainAt = w.time; w.step(p.x, p.y); const rainLen = w.rainUntil - w.time;
     U.trueRand = r0; w.onWeather = cb; w.rainUntil = ra; w.nextRainAt = rn;
     ok('v0.6.10: things counted in days follow the longer day (the shortest rain is a quarter of 360 = 90 s)', Math.abs(rainLen - 90) <= 0.5, rainLen); }
+  // ============ v0.8.4：四方地界（照規則種）；蜃碎片改叫蜃殘體 ============
+  { const E = g.ents, p0 = { x: p.x, y: p.y }, zs = G.zones(g.seed), zone = (id) => zs.find(z => z.id === id), DB = G.DB, zones0 = p.zones, cour0 = p.cour;
+    ok('v0.8.4: eight places on the four sides of the paper, each on its own side', zs.length === 8 && zone('青龍').x > 400 && zone('修蛇').x > 800 && zone('白虎').x < -400 && zone('封豨').x < -800 && zone('朱雀').y > 400 && zone('大風').y > 800 && zone('玄武').y < -400 && zone('共工').x < -700 && zone('共工').y < -700 && zs.map(z => z.name).join('') === '不周山洞庭桑林青丘龍淵虎嶺丹穴玄洲', zs.map(z => z.name + '(' + z.x + ',' + z.y + ')'));
+    const ring = (z, r, test) => { let bad = 0; for (let a = 0; a < 64; a++) for (const k of [0.3, 0.7, 1]) { const x = Math.round(z.x + Math.cos(a / 64 * 2 * Math.PI) * r * k), y = Math.round(z.y + Math.sin(a / 64 * 2 * Math.PI) * r * k); if (!test(w.get(x, y))) bad++; } return bad; };
+    const az = zone('青龍'), dt = zone('修蛇'), sl = zone('封豨'), bz = zone('共工');
+    ok('v0.8.4: the 東海青龍 sits at the heart of 龍淵, nothing but water for 49 tiles around', g.azure.x === az.x && g.azure.y === az.y && w.get(az.x, az.y) === '淼' && ring(az, 49, (t) => DB[t].kind === 'water') === 0);
+    ok('v0.8.4: 洞庭 is a fresh lake (湖) for 49 tiles around its heart, ringed by reefs', w.get(dt.x, dt.y) === '湖' && ring(dt, 49, (t) => t === '湖') === 0 && [...Array(360)].some((_, a) => [57, 59, 61].some(r => DB[w.get(Math.round(dt.x + Math.cos(a * Math.PI / 180) * r), Math.round(dt.y + Math.sin(a * Math.PI / 180) * r))].kind !== 'water')));
+    ok('v0.8.4: 桑林\'s heart is solid walkable ground for 38 tiles around', ring(sl, 38, (t) => DB[t].walk > 0 && DB[t].kind !== 'water') === 0);
+    ok('v0.8.4: 不周山 is land for 130 tiles around, with a ring of mountains round a basin', ring(bz, 130, (t) => DB[t].kind !== 'water') === 0 && DB[w.get(bz.x, bz.y)].walk > 0 && ['山', '煤', '鐵', '磊'].indexOf(w.get(bz.x - 52, bz.y)) >= 0);
+    // 登上桑林：記下來、長膽氣、狀態列寫地名
+    p.zones = {}; p.x = p.rx = sl.x; p.y = p.ry = sl.y; w.set(p.x, p.y, '草'); E.px = p.x; E.py = p.y; p.sailing = false; p.ship = null; p.swimming = false; const c0 = p.cour; g.updateStats(0.05);
+    ok('v0.8.4: landing on 桑林 the first time: noted, courage up, and the 淮南子 line on it', p.zones['封豨'] === 1 && p.cour > c0 && /登上桑林/.test(toasts()) && /禽封豨於桑林/.test(toasts()) && /^桑林 · /.test(g.placeName()), [p.cour - c0, g.placeName()]);
+    const c1 = p.cour; g.updateStats(0.05); ok('v0.8.4: …only the first time', p.cour === c1);
+    // 開船進洞庭：狀態列寫「船上 · 洞庭」，進了湖才算到了
+    p.x = p.rx = dt.x + 20; p.y = p.ry = dt.y; E.px = p.x; E.py = p.y; p.sailing = true; p.ship = World.newShip('孤帆'); g.updateStats(0.05); g.statusSig = ''; await sleep(400);
+    ok('v0.8.4: sailing into 洞庭 counts as arriving; the status bar reads 船上 · 洞庭', p.zones['修蛇'] === 1 && /到了洞庭/.test(toasts()) && /船上 · 洞庭/.test(document.getElementById('status').textContent), document.getElementById('status').textContent);
+    // 大地圖：到過的地界寫名字（畫得出來不出錯）
+    g.toggleMap(); await sleep(150); const mv = g.renderer.mapView; g.toggleMap();
+    ok('v0.8.4: the big map stretches out to 洞庭 once sailed there', !!mv && mv.ox + mv.N >= dt.x && mv.ox <= 0, mv);
+    // 存讀檔：到過哪些地界記得住；舊存檔沒有 zoneNews 就說一聲紙的四方，蜃碎片改叫蜃殘體
+    p.sailing = false; p.ship = null; p.x = p.rx = p0.x; p.y = p.ry = p0.y; E.px = p.x; E.py = p.y;
+    g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot)));
+    const old = JSON.parse(JSON.stringify(sv)); delete old.player.zones; delete old.player.zoneNews; old.player.bag = old.player.bag.concat([{ n: '蜃碎片', c: 5 }]);
+    g.load(old);
+    ok('v0.8.4: an old save hears about the four sides of the paper; its 蜃碎片 are now 蜃殘體', /紙的四方/.test(toasts()) && /不周山/.test(toasts()) && g.count('蜃殘體') >= 5 && g.count('蜃碎片') === 0 && p.zoneNews === true, g.count('蜃殘體'));
+    g.load(sv);
+    ok('v0.8.4: the places visited are kept across a save', p.zones && p.zones['封豨'] === 1 && p.zones['修蛇'] === 1);
+    g.removeItem('蜃殘體', 99); p.zones = zones0 || {}; p.cour = cour0; g.courSig = ''; p.x = p.rx = p0.x; p.y = p.ry = p0.y; E.px = p.x; E.py = p.y; }
   // ============ v0.8.3：魂環隔開、玄武四顆珠；水性減半；船一艘一欄（兩格／五格）、落水放船下水；魔物誌十二張 ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, az = g.azure, az0 = p.azure, ring = document.getElementById('soulring'), bag0 = p.bag.slice();
     const rs = getComputedStyle(ring), mw = document.getElementById('mapwrap').getBoundingClientRect(), rr = ring.getBoundingClientRect();
@@ -1707,7 +1735,7 @@ const result = await page.evaluate(async () => {
     ok('v0.8.2: back on land the 溺 box goes away', db.classList.contains('hidden'));
     // 魔物誌：斃了第一頭蜃才翻開
     p.codex = undefined; const jt0 = () => { g.journalTab = 'codex'; g.toggleJournal(); const t = document.getElementById('journal-tabs').textContent + document.getElementById('journal-body').textContent; g.toggleJournal(); g.journalTab = 'see'; return t; };
-    const before = jt0(); g.kill(E.add('蜃', p.x + 3, p.y + 3, { moveT: 99, fogT: 999 })); g.removeItem('蜃碎片', 99); const after = jt0();
+    const before = jt0(); g.kill(E.add('蜃', p.x + 3, p.y + 3, { moveT: 99, fogT: 999 })); g.removeItem('蜃殘體', 99); const after = jt0();
     ok('v0.8.2: the 魔物誌 opens in the journal only after the first 蜃 is slain, with a card for it', before.indexOf('魔物誌') < 0 && after.indexOf('魔物誌') >= 0 && /海旁蜃氣象樓臺/.test(after) && p.codex['蜃'] === 1, after.slice(after.indexOf('魔物誌'), after.indexOf('魔物誌') + 60));
     ok('v0.8.2: …and the 東海青龍 you met has a card too; ones you never met stay hidden', /東海青龍/.test(after) && /左青龍而右白虎/.test(after) && /未遇/.test(after)); }
   // ============ v0.8：八格存檔、暫停面板「存到」別格；東海青龍、蜃珠、船自己回命、舊存檔的龍換青鱗 ============
@@ -1744,28 +1772,28 @@ const result = await page.evaluate(async () => {
     ok('v0.8: …and a parked ship mends too (方舟: a quarter of 420 in half a day)', Math.abs(pk.hp - (20 + 105)) < 1e-3, pk.hp); w.removeShip(U.key(az.x - 12, az.y + 6));
     g.toggleMap(); await sleep(60); const mv = g.renderer.mapView; g.toggleMap();
     ok('v0.8: with the scale (or once taught) the big map reaches out to mark the 青龍', !!mv && az.x >= mv.ox && az.x <= mv.ox + mv.N && az.y >= mv.oy && az.y <= mv.oy + mv.N, mv);
-    // v0.8.1：蜃死掉蜃碎片一或二片（64%／36%，真隨機），不再直接掉蜃珠
-    { const tr = U.trueRand; g.removeItem('蜃碎片', 99); g.removeItem('蜃珠', 9);
-      U.trueRand = () => 0.5; g.kill(E.add('蜃', p.x + 4, p.y + 3, { moveT: 99, fogT: 999 })); const one = g.count('蜃碎片');
+    // v0.8.1：蜃死掉蜃殘體一或二片（64%／36%，真隨機），不再直接掉蜃珠
+    { const tr = U.trueRand; g.removeItem('蜃殘體', 99); g.removeItem('蜃珠', 9);
+      U.trueRand = () => 0.5; g.kill(E.add('蜃', p.x + 4, p.y + 3, { moveT: 99, fogT: 999 })); const one = g.count('蜃殘體');
       U.trueRand = () => 0.2; g.kill(E.add('蜃', p.x + 4, p.y + 3, { moveT: 99, fogT: 999 })); U.trueRand = tr;
-      ok('v0.8.1: a slain 蜃 drops one 蜃碎片 (64%) or two (36%), not a whole pearl', one === 1 && g.count('蜃碎片') === 3 && g.count('蜃珠') === 0 && /蜃碎片/.test(toasts()), [one, g.count('蜃碎片')]); }
+      ok('v0.8.1: a slain 蜃 drops one 蜃殘體 (64%) or two (36%), not a whole pearl', one === 1 && g.count('蜃殘體') === 3 && g.count('蜃珠') === 0 && /蜃殘體/.test(toasts()), [one, g.count('蜃殘體')]); }
     p.sailing = false; p.ship = null; E.list = E.list.filter(e => e.type !== '青龍');
-    // v0.8.1：九片蜃碎片加海水瓶三，在火旺的鼎裡熬一顆蜃珠，八成三成；不成退碎片（困難只退八片），海水瓶不退
+    // v0.8.1：九塊蜃殘體加海水瓶三，在火旺的鼎裡熬一顆蜃珠，八成三成；不成退殘體（困難只退八塊），海水瓶不退
     p.x = p.rx = p0.x; p.y = p.ry = p0.y; E.px = p.x; E.py = p.y;
-    { const tr = U.trueRand, kx = p0.x + 1, ky = p0.y, cnt = () => [g.count('蜃碎片'), g.count('海水瓶'), g.count('蜃珠')].join('/');
+    { const tr = U.trueRand, kx = p0.x + 1, ky = p0.y, cnt = () => [g.count('蜃殘體'), g.count('海水瓶'), g.count('蜃珠')].join('/');
       w.set(kx, ky, '鼎'); w.addFuel(kx, ky, 300); face(1, 0); p.sta = 100;
       const jar = () => g.count('淡水瓶') + ':' + g.count('玻璃瓶');
-      g.removeItem('海水瓶', 99); g.removeItem('淡水瓶', 99); g.removeItem('玻璃瓶', 99); g.removeItem('蜃碎片', 99); g.addItem('蜃碎片', 9); g.addItem('海水瓶', 3); hold('蜃碎片'); g.pressPlace();
+      g.removeItem('海水瓶', 99); g.removeItem('淡水瓶', 99); g.removeItem('玻璃瓶', 99); g.removeItem('蜃殘體', 99); g.addItem('蜃殘體', 9); g.addItem('海水瓶', 3); hold('蜃殘體'); g.pressPlace();
       ok('v0.8.2: without the bottle of fresh water (熬 has four dots: three brine, one fresh) nothing is used up', cnt() === '9/3/0' && /淡水瓶/.test(g.msgText), [cnt(), g.msgText]);
-      g.removeItem('蜃碎片', 1); g.addItem('淡水瓶', 1); hold('蜃碎片'); g.pressPlace();
+      g.removeItem('蜃殘體', 1); g.addItem('淡水瓶', 1); hold('蜃殘體'); g.pressPlace();
       ok('v0.8.1: eight shards are not enough — nothing is used up', cnt() === '8/3/0' && jar() === '1:0' && /9/.test(g.msgText), [cnt(), g.msgText]);
       g.msgUntil = 0; await sleep(80); const hint = document.getElementById('msg').textContent;
-      ok('v0.8.2: facing a lit 鼎 with shards in hand, the hint says what brewing needs and the odds', /熬蜃珠（碎片 8\/9、海水瓶 3\/3、淡水瓶 1\/1，83%）/.test(hint), hint);
-      g.addItem('蜃碎片', 2); hold('蜃碎片'); U.trueRand = () => 0.9; g.pressPlace();
+      ok('v0.8.2: facing a lit 鼎 with shards in hand, the hint says what brewing needs and the odds', /熬蜃珠（殘體 8\/9、海水瓶 3\/3、淡水瓶 1\/1，83%）/.test(hint), hint);
+      g.addItem('蜃殘體', 2); hold('蜃殘體'); U.trueRand = () => 0.9; g.pressPlace();
       ok('v0.8.2: a failed brew (17%) blows up — all four bottles are gone, the nine shards come back on normal', cnt() === '10/0/0' && jar() === '0:0' && /炸/.test(g.msgText), [cnt(), jar()]);
-      const dk = g.diff; g.diff = XIEYI.DIFF.hard; g.addItem('海水瓶', 3); g.addItem('淡水瓶', 1); hold('蜃碎片'); p.sta = 100; g.pressPlace(); g.diff = dk;
+      const dk = g.diff; g.diff = XIEYI.DIFF.hard; g.addItem('海水瓶', 3); g.addItem('淡水瓶', 1); hold('蜃殘體'); p.sta = 100; g.pressPlace(); g.diff = dk;
       ok('v0.8.1: on hard a failed brew gives back only eight', cnt() === '9/0/0', cnt());
-      g.addItem('海水瓶', 3); g.addItem('淡水瓶', 1); hold('蜃碎片'); p.sta = 100; U.trueRand = () => 0.5; g.pressPlace(); U.trueRand = tr;
+      g.addItem('海水瓶', 3); g.addItem('淡水瓶', 1); hold('蜃殘體'); p.sta = 100; U.trueRand = () => 0.5; g.pressPlace(); U.trueRand = tr;
       ok('v0.8.2: a successful brew (83%) turns nine shards and four bottles of water into one 蜃珠 and gives the four empty bottles back', cnt() === '0/0/1' && jar() === '0:4' && /熬成一顆蜃珠/.test(toasts()), [cnt(), jar()]);
       g.removeItem('玻璃瓶', 9);
       w.set(kx, ky, w.base(kx, ky)); g.removeItem('蜃珠', 9); }
