@@ -23,6 +23,9 @@
   // 魄（v0.5 加強）：玩家身上的光（手裡的火把蠟燭、頭上的燈帽）只把魄逼到 GHOST_KEEP 格外，在 GHOST_HOVER 格內徘徊；
   // 地上的光（燈、火、旺灶）GHOST_BURN 格內、龍四格內才煙滅。玩家有光時每 GHOST_DASH_GAP 息，最近那隻撲上來 GHOST_DASH 息；
   // 魄在兩格內（GHOST_SNUFF_R），手裡的光每息有 snuffP 的機會被吹熄（game.ghostTouch）
+  // 鑿齒（v0.8.5，小魔王）：盾在面朝的那邊，TOOTH_TURN 息才轉一回身；人在牠正面（夾角約六十七度內，就是面前三格）牠才撞得到，也只有正面打牠吃一成傷。
+  // 白虎（v0.8.5，神獸）：伏在虎嶺，四十格內現身；沒帶虎符的人進了 TIGER_ROAR_R 格，每 TIGER_ROAR_GAP 息一聲嘯（震，遊戲端結算）
+  const TOOTH_TURN = 1.2, TOOTH_STEP = 0.36, TOOTH_GAP = 1.8, TOOTH_FRONT = 0.38, TOOTH_SENSE = 12, TIGER_SEE = 40, TIGER_ROAR_R = 6, TIGER_ROAR_GAP = 10;
   const GHOST_KEEP = 6, GHOST_HOVER = 9, GHOST_BURN = 3, GHOST_DASH = 2.5, GHOST_DASH_GAP = [8, 14], GHOST_DASH_STEP = 0.22, GHOST_SNUFF_R = 2;
 
   class Entities {
@@ -32,6 +35,7 @@
       this.spawnAcc = 0;
       this.ghostAcc = 0;
       this.seaP = 1 / 160;       // 行船時每一點五息有這麼點機會浮上一頭蜃（平均約二百四十息一頭）
+      this.toothP = 1 / 100;     // 人在西邊的外島上，每一點五息有這麼點機會走出一頭鑿齒（平均約一百五十息一頭，v0.8.5）
       this.snuffP = 0.1;         // 魄兩格內，手裡的光每息被吹熄的機會
       this.dashT = GHOST_DASH_GAP[0];   // 下一次撲燈還有幾息（玩家身上有光的夜裡才倒數）
     }
@@ -44,6 +48,9 @@
     bisonRoom(x, y, night) { for (const [bx, by] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (this.bodyFits(x, y, bx, by, night, null)) return [bx, by]; return null; }
     at(x, y) { for (const e of this.list) if (this.covers(e, x, y)) return e; return null; }
     beastAt(x, y, except) { for (const e of this.list) if (e !== except && this.covers(e, x, y) && DB[e.type].kind === 'beast' && e.type !== '魄' && e.type !== '龍' && !(e.type === '鷹' && e.tame)) return e; return null; }   // 龍與馴了的鷹不擋路
+    inFront(e, x, y) { const vx = x - e.x, vy = y - e.y, l = Math.hypot(vx, vy), fl = Math.hypot(e.fx || 0, e.fy || 0); return !l || !fl || (vx * e.fx + vy * e.fy) / (l * fl) > TOOTH_FRONT; }   // (x, y) 在不在牠面前
+    shielded(e, x, y) { return e.type === '齒' && this.inFront(e, x, y); }   // 從 (x, y) 打鑿齒，是不是打在盾上
+    faceTo(e, x, y) { const fx = Math.sign(x - e.x), fy = Math.sign(y - e.y); if (fx || fy) { e.fx = fx; e.fy = fy; } }
     tamed() { return this.list.filter(e => e.type === '鷹' && e.tame); }
     sense(e, p, r) { return this.world.clear(e.x, e.y, p.x, p.y) ? r : r * SMELL; }   // 獸找得到人的距離：看得見照舊，隔著磚只靠氣味打七折
     ram(e, g, x, y) {      // 野牛撞牆：扣一點看不見的耐久；磚剩一半成墟，塌了就沒了
@@ -54,7 +61,7 @@
     rammable(x, y) { const ch = this.world.get(x, y); return RAMMABLE.indexOf(ch) >= 0 && (ch === '墟' || this.world.base(x, y) !== ch); }   // 人造的磚門窗，與所有的墟
     riled(e) { return !!e.angry && (e.type === '蛛' || e.type === '蟾' || e.type === '牛' || (e.type === '鷹' && !e.tame)); }   // 半友好的被惹了（v0.7.3：畫面上發紅變大）
     isHostile(o) {           // 會主動找人的：虎豹狼蛇、野豬、毒蛛；惹了才找人的：無毒蛛、蟾、野牛、沒馴的鷹
-      return '虎豹狼蛇豬'.indexOf(o.type) >= 0 || (o.type === '蛛' && o.venom) || (o.angry && (o.type === '蛛' || o.type === '蟾' || o.type === '牛' || (o.type === '鷹' && !o.tame)));
+      return '虎豹狼蛇豬齒'.indexOf(o.type) >= 0 || (o.type === '蛛' && o.venom) || (o.angry && (o.type === '蛛' || o.type === '蟾' || o.type === '牛' || (o.type === '鷹' && !o.tame)));
     }
     hostileNear(p, r) {      // 玩家 r 格內最近的敵對獸（鷹替你打的對象）
       let best = null, bd = Infinity;
@@ -86,6 +93,7 @@
       if (type === '魚') return d.kind === 'water';
       if (this.world.sheltered(x, y, type)) return false;                  // 小屋裡不生生靈（多小才算看難度，魄另一個門檻）
       if (type === '蜃') return ch === '淼';                                // 蜃只從深海浮上來
+      if (type === '齒') return d.walk > 0 && d.kind !== 'object' && d.kind !== 'water' && !d.bog;   // 鑿齒：外島的陸地上（哪座島由遊戲端判斷）
       if (type === '鹿') return '林木草竹棉麻果'.indexOf(ch) >= 0;
       if (type === '虎') return ch === '森' || (night && ch === '林');
       if (type === '豹') return ch === '森' || ch === '林';
@@ -107,6 +115,7 @@
       if (type === '鳥' || type === '龍' || type === '鷹') return d.kind !== 'fire';
       if (type === '魚' || type === '蜃') return d.kind === 'water';
       if (type === '青龍') return ch === '淼';   // 東海青龍只在深海上盤著（v0.8）
+      if (type === '白虎' && d.kind === 'water') return false;
       if (d.walk <= 0 || d.shelter || d.gate) return false;
       if (d.bog && type !== '蟾') return false;                             // 沼澤：除了蟾，獸都不進
       if (SCARED.indexOf(type) >= 0 && this.world.scared(x, y)) return false;
@@ -242,6 +251,13 @@
         }
         // 東海青龍（v0.8）：人到四十格內就在牠那片海上現身；走遠了跟別的生靈一樣散去（不存檔，回來再現）
         const az = g.azure; if (az && U.cheb(p.x, p.y, az.x, az.y) <= 40 && !this.list.some(e => e.type === '青龍')) this.add('青龍', az.x, az.y, { moveT: 2 });
+        // 白虎（v0.8.5）：人到虎嶺四十格內，就在島心現身；走遠了散去
+        const tz = g.tigerAt; if (tz && U.cheb(p.x, p.y, tz.x, tz.y) <= TIGER_SEE && !this.list.some(e => e.type === '白虎')) { const sp = this.canStand('白虎', tz.x, tz.y, night) ? [tz.x, tz.y] : null; if (sp) this.add('白虎', sp[0], sp[1], { moveT: 2, roarT: 2 }); }
+        // 鑿齒（v0.8.5）：人在西邊的外島上，從八到十四格外的陸地走出來；一次只一隻
+        if (!p.sailing && !p.swimming && this.count('齒') === 0 && Math.random() < this.toothP && g.toothLand && g.toothLand()) {
+          const m = this.spawnNear('齒', p, 8, 14, night, { moveT: 1.5, turnT: TOOTH_TURN });
+          if (m) { this.faceTo(m, p.x, p.y); if (g.toothRose) g.toothRose(m); }
+        }
         // 蜃：只在玩家行船或落水時，從十到十六格外的深海浮上來；機率低，一次只一隻
         if ((p.sailing || p.swimming) && this.count('蜃') === 0 && Math.random() < this.seaP) {
           const m = this.spawnNear('蜃', p, 10, 16, night, { moveT: 1.5, fogT: 4 });
@@ -287,6 +303,11 @@
           e.fogT = (e.fogT === undefined ? 6 : e.fogT) - dt;
           if (e.fogT <= 0) { e.fogT = 16 + Math.random() * 10; if (d <= 16 && (p.sailing || p.swimming)) w.spawnSeaFog(e.x, e.y, p.x, p.y); }
         }
+        if (e.type === '齒') { e.turnT = (e.turnT === undefined ? TOOTH_TURN : e.turnT) - dt; if (e.turnT <= 0) { e.turnT = TOOTH_TURN; this.faceTo(e, p.x, p.y); } }   // 一息多才轉一回身
+        if (e.type === '白虎') {   // 沒帶虎符的人進了六格：一聲嘯，地跟著抖
+          e.roarT = (e.roarT === undefined ? 2 : e.roarT) - dt;
+          if (e.roarT <= 0 && d <= TIGER_ROAR_R && g.tigerRoar && g.tigerRoar(e)) e.roarT = TIGER_ROAR_GAP;
+        }
         const rate = e.slowT > 0 ? 0.5 : 1;            // 撞在台邊：五息內行動與撲咬都慢一倍
         if (e.slowT > 0) e.slowT -= dt;
         if (e.provoked > 0) e.provoked -= dt;
@@ -321,6 +342,18 @@
             e.moveT = 0.6;
           } else if (atSea && d <= 14) { e.moveT = 0.4; this.stepTo(e, p.x, p.y, false, night); }
           else { e.moveT = 1 + Math.random() * 1.5; this.wander(e, night, null); }
+          continue;
+        }
+        if (e.type === '齒') {     // 鑿齒：貼著時人在盾前才撞得到，在身側背後就等牠轉過身來；十二格內追過來
+          if (d <= 1 && !sheltered) { if (this.inFront(e, p.x, p.y) && e.atk <= 0) { g.hit(e, DB['齒'].atk); e.atk = TOOTH_GAP; } e.moveT = 0.3; }
+          else if (d <= this.sense(e, p, TOOTH_SENSE) && !sheltered) { e.moveT = TOOTH_STEP; const ox = e.x, oy = e.y; if (this.stepTo(e, p.x, p.y, false, night)) this.faceTo(e, e.x + (e.x - ox), e.y + (e.y - oy)); }
+          else { e.moveT = 1 + Math.random() * 1.5; if (Math.random() < 0.5) this.wander(e, night, null); }
+          continue;
+        }
+        if (e.type === '白虎') {   // 伏在虎嶺島心三格內，不近人也不避人；人來了四格內就停下來
+          e.moveT = 1.4 + Math.random() * 1.6; const tz = g.tigerAt;
+          if (d <= 4) { this.faceTo(e, p.x, p.y); continue; }
+          if (tz && U.cheb(e.x, e.y, tz.x, tz.y) > 3) this.stepTo(e, tz.x, tz.y, false, night); else if (Math.random() < 0.4) this.wander(e, night, null);
           continue;
         }
         if (e.type === '青龍') {   // 在自己那片海上盤著（離家三格內），不近人也不避人

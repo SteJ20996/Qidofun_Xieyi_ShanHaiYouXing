@@ -47,6 +47,7 @@ const result = await page.evaluate(async () => {
 
   try {
   g.ents.seaP = 0;   // 蜃也是：專門的海上測試自己開
+  g.ents.toothP = 0;   // 鑿齒也是（v0.8.5）：專門的測試自己開
   w.fogP = 0;   // 霧障是真隨機的，測試途中跳出彈窗會把遊戲停住；專門的霧障測試自己開
   g.warnEnabled = false; w.fogStep = 1e9;   // 數值提醒的彈窗與霧障的挪動也先關掉，各自的測試再開
   g.ents.snuffP = 0; g.ents.dashT = 1e9;   // 魄吹燈與撲燈也是真隨機、真時間：專門的測試自己開
@@ -300,7 +301,8 @@ const result = await page.evaluate(async () => {
   p.cour = g.levelAt(30); ok('level 30: attack ×1.15³, taken ÷1.15²', Math.abs(g.dmgMult() - Math.pow(1.15, 3) * (1 + 0.05 / 3)) < 1e-9 && Math.abs(g.takenMult() - 0.83 / 1.15 / 1.15) < 1e-9);
   p.cour = g.levelAt(16); p.hp = 100; p.hitWin = { start: -99, n: 0 }; g.hit({ type: '虎', x: p.x + 1, y: p.y }, 20);
   ok('near the 山海衣 beasts hit 5/3 harder; the armour still takes 17% off (20 × 5/3 × 0.83 = 27.6667)', Math.abs(p.hp - (100 - 27.6667)) < 1e-9, p.hp);
-  w.set(p.x + 3, p.y, '草'); const tt = g.ents.add('虎', p.x + 3, p.y, { moveT: 0, calm: 0, atk: 0 }); g.ents.update(0.01, g);
+  for (let i = 1; i <= 3; i++) w.set(p.x + i, p.y, '草');   // 中間別擋著磚門墟：看不見人，虎白天只聞得到 2.8 格，不會撲（這項以前偶爾不過）
+  const tt = g.ents.add('虎', p.x + 3, p.y, { moveT: 0, calm: 0, atk: 0 }); g.ents.update(0.01, g);
   ok('near the 山海衣 hostile beasts move at half speed', Math.abs(tt.moveT - 0.6) < 1e-6, tt.moveT); g.ents.remove(tt);
   g.takeOff('盔');
   ok('taking one piece off turns it back into plain clothes', !g.totemOn() && Math.abs(g.dmgMult() - (1 + 0.05 / 3)) < 1e-9 && Math.abs(g.takenMult() - 0.85) < 1e-9 && g.has('布帽'), g.takenMult());
@@ -1645,6 +1647,72 @@ const result = await page.evaluate(async () => {
     const r0 = U.trueRand, cb = w.onWeather, ra = w.rainUntil, rn = w.nextRainAt; w.onWeather = null; U.trueRand = () => 0; w.rainUntil = 0; w.nextRainAt = w.time; w.step(p.x, p.y); const rainLen = w.rainUntil - w.time;
     U.trueRand = r0; w.onWeather = cb; w.rainUntil = ra; w.nextRainAt = rn;
     ok('v0.6.10: things counted in days follow the longer day (the shortest rain is a quarter of 360 = 90 s)', Math.abs(rainLen - 90) <= 0.5, rainLen); }
+  // ============ v0.8.5：傷害分質；鑿齒（盾）、虎符、白虎（嘯、抗震、虎魄）；死在神獸手上膽氣只掉一半 ============
+  { const E = g.ents, p0 = { x: p.x, y: p.y }, DB = G.DB, cour0 = p.cour, hp0 = p.hp, bai0 = p.bai, put = (x, y) => { p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; };
+    E.list = E.list.filter(o => o.type !== '齒' && o.type !== '白虎');
+    // 傷害分質
+    p.bai = false; p.sailing = false; p.ship = null; p.swimming = false; w.set(p.x, p.y, '草');
+    ok('v0.8.5: 力 is cut by armour (= takenMult), 震 is not — but nothing quakes up onto a 台, 橋, 棧 or a boat', g.kindMult('力') === g.takenMult() && g.kindMult('震') === g.baseTaken() && (() => { w.set(p.x, p.y, '台'); const k = g.kindMult('震'); w.set(p.x, p.y, '草'); return k === 0; })());
+    p.bai = true; ok('v0.8.5: 白虎\'s 抗震 takes a quarter off 震', Math.abs(g.kindMult('震') - 0.75 * g.baseTaken()) < 1e-9); p.bai = false;
+    p.hp = 80; const d1 = g.hurt(10, '震', { name: '白虎', big: true });
+    ok('v0.8.5: hurt() takes the damage and remembers who dealt it', Math.abs(p.hp - (80 - d1)) < 1e-6 && d1 > 0 && p.lastHit.by === '白虎' && p.lastHit.big && p.lastHit.kind === '震');
+    // 死在神獸手上：膽氣只掉一半；平常掉六成
+    p.cour = 100; p.hp = 0.5; g.hurt(5, '震', { name: '白虎', big: true }); g.die('傷');
+    ok('v0.8.5: killed by the 白虎 the death note says courage only halves', /死在白虎手上，膽氣只減一半/.test(document.getElementById('dead-text').textContent) && p.deathKeep === 0.5, document.getElementById('dead-text').textContent);
+    g.respawn(); ok('v0.8.5: …and on waking courage is half of what it was', p.cour === 50, p.cour);
+    p.cour = 100; p.hp = 0.5; g.hurt(5, '力', { name: '狼' }); g.die('傷'); g.respawn();
+    ok('v0.8.5: killed by an ordinary beast courage still falls by six tenths', Math.abs(p.cour - 40) < 1e-9, p.cour);
+    p.cour = cour0; p.hp = 100; g.courSig = '';
+    // 鑿齒：只在西邊的外島走出來
+    const west = G.isles(g.seed).filter(i => i.cx < -350 && !G.zoneAt(i.cx, i.cy, g.seed)).sort((a, b) => b.R - a.R)[0];
+    let spot = null; for (let r = 0; r < west.R && !spot; r++) for (let a = 0; a < 16 && !spot; a++) { const x = Math.round(west.cx + Math.cos(a / 8 * Math.PI) * r), y = Math.round(west.cy + Math.sin(a / 8 * Math.PI) * r); if (w.walkable(x, y) && DB[w.get(x, y)].kind !== 'water') spot = [x, y]; }
+    put(p0.x, p0.y); const atHome = g.toothLand(); const tz = G.zones(g.seed).find(z => z.id === '白虎'); put(tz.x, tz.y); const atTiger = g.toothLand(); put(spot[0], spot[1]); const atWest = g.toothLand();
+    ok('v0.8.5: the 鑿齒 only comes out on the western outer isles — not at home, not on 虎嶺', !atHome && !atTiger && atWest, [atHome, atTiger, atWest, west.name, west.cx]);
+    E.toothP = 1; for (let n = 0; n < 12 && !E.count('齒'); n++) { E.spawnAcc = 2; E.update(0.01, g); } E.toothP = 0;
+    ok('v0.8.5: on a western isle a 鑿齒 walks out, with a toast about the chisel sound and its shield', E.count('齒') === 1 && /鑿齒！/.test(toasts()) && /盾/.test(toasts()), E.count('齒'));
+    // 盾：正面只吃一成，側面全吃；牠只撞得到正面的人
+    E.list = E.list.filter(o => o.type !== '齒'); w.set(p.x + 1, p.y, '草'); w.set(p.x, p.y + 1, '草');
+    const tt = E.add('齒', p.x + 1, p.y, { fx: -1, fy: 0, turnT: 99, moveT: 99 }); g.addItem('石劍', 1); hold('石劍'); p.sta = 100;
+    let h0 = tt.hp; p.atkT = 0; g.attack(tt); const front = h0 - tt.hp;
+    ok('v0.8.5: hitting the 鑿齒 from in front lands on the 盾 — a tenth of the damage', Math.abs(front - U.r4(G.ITEMS['石劍'].dmg * g.dmgMult() * 0.1)) < 1e-6 && /盾上/.test(g.msgText), [front, g.msgText]);
+    tt.fx = 0; tt.fy = 1; h0 = tt.hp; p.atkT = 0; g.attack(tt); const side = h0 - tt.hp;
+    ok('v0.8.5: from its side the blow goes round the shield — full damage', Math.abs(side - front * 10) < 1e-3 && /繞過盾/.test(g.msgText), [side, front]);
+    p.hp = 100; tt.atk = 0; tt.moveT = 0; tt.turnT = 99; E.update(0.01, g); const sideHp = p.hp;
+    tt.fx = -1; tt.fy = 0; tt.atk = 0; tt.moveT = 0; E.update(0.01, g); const frontHp = p.hp;
+    ok('v0.8.5: it can only ram you when you stand in front of it (14, 力)', sideHp === 100 && frontHp < 100 && Math.abs(100 - frontHp - U.r4(14 * g.takenMult())) < 1e-6, [sideHp, frontHp]);
+    tt.fx = 0; tt.fy = 1; tt.turnT = 0.01; E.update(0.05, g); ok('v0.8.5: it turns to face you, a breath or so at a time', tt.fx === -1 && tt.fy === 0, [tt.fx, tt.fy]);
+    // 斃之：殘體一或二塊
+    { const tr = U.trueRand; g.removeItem('鑿齒殘體', 99); U.trueRand = () => 0.5; g.kill(tt); const one = g.count('鑿齒殘體'); U.trueRand = () => 0.1; g.kill(E.add('齒', p.x + 3, p.y + 3, { moveT: 99 })); U.trueRand = tr;
+      ok('v0.8.5: a slain 鑿齒 leaves one 鑿齒殘體 (64%) or two (36%); the 魔物誌 counts it', one === 1 && g.count('鑿齒殘體') === 3 && p.codex['鑿齒'] === 2 && /鑿齒斃/.test(toasts()), [one, g.count('鑿齒殘體')]); }
+    // 虎符：九塊、鐵三、鎢鋼一，火旺的鼎；八成三成
+    { const tr = U.trueRand, kx = p.x + 1, ky = p.y, cnt = () => [g.count('鑿齒殘體'), g.count('鐵'), g.count('鎢鋼'), g.count('虎符')].join('/');
+      w.set(kx, ky, '鼎'); w.addFuel(kx, ky, 300); face(1, 0); p.sta = 100;
+      g.removeItem('鐵', 99); g.removeItem('鎢鋼', 99); g.removeItem('虎符', 9); g.removeItem('鑿齒殘體', 99); g.addItem('鑿齒殘體', 9); g.addItem('鐵', 3); hold('鑿齒殘體'); g.pressPlace();
+      ok('v0.8.5: without the 鎢鋼 nothing is used up', cnt() === '9/3/0/0' && /鎢鋼/.test(g.msgText), [cnt(), g.msgText]);
+      g.addItem('鎢鋼', 1); await until(() => { g.msgUntil = 0; return /鑄虎符/.test(document.getElementById('msg').textContent); }, 1500); const hint = document.getElementById('msg').textContent;   // 雨停之類的訊息可能剛好蓋過去：等提示列換回來
+      ok('v0.8.5: facing a lit 鼎 with 鑿齒殘體 in hand, the hint says what a 虎符 needs', /鑄虎符（殘體 9\/9、鐵 3\/3、鎢鋼 1\/1，83%）/.test(hint), hint);
+      U.trueRand = () => 0.9; hold('鑿齒殘體'); g.pressPlace();
+      ok('v0.8.5: a failed casting melts the iron and 鎢鋼; the nine pieces come back', cnt() === '9/0/0/0' && /熔掉/.test(g.msgText), cnt());
+      g.addItem('鐵', 3); g.addItem('鎢鋼', 1); U.trueRand = () => 0.5; hold('鑿齒殘體'); p.sta = 100; g.pressPlace(); U.trueRand = tr;
+      ok('v0.8.5: a good casting (83%) makes one 虎符', cnt() === '0/0/0/1' && /鑄成一枚虎符/.test(toasts()), cnt());
+      w.set(kx, ky, w.base(kx, ky)); }
+    // 白虎：虎嶺四十格內現身；沒帶虎符走近六格就嘯（震）；求教得抗震、虎魄
+    put(tz.x + 5, tz.y); w.set(p.x, p.y, '草'); E.list = E.list.filter(o => o.type !== '白虎'); E.spawnAcc = 2; E.update(0.01, g);
+    const bh = E.list.find(o => o.type === '白虎');
+    ok('v0.8.5: near 虎嶺 the 白虎 appears at the heart of the island', !!bh && U.cheb(bh.x, bh.y, tz.x, tz.y) <= 3, bh && [bh.x, bh.y]);
+    const fu = g.count('虎符'); g.removeItem('虎符', 9); p.hp = 100; bh.roarT = 0; E.update(0.01, g);
+    const roared = 100 - p.hp, roarMsg = g.msgText;
+    ok('v0.8.5: without a 虎符, inside six tiles it roars — 震, six on normal, and asks for the tally', Math.abs(roared - U.r4(6 * g.baseTaken())) < 1e-6 && /震/.test(roarMsg) && /拿虎符來/.test(roarMsg), [roared, roarMsg]);
+    w.set(p.x, p.y, '台'); p.hp = 100; bh.roarT = 0; E.update(0.01, g);
+    ok('v0.8.5: standing on a 台 the quake does not reach you', p.hp === 100 && /震不上來/.test(g.msgText), g.msgText); w.set(p.x, p.y, '草');
+    g.addItem('虎符', fu || 1); p.hp = 100; bh.roarT = 0; E.update(0.01, g);
+    ok('v0.8.5: carrying a 虎符, it does not roar', p.hp === 100);
+    put(bh.x + 2, bh.y); w.set(p.x, p.y, '草'); p.bai = false; g.courSig = ''; g.pressGather();
+    const ring = document.getElementById('soulring'); await sleep(80);
+    ok('v0.8.5: E within two tiles with a 虎符: 白虎 teaches 抗震, the 虎魄 third lights up', p.bai === true && g.count('虎符') === 0 && /求教白虎/.test(toasts()) && ring.classList.contains('b') && /虎魄（白虎，已求教）/.test(ring.title), ring.title);
+    g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot)));
+    ok('v0.8.5: having been taught by the 白虎 is saved', sv.player.bai === true);
+    p.bai = bai0; p.hp = hp0; g.courSig = ''; E.list = E.list.filter(o => o.type !== '白虎' && o.type !== '齒'); g.removeItem('鑿齒殘體', 99); g.removeItem('石劍', 9); p.creatures = p.creatures.filter(c => c !== '齒' && c !== '白虎'); delete p.codex['鑿齒']; put(p0.x, p0.y); }
   // ============ v0.8.4：四方地界（照規則種）；蜃碎片改叫蜃殘體 ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, zs = G.zones(g.seed), zone = (id) => zs.find(z => z.id === id), DB = G.DB, zones0 = p.zones, cour0 = p.cour;
     ok('v0.8.4: eight places on the four sides of the paper, each on its own side', zs.length === 8 && zone('青龍').x > 400 && zone('修蛇').x > 800 && zone('白虎').x < -400 && zone('封豨').x < -800 && zone('朱雀').y > 400 && zone('大風').y > 800 && zone('玄武').y < -400 && zone('共工').x < -700 && zone('共工').y < -700 && zs.map(z => z.name).join('') === '不周山洞庭桑林青丘龍淵虎嶺丹穴玄洲', zs.map(z => z.name + '(' + z.x + ',' + z.y + ')'));
@@ -1653,7 +1721,7 @@ const result = await page.evaluate(async () => {
     ok('v0.8.4: the 東海青龍 sits at the heart of 龍淵, nothing but water for 49 tiles around', g.azure.x === az.x && g.azure.y === az.y && w.get(az.x, az.y) === '淼' && ring(az, 49, (t) => DB[t].kind === 'water') === 0);
     ok('v0.8.4: 洞庭 is a fresh lake (湖) for 49 tiles around its heart, ringed by reefs', w.get(dt.x, dt.y) === '湖' && ring(dt, 49, (t) => t === '湖') === 0 && [...Array(360)].some((_, a) => [57, 59, 61].some(r => DB[w.get(Math.round(dt.x + Math.cos(a * Math.PI / 180) * r), Math.round(dt.y + Math.sin(a * Math.PI / 180) * r))].kind !== 'water')));
     ok('v0.8.4: 桑林\'s heart is solid walkable ground for 38 tiles around', ring(sl, 38, (t) => DB[t].walk > 0 && DB[t].kind !== 'water') === 0);
-    ok('v0.8.4: 不周山 is land for 130 tiles around, with a ring of mountains round a basin', ring(bz, 130, (t) => DB[t].kind !== 'water') === 0 && DB[w.get(bz.x, bz.y)].walk > 0 && ['山', '煤', '鐵', '磊'].indexOf(w.get(bz.x - 52, bz.y)) >= 0);
+    ok('v0.8.5: 不周山 (radius 120) is land for 102 tiles around, with a ring of mountains round a basin', bz.r === 120 && bz.solid === 102 && ring(bz, 102, (t) => DB[t].kind !== 'water') === 0 && DB[w.get(bz.x, bz.y)].walk > 0 && ['山', '煤', '鐵', '磊'].indexOf(w.get(bz.x - 52, bz.y)) >= 0);
     // 登上桑林：記下來、長膽氣、狀態列寫地名
     p.zones = {}; p.x = p.rx = sl.x; p.y = p.ry = sl.y; w.set(p.x, p.y, '草'); E.px = p.x; E.py = p.y; p.sailing = false; p.ship = null; p.swimming = false; const c0 = p.cour; g.updateStats(0.05);
     ok('v0.8.4: landing on 桑林 the first time: noted, courage up, and the 淮南子 line on it', p.zones['封豨'] === 1 && p.cour > c0 && /登上桑林/.test(toasts()) && /禽封豨於桑林/.test(toasts()) && /^桑林 · /.test(g.placeName()), [p.cour - c0, g.placeName()]);
