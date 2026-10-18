@@ -65,7 +65,7 @@
       osc.connect(f); f.connect(g); g.connect(o); osc.start(t); lfo.start(t); osc.stop(t + 0.75); lfo.stop(t + 0.75);
     });
   };
-  // 各種獸的聲音（v0.28）：撲咬時一聲，走近八格內先聽見一聲（soft：小聲些）
+  // 各種獸的聲音（v0.6）：撲咬時一聲，走近八格內先聽見一聲（soft：小聲些）
   function growl(c, out, t, f0, f1, dur, vol, lfoHz, lfoAmt, cut, type) {
     const osc = c.createOscillator(); osc.type = type || 'sawtooth'; osc.frequency.setValueAtTime(f0, t); osc.frequency.linearRampToValueAtTime(f1, t + dur);
     const lfo = c.createOscillator(); lfo.frequency.value = lfoHz; const lg = c.createGain(); lg.gain.value = lfoAmt; lfo.connect(lg); lg.connect(osc.frequency);

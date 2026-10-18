@@ -50,7 +50,7 @@ const result = await page.evaluate(async () => {
   g.warnEnabled = false; w.fogStep = 1e9;   // 數值提醒的彈窗與霧障的挪動也先關掉，各自的測試再開
   g.ents.snuffP = 0; g.ents.dashT = 1e9;   // 魄吹燈與撲燈也是真隨機、真時間：專門的測試自己開
   // ============ A. 島與採集 ============
-  ok('v0.38: the old island keeps radius 85; the paper is 2500×2500 and the sea around the home island is deep', G.ISLAND_R === 85 && G.WORLD_R === 1250 && w.get(0, 160) === '淼' && w.get(-170, 0) === '淼' && w.get(0, 1300) === '淼');
+  ok('v0.7: the old island keeps radius 85; the paper is 2500×2500 and the sea around the home island is deep', G.ISLAND_R === 85 && G.WORLD_R === 1250 && w.get(0, 160) === '淼' && w.get(-170, 0) === '淼' && w.get(0, 1300) === '淼');
   ok('eight landmarks placed', w.places.length === 8, w.places.map(x => x.name).join(''));
   ok('five steles', w.steles.size === 5);
   const sp0 = [p.x, p.y]; await press('KeyD', 600); await sleep(300);
@@ -105,14 +105,14 @@ const result = await page.evaluate(async () => {
   face(0, -1); w.set(T().x, T().y, '沙'); w.set(T().x, T().y, '木'); hold('門'); g.pressPlace();
   ok('cannot place on a tree before clearing it', w.get(T().x, T().y) === '木');
   w.set(T().x, T().y, '草'); const tr0 = U.trueRand; U.trueRand = () => 0.9; const grass0 = g.count('草'); g.pressPlace(); U.trueRand = tr0;
-  ok('v0.29: a 門 goes straight onto grass; this time the grass is crushed', w.get(T().x, T().y) === '門' && g.count('草') === grass0 && g.msgText.indexOf('壓壞') >= 0, g.count('草'));
+  ok('v0.6.2: a 門 goes straight onto grass; this time the grass is crushed', w.get(T().x, T().y) === '門' && g.count('草') === grass0 && g.msgText.indexOf('壓壞') >= 0, g.count('草'));
   ok('placed 門: player passes, ghosts do not', w.get(T().x, T().y) === '門' && g.pass(T().x, T().y) && !g.ents.canStand('狼', T().x, T().y, true) && !g.ents.canStand('虎', T().x, T().y, true));
   face(-1, 0); w.set(T().x, T().y, '花'); hold('床'); const fl0 = g.count('花'); U.trueRand = () => 0.1; g.pressPlace(); U.trueRand = tr0;
   const bed = T();
   ok('placed 床 sets home', w.get(bed.x, bed.y) === '床' && p.home && p.home.x === bed.x, p.home);
-  ok('v0.29: a 床 on 花 — half the time the flower is picked up as it goes down', g.count('花') === fl0 + 1, [fl0, g.count('花')]);
+  ok('v0.6.2: a 床 on 花 — half the time the flower is picked up as it goes down', g.count('花') === fl0 + 1, [fl0, g.count('花')]);
   face(0, 1); w.set(T().x, T().y, '田'); hold('灶'); const stander = g.ents.add('鹿', T().x, T().y, { calm: 99, moveT: 99 }); g.pressPlace();
-  ok('v0.29: nothing goes down on a tile a creature stands on', w.get(T().x, T().y) === '田' && g.count('灶') === 1 && g.msgText.indexOf('有生靈') >= 0);
+  ok('v0.6.2: nothing goes down on a tile a creature stands on', w.get(T().x, T().y) === '田' && g.count('灶') === 1 && g.msgText.indexOf('有生靈') >= 0);
   g.ents.list = g.ents.list.filter(e => e !== stander); w.set(T().x, T().y, '沙'); g.pressPlace();
   const stove = T();
   ok('placed 灶 is cold', w.get(stove.x, stove.y) === '灶' && !w.stoveLit(stove.x, stove.y));
@@ -182,7 +182,7 @@ const result = await page.evaluate(async () => {
   ok('zero stamina bleeds hp', p.hp < 100, p.hp); p.sta = 80;
   w.set(p.x + 5, p.y + 5, '磚');
   ok('ghost passes bricks, wolves do not', g.ents.canStand('魄', p.x + 5, p.y + 5, true) && !g.ents.canStand('狼', p.x + 5, p.y + 5, true));
-  // 手持火把：只把魄逼到六格外，不再煙滅（v0.20）
+  // 手持火把：只把魄逼到六格外，不再煙滅（v0.5）
   g.addItem('火把', 1); hold('火把'); gh.moveT = 0; await until(() => U.cheb(gh.x, gh.y, p.x, p.y) > 6, 5000);
   ok('a held torch drives the ghost back beyond six tiles; it does not dissipate', g.ents.list.includes(gh) && !(gh.fade < 1) && U.cheb(gh.x, gh.y, p.x, p.y) > 6 && g.hasLight(), U.cheb(gh.x, gh.y, p.x, p.y));
   g.ents.remove(gh);
@@ -206,7 +206,7 @@ const result = await page.evaluate(async () => {
   await until(() => !g.ents.list.includes(g2), 4000);
   ok('by day a ghost in the woods freezes, one outside dissipates', g.ents.list.includes(g1) && g1.frozen && !g.ents.list.includes(g2));
   g.ents.remove(g1);
-  // 毒蛇：咬一口中毒九秒、每秒一點五（v0.28.1 起，原本五秒每秒三）；連咬十五口必死
+  // 毒蛇：咬一口中毒九秒、每秒一點五（v0.6.1 起，原本五秒每秒三）；連咬十五口必死
   hold('木'); w.time = DAY * 13 + DAY * 0.53;
   face(1, 0); w.set(T().x, T().y, '草'); const snake = g.ents.add('蛇', T().x, T().y, { moveT: 0, atk: 0 }); p.hp = 100; p.biteN = 0; p.biteLast = -99;
   await until(() => p.poisonT > 0, 3000);
@@ -245,14 +245,14 @@ const result = await page.evaluate(async () => {
   // 稻草人：十格內獸不能站
   w.set(T().x, T().y, '土'); g.addItem('偶', 2); hold('偶'); g.pressPlace();
   const sc = T();
-  ok('scarecrow placed with 45 days (v0.37; was 30)', w.get(sc.x, sc.y) === '偶' && Math.round(w.scareDays(sc.x, sc.y)) === 45, w.scareDays(sc.x, sc.y));
+  ok('scarecrow placed with 45 days (v0.6.10; was 30)', w.get(sc.x, sc.y) === '偶' && Math.round(w.scareDays(sc.x, sc.y)) === 45, w.scareDays(sc.x, sc.y));
   for (const dx of [7, 8, 9, 10]) w.set(sc.x + dx, sc.y, '草');
   ok('beasts cannot come within ten tiles of a fresh scarecrow', !g.ents.canStand('虎', sc.x + 9, sc.y, true) && !g.ents.canStand('蛇', sc.x + 10, sc.y, true) && g.ents.canStand('鹿', sc.x + 9, sc.y, true) && g.ents.canStand('魄', sc.x + 9, sc.y, true));
   g.pressPlace();
-  ok('a second scarecrow extends to sixty days at most (v0.37; was 40)', Math.round(w.scareDays(sc.x, sc.y)) === 60, w.scareDays(sc.x, sc.y));
+  ok('a second scarecrow extends to sixty days at most (v0.6.10; was 40)', Math.round(w.scareDays(sc.x, sc.y)) === 60, w.scareDays(sc.x, sc.y));
   w.scarecrows.set(sc.x + ',' + sc.y, w.time + 23 * DAY); const front = !g.ents.canStand('虎', sc.x + 10, sc.y, true);
   w.scarecrows.set(sc.x + ',' + sc.y, w.time + 22 * DAY);
-  ok('v0.37: ten tiles while more than 22.5 days are left, seven after', front && !g.ents.canStand('虎', sc.x + 7, sc.y, true) && g.ents.canStand('虎', sc.x + 8, sc.y, true));
+  ok('v0.6.10: ten tiles while more than 22.5 days are left, seven after', front && !g.ents.canStand('虎', sc.x + 7, sc.y, true) && g.ents.canStand('虎', sc.x + 8, sc.y, true));
   w.scarecrows.set(sc.x + ',' + sc.y, w.time + 10 * DAY);
   ok('in the last fifteen days the radius is seven', !g.ents.canStand('虎', sc.x + 7, sc.y, true) && g.ents.canStand('虎', sc.x + 8, sc.y, true));
   w.scarecrows.delete(sc.x + ',' + sc.y);
@@ -274,7 +274,7 @@ const result = await page.evaluate(async () => {
   // 膽氣：每 20 點一重，回復倍率
   p.cour = 45; g.addCourage(0);
   ok('courage level 2 gives 1.2x recovery', g.level() === 2 && Math.abs(g.mult() - 1.2) < 1e-9);
-  ok('level thresholds grow as 20×(1+0.1n)², kept to four decimals (v0.29)', g.levelCost(0) === 20 && g.levelCost(1) === 24.2 && g.levelCost(2) === 28.8 && g.levelCost(3) === 33.8 && g.levelCost(4) === 39.2 && g.levelAt(1) === 20 && g.levelAt(2) === 44.2 && g.levelAt(8) === 300 && g.levelAt(10) === 437 && g.levelAt(31) === 4371, [g.levelAt(8), g.levelAt(10), g.levelAt(31)]);
+  ok('level thresholds grow as 20×(1+0.1n)², kept to four decimals (v0.6.2)', g.levelCost(0) === 20 && g.levelCost(1) === 24.2 && g.levelCost(2) === 28.8 && g.levelCost(3) === 33.8 && g.levelCost(4) === 39.2 && g.levelAt(1) === 20 && g.levelAt(2) === 44.2 && g.levelAt(8) === 300 && g.levelAt(10) === 437 && g.levelAt(31) === 4371, [g.levelAt(8), g.levelAt(10), g.levelAt(31)]);
   ok('ship recipe locked below level 8', (() => { g.addItem('木板', 8); g.addItem('船槳', 1); g.addItem('船帆', 1); p.sta = 100; g.craft('ship'); return g.count('孤帆') === 0; })());
   p.cour = 300; g.craft('ship');
   ok('a 孤帆 is craftable at level 8 for 8 planks, an oar and a sail', g.count('孤帆') === 1 && g.level() === 8 && g.count('木板') === 0, [g.count('孤帆'), g.level()]);
@@ -321,7 +321,7 @@ const result = await page.evaluate(async () => {
   p.worn['盔'].wm = 5; p.hitWin = { start: w.time, n: 4 }; w.time += 16; await sleep(80);
   ok('the wear multiplier caps at ×6', Math.abs(p.worn['盔'].wm - 6) < 1e-9 && p.hitWin.n === 0, p.worn['盔'].wm);
   g.addItem('麻布', 1); p.sta = 50; g.repairWorn('盔');
-  ok('v0.39: a piece with more than half its life left cannot be patched yet', g.count('麻布') === 1 && p.sta === 50 && g.msgText.indexOf('用過一半才能修補') >= 0, g.msgText);
+  ok('v0.7.1: a piece with more than half its life left cannot be patched yet', g.count('麻布') === 1 && p.sta === 50 && g.msgText.indexOf('用過一半才能修補') >= 0, g.msgText);
   p.worn['盔'].dur = g.lifeOf(p.worn['盔']) * 0.4; g.repairWorn('盔');
   ok('repairing with 麻布 restores 180 days and restarts wear at ×1.5', Math.round(p.worn['盔'].dur / DAY) === 180 && p.worn['盔'].wm === 1.5 && g.count('麻布') === 0 && p.sta === 46, [p.worn['盔'].wm, g.count('麻布')]);
   p.hp = 100; p.hurtT = 0; g.takeOff('盔'); g.takeOff('靴'); trim(['木', '石', '石子', '草', '土', '磚', '孤帆', '方舟']);
@@ -339,12 +339,12 @@ const result = await page.evaluate(async () => {
   ok('full iron (甲盔靴 + cloth lining and trousers): 30% less damage, poison immune, 25% slower, +5% attack, +8% drain', Math.abs(g.armorRed() - 0.30) < 1e-9 && g.ironFull() && Math.abs(g.ironSpeed() - 0.75) < 1e-9 && Math.abs(g.dmgMult() - 1.05) < 1e-9 && Math.abs(g.ironDrain() - 1.08) < 1e-9 && Math.abs(g.takenMult() - 0.7) < 1e-9, [g.armorRed(), g.dmgMult(), g.takenMult()]);
   p.poisonT = 0; p.poisonPer = 0; g.bite({ type: '蛇', x: p.x + 1, y: p.y }, 3);
   ok('iron-clad, a snake bite does not poison', p.poisonT === 0 && p.poisonPer === 0);
-  const wornDown = (k) => { p.worn[k].dur = g.lifeOf(p.worn[k]) * 0.4; };   // v0.39：用過一半才能修補
+  const wornDown = (k) => { p.worn[k].dur = g.lifeOf(p.worn[k]) * 0.4; };   // v0.7.1：用過一半才能修補
   p.worn['甲'].wm = 3; g.removeItem('鐵', 99); g.addItem('鐵', 1); p.sta = 50; wornDown('甲'); g.repairWorn('甲');
   ok('iron pieces are repaired with 鐵: one the first time', p.worn['甲'].wm === 1.5 && g.count('鐵') === 0 && p.worn['甲'].rg === 1);
   g.addItem('鐵', 1); p.sta = 50; wornDown('甲'); g.repairWorn('甲'); const ironShort = g.count('鐵') === 1 && p.worn['甲'].rg === 1 && g.msgText.indexOf('鐵 2') >= 0;
   const ic = []; g.addItem('鐵', 30); for (let i = 0; i < 4; i++) { const c0 = g.count('鐵'); p.sta = 50; wornDown('甲'); g.repairWorn('甲'); ic.push(c0 - g.count('鐵')); }
-  ok('v0.30: the same iron piece costs 鐵 1, 2, 4, 8, then 8 again; one 鐵 is not enough the second time', ironShort && ic.join(',') === '2,4,8,8' && p.worn['甲'].rg === 5, ic);
+  ok('v0.6.3: the same iron piece costs 鐵 1, 2, 4, 8, then 8 again; one 鐵 is not enough the second time', ironShort && ic.join(',') === '2,4,8,8' && p.worn['甲'].rg === 5, ic);
   g.removeItem('鐵', 99);
   for (const k of ['襯', '甲', '褲', '盔', '靴']) g.takeOff(k); trim(['木', '石', '石子', '草', '土', '磚', '孤帆', '方舟']); p.hitWin = { start: -99, n: 0 };
   // 難度：魄幾夜起、受傷與攻擊倍率、夜裡獸量
@@ -354,7 +354,7 @@ const result = await page.evaluate(async () => {
   g.diff = XIEYI.DIFF.easy; w.time = DAY * 12 + DAY * 0.93; const e13 = g.ghostNight(); w.time = DAY * 20 + DAY * 0.93;
   ok('easy: no ghosts on night 13, ghosts from night 21, taken ×0.9, attack ×1.1', !e13 && g.ghostNight() && Math.abs(g.takenMult() - 0.9) < 1e-9 && Math.abs(g.dmgMult() - 1.1) < 1e-9 && g.beastMult() === 1);
   g.diff = XIEYI.DIFF.normal; w.time = tSave;
-  // 錦囊：囊多兩格、具欄多一格，最多八個（v0.37；v0.19–v0.36 六個、更早四個）
+  // 錦囊：囊多兩格、具欄多一格，最多八個（v0.6.10；v0.4.13–v0.6.9 六個、更早四個）
   g.addItem('錦囊', 1); hold('錦囊'); g.useItem(); await sleep(60);
   ok('a pouch adds two bag slots and one tool slot', p.pouches === 1 && g.slots() === 18 && g.toolSlots() === 7 && document.querySelectorAll('#bagbar .slot').length === 18 && document.querySelectorAll('#toolbar .slot').length === 7);
   p.pouches = 8; g.addItem('錦囊', 1); hold('錦囊'); g.useItem();
@@ -434,7 +434,7 @@ const result = await page.evaluate(async () => {
   ok('damage taken keeps four decimals (20 × 5/3 × 0.83 = 27.6667)', Math.abs(p.hp - (100 - 27.6667)) < 1e-9, p.hp);
   g.ents.remove(rt); for (const k of ['襯', '褲', '甲', '盔', '靴']) g.takeOff(k); trim(['木', '石', '石子', '草', '土', '磚', '孤帆', '方舟']); p.cour = 0; p.hp = 100; p.hurtT = 0;
   p.hpMax = 100; p.hp = 100; p.pillsEaten = 0; p.pillsMade = 0; g.removeItem('丹', 9); g.removeItem('蟾蜍肉', 9); g.removeItem('毒蟾肉', 9); w.set(ding.x, ding.y, '土');
-  // 龜：少見不咬人，命二百五（v0.28）；龜甲卜之，吉則五日無魄
+  // 龜：少見不咬人，命二百五（v0.6）；龜甲卜之，吉則五日無魄
   face(1, 0); w.set(T().x, T().y, '草'); const tu = g.ents.add('龜', T().x, T().y, { moveT: 99 }); hold('石劍');
   for (let i = 0; i < 6; i++) { p.atkT = 0; g.pressGather(); }
   ok('a turtle takes seven sword blows (250 hp): six leave it at 10', tu.hp === 10 && g.ents.list.includes(tu), tu.hp);
@@ -446,7 +446,7 @@ const result = await page.evaluate(async () => {
   g.addItem('龜甲', 1); hold('龜甲'); Math.random = () => 0.1; g.useItem(); Math.random = rnd3;
   ok('a good omen: five days without ghosts', g.peaceDays() === 5 && (() => { const t0 = w.time; w.time = Math.floor((p.noGhostUntil - DAY) / DAY) * DAY + DAY * 0.93; const inside = !g.ghostNight(); w.time = Math.floor(p.noGhostUntil / DAY) * DAY + DAY * 1.93; const after = g.ghostNight(); w.time = t0; return inside && after; })(), [g.peaceDays()]);
   p.noGhostUntil = 0;
-  // 漁網：棉麻草織小網，四小成中，四中或十三小成大（v0.21 起是撒網）
+  // 漁網：棉麻草織小網，四小成中，四中或十三小成大（v0.5.1 起是撒網）
   trim(['木', '石', '石子', '草', '土', '磚', '孤帆', '方舟']); g.removeItem('草', 99); g.removeItem('魚', 99);
   g.addItem('棉', 26); g.addItem('麻', 26); g.addItem('草', 39);
   for (let i = 0; i < 13; i++) { p.sta = 100; g.craft('net'); }
@@ -457,7 +457,7 @@ const result = await page.evaluate(async () => {
   ok('four small nets weave a medium net', g.count('中漁網') === 4 && g.count('漁網') === 0);
   p.sta = 100; g.craft('bignet');
   ok('four medium nets weave a big net', g.count('大漁網') === 2 && g.count('中漁網') === 0);
-  // 撒網（v0.21）：拿著網走到水邊，水上浮出網影；F 瞬間撒出，網影裡的魚一網打盡；耐久照網到幾條扣：0 條 1、1 條 2、2 條 4、3 條以上 7
+  // 撒網（v0.5.1）：拿著網走到水邊，水上浮出網影；F 瞬間撒出，網影裡的魚一網打盡；耐久照網到幾條扣：0 條 1、1 條 2、2 條 4、3 條以上 7
   {
     const PX = p.x, PY = p.y, area = [];
     for (let dx = -1; dx <= 4; dx++) for (let dy = -3; dy <= 3; dy++) { const x = PX + dx, y = PY + dy; area.push([x, y, w.raw(x, y)]); w.set(x, y, dx <= 0 ? '土' : '水'); }
@@ -513,7 +513,7 @@ const result = await page.evaluate(async () => {
     g.removeItem('棉', 99); g.removeItem('麻', 99); p.cour = 0;
   }
   g.removeItem('魚', 99); g.removeItem('大漁網', 9); g.removeItem('漁網', 9); g.removeItem('中漁網', 9);
-  // 雪域與熱氣（v0.18）：離雪五格內待過五息暖才多掉、越待越快；烤的東西給九十息熱氣、累積一百五十；有熱氣時凍不傷命。雨裡燈的損壞率看難度
+  // 雪域與熱氣（v0.4.12）：離雪五格內待過五息暖才多掉、越待越快；烤的東西給九十息熱氣、累積一百五十；有熱氣時凍不傷命。雨裡燈的損壞率看難度
   ok('lamp ruin odds per difficulty: easy 1/4500, normal 1/2500, hard 1/800; the world carries the current one', XIEYI.DIFF.easy.lampP === 1 / 4500 && XIEYI.DIFF.normal.lampP === 1 / 2500 && XIEYI.DIFF.hard.lampP === 1 / 800 && w.rainLampP === 1 / 2500, w.rainLampP);
   {
     const sx = p.x + 5, sy = p.y, keep = w.raw(sx, sy), lining = p.worn['襯']; p.worn['襯'] = null; setDay(0.53); hold('石子'); p.heatT = 0;
@@ -538,7 +538,7 @@ const result = await page.evaluate(async () => {
     ok('heat survives a save and load', Math.abs(p.heatT - 42) < 1e-9, p.heatT);
     p.worn['襯'] = lining; setDay(0.53); p.warm = 100; p.hp = 100; p.heatT = 0; p.snowT = 0; g.removeItem('烤肉', 9); g.removeItem('烤魚', 9);
   }
-  // v0.19：膽氣加成看難度；神兵減益看難度、兩件只算一重、困難掉力；錦囊六個；跨過燈；櫃裡自動歸類；回血門檻七成五含暖；霧障八方飄、會換形
+  // v0.4.13：膽氣加成看難度；神兵減益看難度、兩件只算一重、困難掉力；錦囊六個；跨過燈；櫃裡自動歸類；回血門檻七成五含暖；霧障八方飄、會換形
   {
     const l0 = p.cour; p.cour = 0;
     g.diff = XIEYI.DIFF.hard; g.addCourage(20, 'kill'); const ch = p.cour; p.cour = 0;
@@ -559,7 +559,7 @@ const result = await page.evaluate(async () => {
     g.removeItem('燭龍焚溟', 9); g.removeItem('九閽鳴雷', 9); p.tools = p.tools.filter(s => s.n !== '燭龍焚溟' && s.n !== '九閽鳴雷'); if (p.tool >= p.tools.length) p.tool = p.tools.length - 1; g.barSig = '';
     ok('without them the plain rule is back: three days, floor 31', !g.hasGod() && g.decayDays() === 3 && g.decayFloor() === 31);
     const pch = p.pouches; p.pouches = 8; g.addItem('錦囊', 1); hold('錦囊'); g.msgText = ''; g.useItem();
-    ok('eight pouches is the cap (v0.37): 32 bag slots, 14 tool slots, a ninth is refused', p.pouches === 8 && g.slots() === 32 && g.toolSlots() === 14 && g.count('錦囊') === 1 && g.msgText.indexOf('八個') >= 0, [g.slots(), g.toolSlots(), g.msgText]);
+    ok('eight pouches is the cap (v0.6.10): 32 bag slots, 14 tool slots, a ninth is refused', p.pouches === 8 && g.slots() === 32 && g.toolSlots() === 14 && g.count('錦囊') === 1 && g.msgText.indexOf('八個') >= 0, [g.slots(), g.toolSlots(), g.msgText]);
     g.removeItem('錦囊', 9); p.pouches = pch; g.barSig = '';
     face(1, 0); const lx = T().x, ly = T().y, keepL = w.raw(lx, ly); w.set(lx, ly, '燈');
     ok('a lamp blocks beasts but not you', g.pass(lx, ly) && !g.ents.canStand('狼', lx, ly, true) && !g.ents.canStand('虎', lx, ly, true), [g.pass(lx, ly)]);
@@ -596,7 +596,7 @@ const result = await page.evaluate(async () => {
       ok('with no light a fog drifts in several directions, keeps 5–30 cells, never turns back, and keeps changing shape', dirs.size >= 3 && moves === 40 && sizes && morphs >= 10, [[...dirs], moves, sizes, morphs]);
       w.removeFog(fog.id); }
   }
-  // v0.20：魄加強——身上的光只逼得退、地上的光三格內才煙滅；撲燈、吹熄手裡的光、燈帽燒三倍；夜越深越多越快、蝕心更狠；屋外有魄而屋裡沒燈愜意緩掉
+  // v0.5：魄加強——身上的光只逼得退、地上的光三格內才煙滅；撲燈、吹熄手裡的光、燈帽燒三倍；夜越深越多越快、蝕心更狠；屋外有魄而屋裡沒燈愜意緩掉
   {
     const tKeep = w.time, X = p.x, Y = p.y; w.time = DAY * 12 + DAY * 0.98;
     for (const [k] of w.stoves) w.stoves.set(k, 0);
@@ -674,14 +674,14 @@ const result = await page.evaluate(async () => {
   ok('coal is strong fuel (+150)', Math.abs(w.stoveFuel(T().x, T().y) - f0 - 150) < 1 && g.count('煤') === 0, w.stoveFuel(T().x, T().y) - f0);
   g.closeStove();
   w.set(T().x, T().y, '土'); hold('石劍'); p.hurtT = 0;
-  // 鋼具與鎢鋼具：鐵二木一煤一鍛鋼具（140%）；鐵礦脈 1/18 真隨機出鎢礦（v0.30）；八煤成精煤；鎢礦一鐵礦二精煤一煉鎢鋼；鎢鋼具 150%／耐久 200%
+  // 鋼具與鎢鋼具：鐵二木一煤一鍛鋼具（140%）；鐵礦脈 1/18 真隨機出鎢礦（v0.6.3）；八煤成精煤；鎢礦一鐵礦二精煤一煉鎢鋼；鎢鋼具 150%／耐久 200%
   trim(['木', '石', '石子', '草', '土', '磚', '孤帆', '方舟']); g.addItem('鐵', 2); g.addItem('木', 1); g.addItem('煤', 1); p.sta = 100; g.craft('forge', '鋼劍');
   ok('a steel sword: 56 damage and 56 durability (140% of stone)', !!tool('鋼劍') && tool('鋼劍').dur === 56 && G.ITEMS['鋼劍'].dmg === 56 && g.count('鐵') === 0, bag());
   { const sw = tool('鋼劍'); hold('鋼劍'); const peb0 = g.count('石子'), sc = []; g.addItem('鐵', 30);
     for (let i = 0; i < 5; i++) { const c0 = g.count('鐵'); sw.dur = 3; p.sta = 50; g.craft('regrind'); sc.push(c0 - g.count('鐵')); }
-    ok('v0.30: a steel tool is mended with 鐵 1, 2, 4, 8, 8 — no pebbles', sc.join(',') === '1,2,4,8,8' && sw.dur === 56 && g.count('石子') === peb0, sc);
+    ok('v0.6.3: a steel tool is mended with 鐵 1, 2, 4, 8, 8 — no pebbles', sc.join(',') === '1,2,4,8,8' && sw.dur === 56 && g.count('石子') === peb0, sc);
     g.removeItem('鐵', 99); }
-  ok('v0.30: iron veins hide tungsten one time in eighteen, by true randomness', Math.abs(G.DB['鐵'].bonus['鎢礦'] - 1 / 18) < 1e-9 && G.DB['鐵'].trueBonus === true);
+  ok('v0.6.3: iron veins hide tungsten one time in eighteen, by true randomness', Math.abs(G.DB['鐵'].bonus['鎢礦'] - 1 / 18) < 1e-9 && G.DB['鐵'].trueBonus === true);
   const rndT = U.trueRand; U.trueRand = () => 0.9; face(0, 1); w.set(T().x, T().y, '鐵'); hold('石鎬'); g.action = null; g.pressGather(); await until(() => !g.action, 12000);
   const noLuck = g.count('鎢礦') === 0;
   U.trueRand = () => 0.05; w.set(T().x, T().y, '鐵'); g.action = null; g.pressGather(); await until(() => !g.action, 12000); U.trueRand = rndT;
@@ -696,7 +696,7 @@ const result = await page.evaluate(async () => {
   ok('regrinding tungsten steel costs 8 stamina and 10 food (and the first time 鐵 1)', tool('鎢鋼劍').dur === 112 && p.sta === 42 && Math.round(p.food) === 40 && g.count('鐵') === 0, [p.sta, p.food]);
   { const ws = tool('鎢鋼劍'), wc = []; g.addItem('鐵', 30); g.addItem('鎢鋼', 9);
     for (let i = 0; i < 4; i++) { const i0 = g.count('鐵'), t0 = g.count('鎢鋼'); ws.dur = 3; p.sta = 50; p.food = 50; g.craft('regrind'); wc.push((i0 - g.count('鐵')) + '+' + (t0 - g.count('鎢鋼'))); }
-    ok('v0.30: a tungsten tool then costs 鐵 2; 鐵 3 + 鎢鋼 1; 鐵 6 + 鎢鋼 2; and 鐵 6 + 鎢鋼 2 from then on', wc.join(',') === '2+0,3+1,6+2,6+2' && ws.dur === 112, wc);
+    ok('v0.6.3: a tungsten tool then costs 鐵 2; 鐵 3 + 鎢鋼 1; 鐵 6 + 鎢鋼 2; and 鐵 6 + 鎢鋼 2 from then on', wc.join(',') === '2+0,3+1,6+2,6+2' && ws.dur === 112, wc);
     g.removeItem('鐵', 99); g.removeItem('鎢鋼', 99); }
   w.set(T().x, T().y, '土');   // 面向灶按 F 是開灶，穿衣甲要先轉開
   g.addItem('鎢鋼甲', 1); hold('鎢鋼甲'); g.pressPlace(); const wv = p.worn['甲'];
@@ -705,7 +705,7 @@ const result = await page.evaluate(async () => {
   ok('repairing tungsten armour costs 12 stamina and 15 food; the first time 鐵 1', Math.round(wv.dur / DAY) === 360 && wv.wm === 1.5 && g.count('鐵') === 0 && p.sta === 38 && Math.round(p.food) === 35, [p.sta, p.food]);
   { const ac = []; g.addItem('鐵', 30); g.addItem('鎢鋼', 9);
     for (let i = 0; i < 4; i++) { const i0 = g.count('鐵'), t0 = g.count('鎢鋼'); wv.dur = 1000; p.sta = 50; p.food = 50; g.repairWorn('甲'); ac.push((i0 - g.count('鐵')) + '+' + (t0 - g.count('鎢鋼'))); }
-    ok('v0.30: tungsten armour then costs 鐵 2; 鐵 3 + 鎢鋼 1; 鐵 6 + 鎢鋼 2; and so on', ac.join(',') === '2+0,3+1,6+2,6+2' && wv.rg === 5, ac);
+    ok('v0.6.3: tungsten armour then costs 鐵 2; 鐵 3 + 鎢鋼 1; 鐵 6 + 鎢鋼 2; and so on', ac.join(',') === '2+0,3+1,6+2,6+2' && wv.rg === 5, ac);
     g.removeItem('鐵', 99); g.removeItem('鎢鋼', 99); }
   g.takeOff('甲'); g.removeItem('鎢鋼甲', 9); p.tools = p.tools.filter(s => s.n !== '鋼劍' && s.n !== '鎢鋼劍'); p.tool = -1; hold('石劍'); p.food = 80;
   w.set(T().x, T().y, '土');
@@ -778,7 +778,7 @@ const result = await page.evaluate(async () => {
   const deep = w.get(p.x + 1, p.y); w.set(p.x + 1, p.y, '淼');
   ok('sailing passes deep water', g.pass(p.x + 1, p.y)); w.set(p.x + 1, p.y, deep);
   p.x = p.rx = 0; p.y = p.ry = G.SEA_EDGE + 1; await sleep(200);
-  ok('v0.38: the old sea edge (113) is open water now, not the end of the paper', !p.crossed && hidden('voyage'), [p.crossed]);
+  ok('v0.7: the old sea edge (113) is open water now, not the end of the paper', !p.crossed && hidden('voyage'), [p.crossed]);
   p.x = p.rx = 0; p.y = p.ry = G.WORLD_R; await sleep(200);
   ok('reaching the edge of the 2500×2500 paper triggers the voyage ending', p.crossed && !hidden('voyage'));
   document.getElementById('voyage-back').click(); await sleep(50);
@@ -925,7 +925,7 @@ const result = await page.evaluate(async () => {
     w.fogP = 1; w.fogPlan = []; const d0 = Math.floor(w.time / DAY); w.fogDay = d0; w.time = (d0 + 1) * DAY + 1; w.step(p.x, p.y);
     const planned = w.fogPlan.length; w.time = (d0 + 2) * DAY - 0.001; w.step(p.x, p.y); w.fogP = 0;   // 到當日最後一刻：兩場都該起了
     const fs = [...w.fogs.values()];
-    ok('a new day rolls twice for fog (odds forced to 1): two patches of 10–30 tiles (v0.31: about eighteen tiles of area) rising on land, none on the player', planned === 2 && fs.length === 2 && fs.every(f => f.cells.size >= 10 && f.cells.size <= 30 && f.shape.area >= 16 && f.shape.area <= 20 && !near1(f) && w.fogLand(Math.floor(f.x), Math.floor(f.y))), [planned, fs.map(f => f.cells.size), w.fogMiss, w.fogNoSeed, p.x, p.y, w.get(p.x, p.y)]);
+    ok('a new day rolls twice for fog (odds forced to 1): two patches of 10–30 tiles (v0.6.4: about eighteen tiles of area) rising on land, none on the player', planned === 2 && fs.length === 2 && fs.every(f => f.cells.size >= 10 && f.cells.size <= 30 && f.shape.area >= 16 && f.shape.area <= 20 && !near1(f) && w.fogLand(Math.floor(f.x), Math.floor(f.y))), [planned, fs.map(f => f.cells.size), w.fogMiss, w.fogNoSeed, p.x, p.y, w.get(p.x, p.y)]);
     const shapes = new Set(); for (let i = 0; i < 10; i++) { const f = w.spawnFog(p.x, p.y); if (!f) continue; const cs = [...f.cells].map(k => k.split(',').map(Number)), mx = Math.min(...cs.map(c => c[0])), my = Math.min(...cs.map(c => c[1])); shapes.add(cs.map(([x, y]) => (x - mx) + ':' + (y - my)).sort().join(' ')); }
     ok('fog shapes vary', shapes.size >= 4, shapes.size);
     for (const id of [...w.fogs.keys()]) w.removeFog(id);
@@ -975,25 +975,25 @@ const result = await page.evaluate(async () => {
   const mu = by('mu'); goNextTo(mu.x, mu.y); const b0 = g.count('磚'); g.pressGather(); await sleep(30); await press('KeyE', 20);
   ok('墓 gives bricks and pebbles', g.count('磚') === b0 + 6 && g.count('石子') >= 3);
   const dong = by('dong'); goNextTo(dong.x, dong.y); g.pressGather(); await sleep(30); await press('KeyE', 20);
-  ok('v0.42: 洞 no longer releases a dragon — it leaves a 青鱗 pointing to the east sea', g.count('青鱗') === 1 && p.scaleTaken && !p.dragon && !p.azure && !g.ents.list.some(e => e.type === '龍') && /青鱗|東海/.test(toasts()));
+  ok('v0.8: 洞 no longer releases a dragon — it leaves a 青鱗 pointing to the east sea', g.count('青鱗') === 1 && p.scaleTaken && !p.dragon && !p.azure && !g.ents.list.some(e => e.type === '龍') && /青鱗|東海/.test(toasts()));
   { const az = g.ents.add('青龍', p.x - 2, p.y, { moveT: 99 }); face(1, 0);
     g.pressGather(); await sleep(30);
-    ok('v0.42: without a 蜃珠 the 青龍 sends you off to slay a 蜃 first', !p.azure && !p.dragon && g.count('青鱗') === 1 && /蜃珠/.test(toasts()));
+    ok('v0.8: without a 蜃珠 the 青龍 sends you off to slay a 蜃 first', !p.azure && !p.dragon && g.count('青鱗') === 1 && /蜃珠/.test(toasts()));
     g.addItem('蜃珠', 1); g.pressGather(); await sleep(30);
-    ok('v0.42: with a 蜃珠 the 青龍 takes it (and the scale), teaches ship mending, and a small dragon follows', p.azure && p.dragon && g.count('蜃珠') === 0 && g.count('青鱗') === 0 && g.ents.list.some(e => e.type === '龍') && /求教青龍/.test(toasts()));
+    ok('v0.8: with a 蜃珠 the 青龍 takes it (and the scale) and teaches ship mending', p.azure && g.count('蜃珠') === 0 && g.count('青鱗') === 0 && /求教青龍/.test(toasts()));
+    await sleep(80);
+    ok('v0.8.2: no small dragon follows — the 青龍 third of the soul ring around the courage ring lights up instead', !p.dragon && !g.ents.list.some(e => e.type === '龍') && document.getElementById('soulring').classList.contains('q') && !document.getElementById('soulring').classList.contains('b') && getComputedStyle(document.getElementById('soulring')).getPropertyValue('--q').trim() === '#24766b');
     g.ents.remove(az); }
-  await until(() => p.creatures.indexOf('龍') >= 0, 4000);
-  ok('the small dragon follows', g.ents.list.some(e => e.type === '龍') && p.dragon && p.creatures.indexOf('龍') >= 0);
-  { const dr = g.ents.list.find(e => e.type === '龍'); setDay(0.98); hold('木'); if (p.worn['帽']) g.takeOff('帽'); g.removeItem('燈帽', 9);
+  { const dr = g.ents.add('龍', p.x + 2, p.y + 2, { moveT: 99 }); setDay(0.98);   // 龍的驅魄規則還留著（以後神獸護駕用得上），擺一條來測 hold('木'); if (p.worn['帽']) g.takeOff('帽'); g.removeItem('燈帽', 9);
     const spot = [[6, 0], [-6, 0], [0, 6], [0, -6]].map(([dx, dy]) => [dr.x + dx, dr.y + dy]).find(([x, y]) => !w.lightNear(x, y, 7) && U.cheb(x, y, p.x, p.y) > 6);
     if (spot) {
       const dir = [Math.sign(spot[0] - dr.x), Math.sign(spot[1] - dr.y)];
       const gh5 = g.ents.add('魄', dr.x + dir[0] * 5, dr.y + dir[1] * 5, { moveT: 99 }), gh4 = g.ents.add('魄', dr.x + dir[0] * 4, dr.y + dir[1] * 4, { moveT: 99 }); dr.moveT = 99;
       await until(() => !g.ents.list.includes(gh4), 4000);
       ok('the dragon dispels 魄 within four tiles, not five', !g.ents.list.includes(gh4) && g.ents.list.includes(gh5), [g.ents.list.includes(gh4), g.ents.list.includes(gh5)]);
-      g.ents.remove(gh5); dr.moveT = 0;
+      g.ents.remove(gh5);
     } else ok('the dragon dispels 魄 within four tiles, not five (no dark spot to test here)', true);
-  }
+    g.ents.remove(dr); }
   const cun = by('cun'); const gx = cun.x + 3, gy = cun.y;
   ok('the village is 7×7 with the well in the middle', cun.w === 7 && cun.h === 7 && w.get(cun.x + 3, cun.y + 3) === '井' && w.get(gx, gy) === '門'); w.set(gx, gy - 1, '草'); p.x = p.rx = gx; p.y = p.ry = gy - 1; face(0, 1);
   for (const pl of w.places) if (pl.id !== 'ta') p.places[pl.id] = 1;
@@ -1021,7 +1021,7 @@ const result = await page.evaluate(async () => {
     const sw = w.serialize();
     ok('true random helper and weather save fields exist', typeof U.trueRand() === 'number' && U.trueRand() < 1 && typeof sw.rainUntil === 'number' && typeof sw.nextRainAt === 'number');
     w.rainLampP = XIEYI.DIFF.normal.lampP; w.rainUntil = 0; }
-  // ============ v0.14：神兵成類、小屋、霧障會動、數值燈與提醒 ============
+  // ============ v0.4.4：神兵成類、小屋、霧障會動、數值燈與提醒 ============
   calm();
   ok('god weapons have their own craft category 神兵', G.CRAFT_CATS.indexOf('神兵') > 0 && G.RECIPES.find(r => r.id === 'hammer').cat === '神兵' && G.RECIPES.find(r => r.id === 'seagod').cat === '神兵' && !G.RECIPES.some(r => r.cat === '工具' && (r.id === 'hammer' || r.id === 'seagod')));
   // —— 小屋：牆與門圍起的小空間擋獸、擋魄，多小才算看難度（獸／魄）：簡單 28／18、一般 18／8、困難 10／擋不住
@@ -1089,7 +1089,7 @@ const result = await page.evaluate(async () => {
     ok('the world tick turns fogs on the fog clock and winds it up again', fog.ang !== ang0 && fog.moveAt > w.time + 500 && fog.moveAt < w.time + 1500 && [...fog.cells].every(k => w.fogCells.get(k) === fog.id), fog.moveAt - w.time);
     w.fogStep = 6; fog.moveAt = w.time + 99; const fx0 = fog.x, fy0 = fog.y, gx0 = fog.gx; for (let i = 0; i < 10; i++) w.tick(0.2, p.x, p.y);
     const drift = Math.hypot(fog.x - fx0, fog.y - fy0);
-    ok('v0.31: fog drifts continuously, a sixth of a tile per second, not a tile at a time', drift > 0.25 && drift < 0.42, drift);
+    ok('v0.6.4: fog drifts continuously, a sixth of a tile per second, not a tile at a time', drift > 0.25 && drift < 0.42, drift);
     const w2 = new window.World(w.seed); w2.restore(w.serialize()); const f2 = [...w2.fogs.values()][0];
     ok('a restored fog gets a fresh move clock, and keeps its place and shape', !!f2 && f2.moveAt > w2.time && Math.abs(f2.x - fog.x) < 1e-3 && f2.shape.n === fog.shape.n && f2.cells.size === fog.cells.size, f2 && f2.moveAt - w2.time);
     w.fogStep = 1e9; w.removeFog(fog.id); }
@@ -1112,7 +1112,7 @@ const result = await page.evaluate(async () => {
     p.food = 100; p.san = 100; p.warnLow = {}; const d0 = g.diff; g.diff = XIEYI.DIFF.hard; p.warm = 10; g.hudSig = ''; g.updateHUD(); await sleep(250);
     ok('hard mode: the outline flashes but there is no popup', bar('warm').classList.contains('low') && hidden('warn') && !g.paused && XIEYI.DIFF.hard.warn === false && XIEYI.DIFF.normal.warn === true);
     g.diff = d0; p.warm = 100; p.warnLow = {}; g.warnEnabled = false; g.hudSig = ''; g.updateHUD(); }
-  // ============ 手柄已封存（v0.27）：遊戲不載入 pad.js，介面上沒有手柄設定；幫助從暫停面板開時在最上面 ============
+  // ============ 手柄已封存（v0.5.8）：遊戲不載入 pad.js，介面上沒有手柄設定；幫助從暫停面板開時在最上面 ============
   { const top = () => { const e = document.elementFromPoint(innerWidth / 2, innerHeight / 2); return e && e.closest('.overlay') && e.closest('.overlay').id; };
     ok('no gamepad code or settings in the game: no window.PAD, no 手柄設定 buttons, no pad panels', typeof window.PAD === 'undefined' && !document.getElementById('btn-pad') && !document.getElementById('pause-pad') && !document.getElementById('help-pad') && !document.getElementById('padset') && !document.getElementById('padmap') && !document.getElementById('pause-bars') && document.body.textContent.indexOf('手柄') < 0);
     g.togglePause(); document.getElementById('pause-help').click(); await sleep(30);
@@ -1147,14 +1147,14 @@ const result = await page.evaluate(async () => {
     ok('the hint for a pouch in hand says they are all used', document.getElementById('msg').textContent.indexOf('已用完八個') >= 0, document.getElementById('msg').textContent.slice(0, 80));
     p.pouches = 1; g.buildCraft(); const prow2 = [...document.querySelectorAll('#craft-list .recipe')].find(r => r.textContent.indexOf('錦囊') >= 0);
     ok('with fewer used the row is craftable again', !!prow2 && prow2.textContent.indexOf('已用完') < 0 && !prow2.querySelector('button').disabled);
-    // v0.37：已用的加囊裡的湊滿八個就不給織；囊裡那幾個照樣用得掉
+    // v0.6.10：已用的加囊裡的湊滿八個就不給織；囊裡那幾個照樣用得掉
     g.removeItem('錦囊', 9); p.pouches = 5; g.addItem('錦囊', 3); g.addItem('麻布', 3); g.addItem('棉', 2); p.sta = 100; g.buildCraft();
     const prow3 = [...document.querySelectorAll('#craft-list .recipe')].find(r => r.textContent.indexOf('錦囊') >= 0); g.msgText = ''; g.craft('pouch');
-    ok('v0.37: five used + three carried = eight: no more weaving (row says 已夠八個), the cloth stays', g.count('錦囊') === 3 && g.count('麻布') >= 3 && g.msgText.indexOf('湊滿八個') >= 0 && !!prow3 && prow3.textContent.indexOf('已夠八個') >= 0 && prow3.querySelector('button').disabled, [g.count('錦囊'), g.msgText]);
+    ok('v0.6.10: five used + three carried = eight: no more weaving (row says 已夠八個), the cloth stays', g.count('錦囊') === 3 && g.count('麻布') >= 3 && g.msgText.indexOf('湊滿八個') >= 0 && !!prow3 && prow3.textContent.indexOf('已夠八個') >= 0 && prow3.querySelector('button').disabled, [g.count('錦囊'), g.msgText]);
     hold('錦囊'); g.useItem(); hold('錦囊'); g.useItem(); hold('錦囊'); g.useItem();
-    ok('v0.37: …and the three carried ones can all still be used, up to eight', p.pouches === 8 && g.count('錦囊') === 0 && g.slots() === 32 && g.toolSlots() === 14, p.pouches);
+    ok('v0.6.10: …and the three carried ones can all still be used, up to eight', p.pouches === 8 && g.count('錦囊') === 0 && g.slots() === 32 && g.toolSlots() === 14, p.pouches);
     g.removeItem('錦囊', 9); p.pouches = 6; g.buildCraft(); g.msgText = ''; g.craft('pouch');
-    ok('v0.37: six used and none carried: a seventh can be woven now', g.count('錦囊') === 1, g.msgText);
+    ok('v0.6.10: six used and none carried: a seventh can be woven now', g.count('錦囊') === 1, g.msgText);
     p.pouches = pch0; g.removeItem('錦囊', 9); g.removeItem('麻布', 9); g.removeItem('棉', 9); g.barSig = ''; g.buildBag();
     // 重磨遞增：同一把 1、2、4、8、8；換一把從 1 起
     g.addItem('石劍', 1); const rsw = tool('石劍'); rsw.rg = 0; hold('石劍'); g.removeItem('石子', 99); g.addItem('石子', 30); p.sta = 100; p.food = 100;
@@ -1188,7 +1188,7 @@ const result = await page.evaluate(async () => {
     ok('a tungsten helm melts into one tungsten steel', g.count('鎢鋼') === w0 + 1 && g.count('鎢鋼盔') === 0);
     ok('nothing left to melt: the 熔 buttons are gone, the knife stays', !document.querySelector('#stove-cook button[data-melt]') && !!tool('石刀'));
     g.closeStove(); w.set(sx, sy, '草'); g.removeItem('鐵', 99); g.removeItem('鎢鋼', 99); p.tools = p.tools.filter(x => x.n !== '石刀'); p.tool = -1; g.barSig = ''; g.buildBag(); }
-  // ============ 新的燃料表、上限 999、灶的四格柴架（v0.21） ============
+  // ============ 新的燃料表、上限 999、灶的四格柴架（v0.5.1） ============
   calm();
   { face(0, 1); const sx = T().x, sy = T().y, key = sx + ',' + sy; w.set(sx, sy, '灶'); w.stoves.set(key, 0); w.shelves.delete(key);
     ok('fuel values: coal 150, grass 30, fruit 45, wood 105, cotton 75, refined coal 900; hemp 70, bamboo 60, old cloth 50; stone burns not', g.fuelOf('煤') === 150 && g.fuelOf('草') === 30 && g.fuelOf('果') === 45 && g.fuelOf('木') === 105 && g.fuelOf('棉') === 75 && g.fuelOf('精煤') === 900 && g.fuelOf('麻') === 70 && g.fuelOf('竹') === 60 && g.fuelOf('布甲') === 50 && g.fuelOf('石') === 0);
@@ -1222,13 +1222,13 @@ const result = await page.evaluate(async () => {
     ok('placed again, the shelf is still there', w.get(sx, sy) === '灶' && shelf() === '木63,木6,草5,精煤1' && !p.bag.includes(carried), [w.get(sx, sy), shelf()]);
     w.set(sx, sy, '草'); ok('when the stove is gone the shelf goes with it', !w.shelves.has(key));
     g.removeItem('煤', 99); g.removeItem('木', 999); g.removeItem('灶', 9); }
-  // 飽暖力都九成以上：愜意慢慢回（v0.21）
+  // 飽暖力都九成以上：愜意慢慢回（v0.5.1）
   { calm(); const m = g.mult(); p.food = 95; p.warm = 95; p.sta = p.staMax; p.san = 50; g.sanAcc = 0; g.updateStats(1);
     ok('with food, warmth and stamina all at 90% or more, 愜意 creeps up (0.1 × the courage multiplier a second)', g.content() && Math.abs(p.san - (50 + 0.1 * m)) < 0.01, [p.san, m]);
     p.food = 85; p.san = 50; g.sanAcc = 0; g.updateStats(1);
     ok('one of them below 90% and it drains as usual', !g.content() && p.san < 50, p.san);
     p.food = 100; p.warm = 100; p.san = 100; }
-  // ============ 彈弓、台與階、囊滿時烤不吞（v0.22） ============
+  // ============ 彈弓、台與階、囊滿時烤不吞（v0.5.2） ============
   { calm(); const X = p.x, Y = p.y, area = [];
     for (let dx = -2; dx <= 11; dx++) for (let dy = -3; dy <= 3; dy++) { const x = X + dx, y = Y + dy; area.push([x, y, w.raw(x, y)]); if (dx || dy) w.set(x, y, '土'); }
     g.ents.list = g.ents.list.filter(e => '鹿虎豹狼蛇蛛蟾鷹龜蜃魚'.indexOf(e.type) < 0); p.cour = 0;
@@ -1267,9 +1267,9 @@ const result = await page.evaluate(async () => {
     ok('the craft row shows the food cost', !!prow && prow.textContent.indexOf('飽 8') >= 0, prow && prow.textContent);
     face(1, 0); hold('階'); g.pressPlace(); w.set(X + 2, Y, '台');
     ok('the 階 is placed like any building', w.get(X + 1, Y) === '階' && g.count('階') === 0);
-    ok('v0.35: beasts may stand on 階 and 台, but come onto the 台 only from a 階 or 台', g.ents.canStand('虎', X + 2, Y, true) && g.ents.canStand('狼', X + 1, Y, true) && !g.ents.climbOk({ x: X + 2, y: Y + 1 }, X + 2, Y) && g.ents.climbOk({ x: X + 1, y: Y }, X + 2, Y));
+    ok('v0.6.8: beasts may stand on 階 and 台, but come onto the 台 only from a 階 or 台', g.ents.canStand('虎', X + 2, Y, true) && g.ents.canStand('狼', X + 1, Y, true) && !g.ents.climbOk({ x: X + 2, y: Y + 1 }, X + 2, Y) && g.ents.climbOk({ x: X + 1, y: Y }, X + 2, Y));
     { const wf = g.ents.add('牛', X + 1, Y, { moveT: 1, calm: 99 }); g.ents.update(0.3, g); const onStair = wf.moveT;
-      ok('v0.35: a beast on the 階 steps half again as slowly (its move timer runs at two thirds)', Math.abs(onStair - (1 - 0.3 / 1.5)) < 1e-6, onStair); g.ents.remove(wf); }
+      ok('v0.6.8: a beast on the 階 steps half again as slowly (its move timer runs at two thirds)', Math.abs(onStair - (1 - 0.3 / 1.5)) < 1e-6, onStair); g.ents.remove(wf); }
     tAt(X + 2, Y + 1); ok('from the ground you cannot step onto the 台', !g.pass(X + 2, Y));
     tAt(X + 1, Y); ok('from the 階 you can', g.pass(X + 2, Y));
     p.moveT = 0; g.tryStep(1, 0); ok('and you walk up onto it', p.x === X + 2 && w.get(p.x, p.y) === '台', [p.x - X, w.get(p.x, p.y)]);
@@ -1282,10 +1282,10 @@ const result = await page.evaluate(async () => {
     const sn = g.ents.add('蛇', X + 2, Y + 1, { moveT: 99 }); g.bite(sn, 3); p.poisonT = 0; p.poisonPer = 0;
     ok('a snake biting you there loses 9 (a tenth of 90)', sn.hp === 81, sn.hp); g.ents.remove(sn);
     { const up = g.ents.add('狼', X + 1, Y, { moveT: 99, calm: 99 }); up.hp = 160; g.hit(up, 10);
-      ok('v0.35: a beast that came up the 階 does not hit the platform edge', up.hp === 160, up.hp); g.ents.remove(up); p.hp = 100; }
+      ok('v0.6.8: a beast that came up the 階 does not hit the platform edge', up.hp === 160, up.hp); g.ents.remove(up); p.hp = 100; }
     tAt(X, Y); tg.hp = 300; g.hit(tg, 20); ok('on the ground there is no such recoil', tg.hp === 300, tg.hp);
     g.ents.remove(tg); p.hp = 100;
-    // 囊滿時：烤不了就不烤，肉不會少（v0.21 前烤好的會不見）；具欄裡的鋼劍熔了也要囊有地方放鐵
+    // 囊滿時：烤不了就不烤，肉不會少（v0.5.1 前烤好的會不見）；具欄裡的鋼劍熔了也要囊有地方放鐵
     face(0, 1); const sx = X, sy = Y + 1; w.set(sx, sy, '灶'); w.addFuel(sx, sy, 300);
     g.removeItem('烤肉', 99); g.removeItem('鐵', 99); g.addItem('肉', 3); g.addItem('鋼劍', 1);
     for (const n of ['土', '草', '沙', '花', '竹', '木', '石子', '棉', '麻', '鐵礦', '煤', '玻璃瓶', '麻布', '偶', '門', '床', '燈', '櫃', '扇', '蠟燭', '火把', '藥', '鎢鋼', '精煤', '龜甲', '磚', '石', '果']) { if (p.bag.length >= g.slots()) break; if (!g.has(n)) g.addItem(n, 1); }
@@ -1297,7 +1297,7 @@ const result = await page.evaluate(async () => {
     ok('with one slot free it cooks', g.count('烤肉') === 1 && g.count('肉') === m0 - 1);
     g.closeStove(); for (const [x, y, c] of area) w.set(x, y, c);
     trim(['木', '石', '石子', '草', '土', '磚', '孤帆', '方舟']); p.tools = p.tools.filter(x => x.n !== '彈弓' && x.n !== '鋼劍'); p.tool = p.tools.length ? 0 : -1; g.barSig = ''; g.buildBag(); tAt(X, Y); }
-  // 一山不容二虎：兩隻虎相距至少十二格（v0.22）
+  // 一山不容二虎：兩隻虎相距至少十二格（v0.5.2）
   { calm(); setDay(0.93); const X = p.x + 20, Y = p.y, area = [];
     for (let dx = -2; dx <= 18; dx++) for (let dy = -3; dy <= 3; dy++) { const x = X + dx, y = Y + dy; area.push([x, y, w.raw(x, y)]); w.set(x, y, '草'); }
     g.ents.list = g.ents.list.filter(e => e.type !== '虎');
@@ -1309,14 +1309,14 @@ const result = await page.evaluate(async () => {
     B.x = B.rx = X + 5; B.y = B.ry = Y; B.moveT = 0; B.calm = 99; g.ents.update(0.01, g);
     ok('two tigers already too close: the idle one walks away', U.cheb(A.x, A.y, B.x, B.y) === 6, U.cheb(A.x, A.y, B.x, B.y));
     g.ents.remove(A); g.ents.remove(B); for (const [x, y, c] of area) w.set(x, y, c); calm(); }
-  // ============ 神兵與彈弓各有專鍵（v0.26）：L 拿出／換神兵、P 收回；Y 拿出／收起彈弓 ============
+  // ============ 神兵與彈弓各有專鍵（v0.5.7）：L 拿出／換神兵、P 收回；Y 拿出／收起彈弓 ============
   { calm(); const keepT = p.tools, keepB = p.bag, keepI = p.tool, keepSel = p.sel, held = () => g.activeTool() && g.activeTool().n;
     p.tools = [{ n: '石刀', c: 1, dur: 30 }, { n: '九閽鳴雷', c: 1, dur: 199 }]; p.bag = [{ n: '燭龍焚溟', c: 1, dur: 199 }, { n: '木', c: 3 }]; p.sel = 0; p.tool = 0; g.prevTool = null; g.barSig = ''; g.buildBag();
     await press('KeyL'); ok('L takes out the god weapon in the tool bar', held() === '九閽鳴雷' && g.msgText.indexOf('拿出「九閽鳴雷」') >= 0, g.msgText);
     await press('KeyL'); ok('L again switches to the other one, moving it from the bag into the tool bar', held() === '燭龍焚溟' && !p.bag.some(s => s.n === '燭龍焚溟') && p.tools.length === 3);
     await press('KeyL'); ok('and back again', held() === '九閽鳴雷');
     await press('KeyP'); ok('P puts the god weapon away: the stone knife held before is back in hand', held() === '石刀' && g.msgText.indexOf('收起「九閽鳴雷」') >= 0, g.msgText);
-    await press('KeyP'); ok('v0.31: P with an ordinary weapon in hand cycles the weapons only (god weapons stay on L): the knife was the only one, so the hand is empty', !g.activeTool() && g.msgText.indexOf('空手') >= 0, g.msgText);
+    await press('KeyP'); ok('v0.6.4: P with an ordinary weapon in hand cycles the weapons only (god weapons stay on L): the knife was the only one, so the hand is empty', !g.activeTool() && g.msgText.indexOf('空手') >= 0, g.msgText);
     p.tool = -1; await press('KeyL'); await press('KeyP'); ok('drawn from empty hands, P leaves them empty again', p.tool === -1 && g.msgText.indexOf('空手') >= 0, g.msgText);
     p.tool = 0; await press('KeyY'); ok('Y without a slingshot says how to make one and keeps the knife', held() === '石刀' && g.msgText.indexOf('沒有彈弓') >= 0, g.msgText);
     p.bag.push({ n: '彈弓', c: 1, dur: 80 }); g.barSig = ''; await press('KeyY'); ok('Y takes the slingshot from the bag into the hand', held() === '彈弓' && !p.bag.some(s => s.n === '彈弓'));
@@ -1326,13 +1326,13 @@ const result = await page.evaluate(async () => {
     p.tools.length = 0; while (p.tools.length < g.toolSlots()) p.tools.push({ n: '石刀', c: 1, dur: 30 }); p.bag.push({ n: '彈弓', c: 1, dur: 80 }); p.tool = 0; g.barSig = '';
     await press('KeyY'); ok('with the tool bar full, Y says so and nothing changes', held() === '石刀' && p.bag.some(s => s.n === '彈弓') && g.msgText.indexOf('具欄滿了') >= 0, g.msgText);
     p.tools = keepT; p.bag = keepB; p.tool = keepI; p.sel = keepSel; g.prevTool = null; g.barSig = ''; g.buildBag(); }
-  // ============ v0.28：毒蛛、龜、野豬、野牛、晝夜各半、磚擋光擋眼、窗、野牛撞磚、沼澤、製作欄的樹、各獸的聲音 ============
+  // ============ v0.6：毒蛛、龜、野豬、野牛、晝夜各半、磚擋光擋眼、窗、野牛撞磚、沼澤、製作欄的樹、各獸的聲音 ============
   { calm(); const E = g.ents, D = G.DB, X0 = p.x, Y0 = p.y, keepB = p.bag, keepT = p.tools, keepI = p.tool, mr = Math.random, tr = window.U.trueRand, area = [];
     for (const k of ['襯', '褲', '甲', '盔', '靴']) g.takeOff(k);
     const cx = 76, cy = 0, put = (x, y, c) => { area.push([x, y, w.get(x, y)]); w.set(x, y, c); };
     for (let dy = -9; dy <= 9; dy++) for (let dx = -13; dx <= 13; dx++) put(cx + dx, cy + dy, '草');
     E.list = []; p.x = cx; p.y = cy; p.rx = cx; p.ry = cy; p.bag = []; p.tools = []; p.tool = -1; p.sel = 0; g.barSig = ''; p.hp = 100;
-    ok('v0.37: a day lasts 420 / 360 / 300 s for easy / normal / hard; this normal island runs 360 in both game and world', DAY === 360 && XIEYI.DIFF.easy.day === 420 && XIEYI.DIFF.normal.day === 360 && XIEYI.DIFF.hard.day === 300 && window.World.DAY === 360 && w.serialize().dayLen === 360, [DAY, window.World.DAY]);
+    ok('v0.6.10: a day lasts 420 / 360 / 300 s for easy / normal / hard; this normal island runs 360 in both game and world', DAY === 360 && XIEYI.DIFF.easy.day === 420 && XIEYI.DIFF.normal.day === 360 && XIEYI.DIFF.hard.day === 300 && window.World.DAY === 360 && w.serialize().dayLen === 360, [DAY, window.World.DAY]);
     const night = (f) => { setDay(f); return g.isNight(); };
     ok('the day starts at midnight: night until 0.25, day 0.25–0.75, night again from 0.75', night(0.01) && night(0.24) && !night(0.25) && !night(0.74) && night(0.75) && night(0.99));
     setDay(0.25); const hDawn = g.shichen(); setDay(0.75); const hDusk = g.shichen(); setDay(0.01); const hMid = g.shichen();
@@ -1366,10 +1366,10 @@ const result = await page.evaluate(async () => {
     for (const dy of [-1, 0, 1]) put(cx + 1, cy + dy, '磚');
     bison.x = cx + 2; bison.y = cy; bison.angry = true; bison.angryAt = w.time; bison.atk = 0; bison.moveT = 0;
     let ruined = false, rams = 0; for (let i = 0; i < 160 && w.get(cx + 1, cy) !== '白'; i++) { const a0 = bison.atk; E.update(0.1, g); if (bison.atk > a0 + 0.5) rams++; if (w.get(cx + 1, cy) === '墟') ruined = true; }
-    ok('v0.29: an angered bison rams the brick: at half its hidden strength it turns to 墟, and it breaks on the fourth ram', ruined && rams === 4 && w.get(cx + 1, cy) === '白' && E.isHostile(bison), [w.get(cx + 1, cy), rams]);
+    ok('v0.6.2: an angered bison rams the brick: at half its hidden strength it turns to 墟, and it breaks on the fourth ram', ruined && rams === 4 && w.get(cx + 1, cy) === '白' && E.isHostile(bison), [w.get(cx + 1, cy), rams]);
     put(cx + 1, cy, '窗'); bison.x = cx + 2; bison.y = cy; bison.atk = 0; let red = false; rams = 0;
     for (let i = 0; i < 120 && w.get(cx + 1, cy) === '窗'; i++) { const a0 = bison.atk; E.update(0.1, g); if (bison.atk > a0 + 0.5) rams++; if (w.wallHurt(cx + 1, cy)) red = true; }
-    ok('v0.29: a window has half a brick\'s strength: it turns red after one ram and breaks on the second', red && rams === 2 && w.get(cx + 1, cy) === '白', [w.get(cx + 1, cy), rams]);
+    ok('v0.6.2: a window has half a brick\'s strength: it turns red after one ram and breaks on the second', red && rams === 2 && w.get(cx + 1, cy) === '白', [w.get(cx + 1, cy), rams]);
     E.remove(bison);
     // 磚擋光擋眼；窗不擋
     put(cx - 6, cy, '燈'); for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]) put(cx - 6 + dx, cy + dy, '磚');
@@ -1385,9 +1385,9 @@ const result = await page.evaluate(async () => {
     p.x = rx; p.y = ry; p.rx = rx; p.ry = ry; E.list = [];
     setDay(0.93); p.san = 10; g.sleep(); const plain = p.san - 10;
     put(rx - 1, ry, '窗'); setDay(0.93); p.san = 10; g.sleep(); const lit = p.san - 10, share = g.windowShare();
-    ok('v0.29: sleeping where windows ÷ room area is over 1/5: 愜意 +24 (20 × 1.2) instead of +20', plain === 20 && share === 1 && lit === 24, [plain, share, lit]);
-    ok('v0.29: window tiers — over 1/9 +5%, over 1/7 +12%, over 1/5 +20%; exactly 1/9 gives nothing', g.windowBonus(1 / 9) === 0 && g.windowBonus(0.12) === 0.05 && g.windowBonus(1 / 6) === 0.12 && g.windowBonus(0.21) === 0.2 && g.windowBonus(0) === 0);
-    ok('v0.29: a bright room also speeds every 愜意 gain by 5% for a whole day', p.sanBoostUntil > w.time + DAY - 2 && g.sanUp(10) === 10.5, [p.sanBoostUntil - w.time, g.sanUp(10)]);
+    ok('v0.6.2: sleeping where windows ÷ room area is over 1/5: 愜意 +24 (20 × 1.2) instead of +20', plain === 20 && share === 1 && lit === 24, [plain, share, lit]);
+    ok('v0.6.2: window tiers — over 1/9 +5%, over 1/7 +12%, over 1/5 +20%; exactly 1/9 gives nothing', g.windowBonus(1 / 9) === 0 && g.windowBonus(0.12) === 0.05 && g.windowBonus(1 / 6) === 0.12 && g.windowBonus(0.21) === 0.2 && g.windowBonus(0) === 0);
+    ok('v0.6.2: a bright room also speeds every 愜意 gain by 5% for a whole day', p.sanBoostUntil > w.time + DAY - 2 && g.sanUp(10) === 10.5, [p.sanBoostUntil - w.time, g.sanUp(10)]);
     w.time = p.sanBoostUntil + 1; ok('…and the day-long boost wears off', g.sanUp(10) === 10); p.sanBoostUntil = 0;
     p.x = cx; p.y = cy; p.rx = cx; p.ry = cy; setDay(0.53);
     // 沼澤：獸除了蟾都不進；站在裡面掉力；木板鋪成棧道
@@ -1406,18 +1406,18 @@ const result = await page.evaluate(async () => {
     ok('a slain boar gives 3 meat and (a quarter of the time) fat; a bison gives 4 meat', g.count('肉') === 7 && g.count('油脂') === 1, bag());
     g.addItem('棉', 1); p.sta = p.staMax; g.craft('candle2');
     ok('棉一油脂一 makes three candles', g.count('蠟燭') === 3 && g.count('油脂') === 0, bag());
-    // 製作欄：v0.37 起照配方表一條一條列，不畫衍生樹
+    // 製作欄：v0.6.10 起照配方表一條一條列，不畫衍生樹
     g.craftCat = '燈火'; const vr = g.visibleRecipes().map(r => r.id), want = G.RECIPES.filter(r => r.cat === '燈火').map(r => r.id);
-    ok('v0.37: craft panel 燈火 lists its recipes in table order, no parent/child levels', vr.join() === want.join() && typeof g.craftTree !== 'function' && typeof g.craftParents !== 'function', vr);
-    g.craftCat = '全部'; ok('v0.37: 全部 lists every recipe once, in table order', g.visibleRecipes().map(r => r.id).join() === G.RECIPES.map(r => r.id).join());
+    ok('v0.6.10: craft panel 燈火 lists its recipes in table order, no parent/child levels', vr.join() === want.join() && typeof g.craftTree !== 'function' && typeof g.craftParents !== 'function', vr);
+    g.craftCat = '全部'; ok('v0.6.10: 全部 lists every recipe once, in table order', g.visibleRecipes().map(r => r.id).join() === G.RECIPES.map(r => r.id).join());
     g.craftCat = '燈火'; g.toggleCraft(); await sleep(30);
-    ok('v0.37: the craft panel draws no tree lines or indented rows', document.querySelectorAll('#craft-list .recipe').length === want.length && !document.querySelector('#craft-list .tree, #craft-list .recipe.child, #craft-list .recipe.parent, #craft-list .from'));
+    ok('v0.6.10: the craft panel draws no tree lines or indented rows', document.querySelectorAll('#craft-list .recipe').length === want.length && !document.querySelector('#craft-list .tree, #craft-list .recipe.child, #craft-list .recipe.parent, #craft-list .from'));
     g.toggleCraft(); g.craftCat = '全部';
     ok('each of 虎豹狼蛇蛛 (and 野豬、野牛) has its own call', typeof SFX.beast === 'function' && ['虎', '豹', '狼', '蛇', '蛛', '豬', '牛'].every(t => SFX.beastTypes.indexOf(t) >= 0));
     ok('the help says 磚, not 牆, for walls', document.getElementById('help').textContent.indexOf('穿牆') < 0 && document.getElementById('help').textContent.indexOf('砌牆') < 0);
     for (let i = area.length - 1; i >= 0; i--) w.set(area[i][0], area[i][1], area[i][2]);
     E.list = []; p.x = X0; p.y = Y0; p.rx = X0; p.ry = Y0; p.bag = keepB; p.tools = keepT; p.tool = keepI; p.sel = 0; g.barSig = ''; g.buildBag(); Math.random = mr; calm(); }
-  // ============ 簡體中文（v0.24）：只在顯示那一層轉字，程式、存檔、字庫的鍵一律繁體 ============
+  // ============ 簡體中文（v0.5.4）：只在顯示那一層轉字，程式、存檔、字庫的鍵一律繁體 ============
   { calm();
     ok('the converter: 字裡行間 → 字里行间; 乾坤 and 著名 kept as words; 穿著 → 穿着; 九閽鳴雷 → 九阍鸣雷', I18N.toHans('字裡行間 · 一紙之島') === '字里行间 · 一纸之岛' && I18N.toHans('乾坤') === '乾坤' && I18N.toHans('著名') === '著名' && I18N.toHans('穿著') === '穿着' && I18N.toHans('九閽鳴雷') === '九阍鸣雷');
     ok('traditional by default; the pause panel offers 简体中文', !I18N.hans && document.documentElement.lang === 'zh-TW' && document.getElementById('pause-lang').textContent === '简体中文');
@@ -1439,105 +1439,105 @@ const result = await page.evaluate(async () => {
     document.getElementById('pause-lang').click(); await sleep(20); const viaPause = I18N.hans; document.getElementById('pause-lang').click(); await sleep(20);
     ok('the pause-panel button switches back and forth', viaPause && !I18N.hans && document.getElementById('pause-lang').textContent === '简体中文');
     g.removeItem('鐵', 1); }
-  // ============ v0.29：一日三百息從半夜起算、精確到四位、墟與補牆、草花田路上放東西、舊存檔 ============
-  { ok('v0.29: a fresh island wakes in the early morning, just after dawn', new window.World(w.seed + 7).time === DAY * 0.26);
+  // ============ v0.6.2：一日三百息從半夜起算、精確到四位、墟與補牆、草花田路上放東西、舊存檔 ============
+  { ok('v0.6.2: a fresh island wakes in the early morning, just after dawn', new window.World(w.seed + 7).time === DAY * 0.26);
     const old = JSON.parse(JSON.stringify(w.serialize())); delete old.dayLen; old.time = 375 * 9 + 375 * 0.8; old.diff['3,3'] = '牆';
     old.scarecrows = { '0,0': old.time + 100 }; old.timers = { '1,1': ['苗', old.time + 50, '田'] };
     const w3 = new window.World(w.seed); w3.restore(old, 10);
-    ok('v0.29: an old save keeps its day number and comes back at that day\'s early morning', w3.time === DAY * 9 + DAY * 0.26, w3.time / DAY);
+    ok('v0.6.2: an old save keeps its day number and comes back at that day\'s early morning', w3.time === DAY * 9 + DAY * 0.26, w3.time / DAY);
     ok('…timers saved in it keep the same countdown, and its old 牆 reads 墟', Math.abs(w3.scarecrows.get('0,0') - (w3.time + 100)) < 1e-6 && Math.abs(w3.timers.get('1,1').at - (w3.time + 50)) < 1e-6 && w3.diff.get('3,3') === '墟');
     const w4 = new window.World(w.seed); w4.restore(w.serialize(), g.day());
-    ok('v0.29: a save made now keeps its exact time', w4.time === U.r4(w.time) && w4.timeShift === 0, [w4.time, w.time]);
-    ok('v0.29: 墟 replaces the village\'s broken walls (牆 is gone from the glyph table)', !!G.DB['墟'] && !G.DB['牆'] && G.DB['墟'].opaque && G.PLACES.find(q => q.id === 'cun').template.join('').indexOf('墟') >= 0 && G.PLACES.find(q => q.id === 'cun').template.join('').indexOf('牆') < 0);
-    ok('v0.29: U.r4 keeps four decimals', U.r4(20 * 5 / 3 * 0.83) === 27.6667 && U.r4(1 / 3) === 0.3333 && U.r4(2.00004) === 2);
+    ok('v0.6.2: a save made now keeps its exact time', w4.time === U.r4(w.time) && w4.timeShift === 0, [w4.time, w.time]);
+    ok('v0.6.2: 墟 replaces the village\'s broken walls (牆 is gone from the glyph table)', !!G.DB['墟'] && !G.DB['牆'] && G.DB['墟'].opaque && G.PLACES.find(q => q.id === 'cun').template.join('').indexOf('墟') >= 0 && G.PLACES.find(q => q.id === 'cun').template.join('').indexOf('牆') < 0);
+    ok('v0.6.2: U.r4 keeps four decimals', U.r4(20 * 5 / 3 * 0.83) === 27.6667 && U.r4(1 / 3) === 0.3333 && U.r4(2.00004) === 2);
     face(1, 0); w.set(T().x, T().y, '磚'); const r1 = w.hitWall(T().x, T().y), r2 = w.hitWall(T().x, T().y);
-    ok('v0.29: two hits on a brick: still 磚 after the first, 墟 after the second', r1 === 'hit' && r2 === 'ruined' && w.get(T().x, T().y) === '墟', [r1, r2]);
+    ok('v0.6.2: two hits on a brick: still 磚 after the first, 墟 after the second', r1 === 'hit' && r2 === 'ruined' && w.get(T().x, T().y) === '墟', [r1, r2]);
     g.addItem('磚', 1); hold('磚'); const b0 = g.count('磚'); g.pressPlace();
-    ok('v0.29: a 磚 laid straight onto 墟 makes a whole brick again', w.get(T().x, T().y) === '磚' && !w.wallHp.has(U.key(T().x, T().y)) && g.count('磚') === b0 - 1);
+    ok('v0.6.2: a 磚 laid straight onto 墟 makes a whole brick again', w.get(T().x, T().y) === '磚' && !w.wallHp.has(U.key(T().x, T().y)) && g.count('磚') === b0 - 1);
     w.set(T().x, T().y, '墟'); const v1 = w.hitWall(T().x, T().y), v2 = w.hitWall(T().x, T().y);
-    ok('v0.29: the village\'s own 墟 is weaker than a brick: two hits and it is gone', v1 === 'hit' && v2 === 'broken', [v1, v2]);
+    ok('v0.6.2: the village\'s own 墟 is weaker than a brick: two hits and it is gone', v1 === 'hit' && v2 === 'broken', [v1, v2]);
     w.set(T().x, T().y, '窗'); const c1 = w.hitWall(T().x, T().y);
-    ok('v0.29: a window hit once is at half strength and turns red', c1 === 'cracked' && w.wallHurt(T().x, T().y));
+    ok('v0.6.2: a window hit once is at half strength and turns red', c1 === 'cracked' && w.wallHurt(T().x, T().y));
     g.addItem('窗', 2); hold('窗'); const n0 = g.count('窗'); g.pressPlace();
-    ok('v0.29: a 窗 put onto the red window replaces it', w.get(T().x, T().y) === '窗' && !w.wallHurt(T().x, T().y) && g.count('窗') === n0 - 1);
+    ok('v0.6.2: a 窗 put onto the red window replaces it', w.get(T().x, T().y) === '窗' && !w.wallHurt(T().x, T().y) && g.count('窗') === n0 - 1);
     g.pressPlace(); ok('…but a whole window is left alone', g.count('窗') === n0 - 1);
     g.removeItem('窗', 9); w.set(T().x, T().y, '草'); }
-  // ============ v0.31：具欄分武器與農具、P 換武器 O 換農具、舊石器磨回石子、光照圖、雨裡的燈、霧順著飄 ============
+  // ============ v0.6.4：具欄分武器與農具、P 換武器 O 換農具、舊石器磨回石子、光照圖、雨裡的燈、霧順著飄 ============
   { const keepT = p.tools, keepI = p.tool; p.tools = []; p.tool = -1;
     for (const n of ['石鎬', '石劍', '石斧', '石刀']) p.tools.push({ n, c: 1, dur: 40 });
     g.barSig = ''; g.buildBag(); await sleep(30);
     const order = p.tools.map(s => s.n).join(''), labels = [...document.querySelectorAll('#toolbar .rowlabel')].map(l => l.textContent).join('');
-    ok('v0.31: the tool bar has two parts — weapons first (武), then farm tools (農) — sharing the same six slots', order === '石劍石刀石鎬石斧' && labels === '武農' && document.querySelectorAll('#toolbar .slot').length === g.toolSlots(), [order, labels]);
+    ok('v0.6.4: the tool bar has two parts — weapons first (武), then farm tools (農) — sharing the same six slots', order === '石劍石刀石鎬石斧' && labels === '武農' && document.querySelectorAll('#toolbar .slot').length === g.toolSlots(), [order, labels]);
     const seq = []; for (let i = 0; i < 3; i++) { await press('KeyP', 20); seq.push(g.activeTool() ? g.activeTool().n : '空'); }
     for (let i = 0; i < 3; i++) { await press('KeyO', 20); seq.push(g.activeTool() ? g.activeTool().n : '空'); }
     await press('KeyO', 20); await press('KeyP', 20); seq.push(g.activeTool() ? g.activeTool().n : '空');
-    ok('v0.31: P goes through the weapons then empty hand; O through the farm tools; P from a farm tool picks the first weapon', seq.join(',') === '石劍,石刀,空,石鎬,石斧,空,石劍', seq);
+    ok('v0.6.4: P goes through the weapons then empty hand; O through the farm tools; P from a farm tool picks the first weapon', seq.join(',') === '石劍,石刀,空,石鎬,石斧,空,石劍', seq);
     g.addItem('鋼鎬', 1); g.barSig = ''; g.buildBag();
-    ok('v0.31: a new farm tool goes into the farm part, and the weapon in hand stays in hand', p.tools.map(s => s.n).join('') === '石劍石刀石鎬石斧鋼鎬' && g.activeTool().n === '石劍', p.tools.map(s => s.n));
+    ok('v0.6.4: a new farm tool goes into the farm part, and the weapon in hand stays in hand', p.tools.map(s => s.n).join('') === '石劍石刀石鎬石斧鋼鎬' && g.activeTool().n === '石劍', p.tools.map(s => s.n));
     hold('石刀'); const peb0 = g.count('石子'); p.sta = 50; g.craft('crush');
-    ok('v0.31: the stone knife in hand is ground back into two pebbles', !p.tools.some(s => s.n === '石刀') && g.count('石子') === peb0 + 2 && !g.activeTool());
+    ok('v0.6.4: the stone knife in hand is ground back into two pebbles', !p.tools.some(s => s.n === '石刀') && g.count('石子') === peb0 + 2 && !g.activeTool());
     p.tools = p.tools.filter(s => s.n === '鋼鎬'); p.tool = 0; p.bag.push({ n: '石斧', c: 1, dur: 12 }); p.sta = 50; g.craft('crush');
-    ok('v0.31: with no stone tool in hand, one from the bag is ground instead (the steel pick in hand is left alone)', g.count('石子') === peb0 + 4 && !p.bag.some(s => s.n === '石斧') && g.activeTool() && g.activeTool().n === '鋼鎬', bag());
+    ok('v0.6.4: with no stone tool in hand, one from the bag is ground instead (the steel pick in hand is left alone)', g.count('石子') === peb0 + 4 && !p.bag.some(s => s.n === '石斧') && g.activeTool() && g.activeTool().n === '鋼鎬', bag());
     p.bag = p.bag.filter(s => ['石刀', '石鎬', '石鋤', '石劍', '石斧'].indexOf(s.n) < 0); p.tools = []; p.tool = -1; g.craft('crush');
-    ok('v0.31: nothing to grind: a clear message and nothing taken', g.count('石子') === peb0 + 4 && g.msgText.indexOf('石器') >= 0);
-    ok('v0.31: 研磨石器 sits in the 工具 recipes', G.RECIPES.find(r => r.id === 'crush').cat === '工具');
+    ok('v0.6.4: nothing to grind: a clear message and nothing taken', g.count('石子') === peb0 + 4 && g.msgText.indexOf('石器') >= 0);
+    ok('v0.6.4: 研磨石器 sits in the 工具 recipes', G.RECIPES.find(r => r.id === 'crush').cat === '工具');
     p.tools = keepT; p.tool = keepI; g.barSig = ''; g.buildBag(); g.removeItem('石子', 4); }
   { const R = g.renderer, ax = p.x + 30, ay = p.y + 30;
     for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) w.set(ax + dx, ay + dy, '草');
     const open1 = R.sight(w, ax, ay, 4); w.set(ax + 2, ay, '磚'); const walled = R.sight(w, ax, ay, 4), again = R.sight(w, ax, ay, 4);
     const W = 9, at = (v, dx, dy) => v[(dy + 4) * W + dx + 4];
-    ok('v0.31: light sight — nothing in the way means all lit; a brick hides what is behind it; the answer is cached until the ground changes', open1 === null && walled && at(walled, 2, 0) === 1 && at(walled, 3, 0) === 0 && at(walled, 0, 3) === 1 && again === walled, walled && [at(walled, 2, 0), at(walled, 3, 0)]);
+    ok('v0.6.4: light sight — nothing in the way means all lit; a brick hides what is behind it; the answer is cached until the ground changes', open1 === null && walled && at(walled, 2, 0) === 1 && at(walled, 3, 0) === 0 && at(walled, 0, 3) === 1 && again === walled, walled && [at(walled, 2, 0), at(walled, 3, 0)]);
     w.set(ax + 2, ay, '草'); ok('…and a changed ground invalidates it', R.sight(w, ax, ay, 4) === null);
     for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) w.set(ax + dx, ay + dy, w.base(ax + dx, ay + dy));
     const lx = p.x + 2, ly = p.y - 1, was = w.get(lx, ly); w.set(lx, ly, '燈'); setDay(0.5); w.rainUntil = w.time + DAY; await sleep(1900);
     const dayRain = R.lastLm; w.rainUntil = 0; const nr0 = w.nextRainAt; w.nextRainAt = w.time + DAY * 9; R.rainA = 0; await sleep(120); const dayDry = R.lastLm; w.nextRainAt = nr0;   // 天氣是真隨機：量乾天時先別讓雨自己下
-    ok('v0.31: in daytime rain a lamp still glows faintly; on a dry day there is no light layer at all', !!dayRain && dayRain.glow && !dayDry, [!!dayRain, dayRain && dayRain.glow, !!dayDry]);
+    ok('v0.6.4: in daytime rain a lamp still glows faintly; on a dry day there is no light layer at all', !!dayRain && dayRain.glow && !dayDry, [!!dayRain, dayRain && dayRain.glow, !!dayDry]);
     setDay(0.9); await sleep(120); const nightLm = R.lastLm;
-    ok('v0.31: at night the light map carries the darkness and the lamp\'s warm glow', !!nightLm && nightLm.glow && nightLm.cols > 0 && R.lmDark.width === nightLm.cols, nightLm && [nightLm.cols, nightLm.rows]);
+    ok('v0.6.4: at night the light map carries the darkness and the lamp\'s warm glow', !!nightLm && nightLm.glow && nightLm.cols > 0 && R.lmDark.width === nightLm.cols, nightLm && [nightLm.cols, nightLm.rows]);
     w.set(lx, ly, was); setDay(0.53); }
   { const fx = p.x - 16, fy = p.y; for (let dy = -9; dy <= 9; dy++) for (let dx = -9; dx <= 9; dx++) w.set(fx + dx, fy + dy, '草');
     const ns = []; for (let i = 0; i < 40; i++) ns.push(window.World.newFogShape(18).n);
-    ok('v0.31: fog shapes run from round (power near 2) to square (power near 6)', Math.min(...ns) < 2.8 && Math.max(...ns) > 5, [Math.min(...ns), Math.max(...ns)]);
+    ok('v0.6.4: fog shapes run from round (power near 2) to square (power near 6)', Math.min(...ns) < 2.8 && Math.max(...ns) > 5, [Math.min(...ns), Math.max(...ns)]);
     for (const id of [...w.fogs.keys()]) w.removeFog(id);
     const f = w.addFog(null, w.time + DAY, false, window.World.newFogShape(18), [fx + 0.5, fy + 0.5]), cov = w.fogCoverage(f, undefined, undefined, undefined, f.mul);
     const area = cov.reduce((a, e) => a + e.c, 0), counted = [...f.cells], byKey = new Map(cov.map(e => [e.k, e.c]));
-    ok('v0.31: a fog covers about eighteen tiles of area; a tile counts once more than 5% of it is covered; at most thirty count', Math.abs(area - 18) < 1.6 && counted.length <= 30 && counted.length >= 18 && counted.every(k => byKey.get(k) > 0.05) && cov.filter(e => e.c > 0.05).length >= counted.length, [area, counted.length]);
+    ok('v0.6.4: a fog covers about eighteen tiles of area; a tile counts once more than 5% of it is covered; at most thirty count', Math.abs(area - 18) < 1.6 && counted.length <= 30 && counted.length >= 18 && counted.every(k => byKey.get(k) > 0.05) && cov.filter(e => e.c > 0.05).length >= counted.length, [area, counted.length]);
     w.removeFog(f.id);
     const room = (half) => { for (let dy = -half - 1; dy <= half + 1; dy++) for (let dx = -half - 1; dx <= half + 1; dx++) w.set(fx + dx, fy + dy, Math.max(Math.abs(dx), Math.abs(dy)) === half + 1 ? '磚' : '草'); };
     room(2); const f5 = w.addFog(null, w.time + DAY, false, window.World.newFogShape(18), [fx + 0.5, fy + 0.5]);
     const inSmall = [...f5.cells].filter(k => { const [x, y] = k.split(',').map(Number); return Math.abs(x - fx) <= 2 && Math.abs(y - fy) <= 2; }).length;
     w.removeFog(f5.id); room(3); const f7 = w.addFog(null, w.time + DAY, false, window.World.newFogShape(18), [fx + 0.5, fy + 0.5]);
     const inBig = [...f7.cells].filter(k => { const [x, y] = k.split(',').map(Number); return Math.abs(x - fx) <= 3 && Math.abs(y - fy) <= 3; }).length;
-    ok('v0.31: fog stays out of a walled room of 45 tiles or less (5×5 = 25), but drifts into a bigger one (7×7 = 49)', inSmall === 0 && inBig > 10, [inSmall, inBig]);
+    ok('v0.6.4: fog stays out of a walled room of 45 tiles or less (5×5 = 25), but drifts into a bigger one (7×7 = 49)', inSmall === 0 && inBig > 10, [inSmall, inBig]);
     w.removeFog(f7.id); room(4); for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) w.set(fx + dx, fy + dy, w.base(fx + dx, fy + dy));
     const fg = w.addFog(null, w.time + DAY, false, window.World.newFogShape(18), [p.x - 6.5, p.y + 0.5]);
     await sleep(100); const seen = g.renderer.fogSeen.has(fg.id) && (fg._cov || []).length > 0;
     w.removeFog(fg.id); await until(() => fg._fade < 1 || !g.renderer.fogSeen.has(fg.id), 1500); const fading = g.renderer.fogSeen.has(fg.id) && fg._fade < 1;   // 等到有一幀開始淡（慢的機器一幀可能超過八十毫秒）；淡完要一息
-    ok('v0.31: the renderer draws the fog from its coverage, and a fog that is gone fades out instead of vanishing', seen && fading, [seen, fading]); }
-  // ============ v0.32：霧障爬山渡海、繞著小屋走；魄煙滅長膽氣、燈帽少兩息；神兵修理是鎢鋼的兩倍 ============
+    ok('v0.6.4: the renderer draws the fog from its coverage, and a fog that is gone fades out instead of vanishing', seen && fading, [seen, fading]); }
+  // ============ v0.6.5：霧障爬山渡海、繞著小屋走；魄煙滅長膽氣、燈帽少兩息；神兵修理是鎢鋼的兩倍 ============
   { const fx = p.x + 20, fy = p.y - 20, clear = (r, ch) => { for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) w.set(fx + dx, fy + dy, ch); };
     clear(10, '草'); for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { w.set(fx + dx - 6, fy + dy, '水'); w.set(fx + dx + 6, fy + dy, '山'); }
     const fw = w.addFog(null, w.time + DAY, false, window.World.newFogShape(18), [fx - 5.5, fy + 0.5]), fm = w.addFog(null, w.time + DAY, false, window.World.newFogShape(18), [fx + 6.5, fy + 0.5]);
     const on = (f, ch) => [...f.cells].filter(k => { const [x, y] = k.split(',').map(Number); return w.get(x, y) === ch; }).length;
-    ok('v0.32: fog goes over water and over mountains', on(fw, '水') >= 10 && on(fm, '山') >= 10, [on(fw, '水'), on(fm, '山')]);
+    ok('v0.6.5: fog goes over water and over mountains', on(fw, '水') >= 10 && on(fm, '山') >= 10, [on(fw, '水'), on(fm, '山')]);
     w.removeFog(fw.id); w.removeFog(fm.id); clear(10, '草');
     for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === 3) w.set(fx + dx, fy + dy, '磚');
     const fh = w.addFog(null, w.time + DAY, false, window.World.newFogShape(18), [fx - 5.5, fy + 0.5]); fh.ang = 0; fh.gx = fh.x; fh.gy = fh.y;
     let wrapped = true, inside = 0; for (let i = 0; i < 12; i++) { w.placeFog(fh, fh.gx + Math.cos(fh.ang) * 0.5, fh.gy + Math.sin(fh.ang) * 0.5, fh.age); const cv = w.fogCover(fh); if (Math.abs(cv.area - fh.shape.area) > 1.2) wrapped = false; inside += [...fh.cells].filter(k => { const [x, y] = k.split(',').map(Number); return Math.abs(x - fx) <= 2 && Math.abs(y - fy) <= 2; }).length; }
     { const ix = fx - 8, iy = fy + 7; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) w.set(ix + dx, iy + dy, Math.max(Math.abs(dx), Math.abs(dy)) === 2 ? '水' : '草');
-      ok('v0.34: a little pocket ringed by water alone is not a house — fog may drift in', !w.fogRoom(ix, iy));
+      ok('v0.6.7: a little pocket ringed by water alone is not a house — fog may drift in', !w.fogRoom(ix, iy));
       for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) w.set(ix + dx, iy + dy, '草'); }
-    ok('v0.32: meeting a small house the fog turns aside, wraps round it with the same area, and never enters', (fh.turned || 0) >= 1 && Math.abs(Math.cos(fh.ang)) < 0.9 && wrapped && inside === 0, [fh.turned, fh.ang, wrapped, inside]);
+    ok('v0.6.5: meeting a small house the fog turns aside, wraps round it with the same area, and never enters', (fh.turned || 0) >= 1 && Math.abs(Math.cos(fh.ang)) < 0.9 && wrapped && inside === 0, [fh.turned, fh.ang, wrapped, inside]);
     w.removeFog(fh.id); clear(10, w.base(fx, fy));
     for (let dy = -10; dy <= 10; dy++) for (let dx = -10; dx <= 10; dx++) w.set(fx + dx, fy + dy, w.base(fx + dx, fy + dy));
     const fe = w.addFog(null, w.time + DAY, false, window.World.newFogShape(18), [0.5, G.WORLD_R - 3.5]); fe.ang = Math.PI / 2; w.placeFog(fe, fe.x, fe.y, fe.age);
-    ok('v0.32/v0.38: at the edge of the paper a fog turns back toward the island instead of drifting off', Math.sin(fe.ang) < 0, fe.ang);
+    ok('v0.6.5/v0.7: at the edge of the paper a fog turns back toward the island instead of drifting off', Math.sin(fe.ang) < 0, fe.ang);
     w.removeFog(fe.id); }
   { const gx = p.x + 3, gy = p.y + 3, keepT = []; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 4; dx++) { keepT.push([gx + dx, gy + dy, w.get(gx + dx, gy + dy)]); w.set(gx + dx, gy + dy, '草'); }
     w.set(gx, gy, '燈'); setDay(0.9); const hat0 = p.worn['帽']; p.worn['帽'] = { n: '燈帽', c: 1, fuel: 100 }; g.ents.list = g.ents.list.filter(e => e.type !== '魄');
     p.cour = g.levelAt(5) + 1; const c0 = p.cour, need5 = g.levelCost(5), out0 = !g.indoors();
     const gh = g.ents.add('魄', gx + 2, gy, { moveT: 99 }); g.ents.update(0.02, g);
-    ok('v0.32: a ghost burned by a lamp at night while you stand outdoors gives 1% of this level (not points), and the lamp hat loses two seconds', out0 && gh.fade < 1 && Math.abs(p.cour - c0 - need5 * 0.01) < 1e-6 && Math.abs(p.worn['帽'].fuel - 98) < 0.01, [p.cour - c0, need5 * 0.01, p.worn['帽'].fuel]);
+    ok('v0.6.5: a ghost burned by a lamp at night while you stand outdoors gives 1% of this level (not points), and the lamp hat loses two seconds', out0 && gh.fade < 1 && Math.abs(p.cour - c0 - need5 * 0.01) < 1e-6 && Math.abs(p.worn['帽'].fuel - 98) < 0.01, [p.cour - c0, need5 * 0.01, p.worn['帽'].fuel]);
     const ind = g.indoors; g.indoors = () => true; const c1 = p.cour; const gh2 = g.ents.add('魄', gx + 2, gy + 1, { moveT: 99 }); g.ents.update(0.02, g); g.indoors = ind;
     ok('…indoors there is no courage for it, but the lamp hat still pays two seconds', gh2.fade < 1 && p.cour === c1 && Math.abs(p.worn['帽'].fuel - 96) < 0.01, [p.cour - c1, p.worn['帽'].fuel]);
     p.cour = g.levelAt(25) + 1; const c2 = p.cour; const gh3 = g.ents.add('魄', gx + 2, gy - 1, { moveT: 99 }); g.ents.update(0.02, g);
@@ -1545,46 +1545,46 @@ const result = await page.evaluate(async () => {
     g.ents.list = g.ents.list.filter(e => e.type !== '魄'); p.worn['帽'] = hat0; p.cour = 0; for (const [x, y, ch] of keepT) w.set(x, y, ch); setDay(0.53); }
   { const keepT = p.tools, keepI = p.tool; p.tools = [{ n: '九閽鳴雷', c: 1, dur: 10 }]; p.tool = 0; g.removeItem('鐵', 99); g.removeItem('鎢鋼', 99); g.addItem('鐵', 40); g.addItem('鎢鋼', 12);
     const gc = []; let sf = true; for (let i = 0; i < 4; i++) { const i0 = g.count('鐵'), t0 = g.count('鎢鋼'); p.tools[0].dur = 3; p.sta = 50; p.food = 50; g.craft('regrind'); gc.push((i0 - g.count('鐵')) + '+' + (t0 - g.count('鎢鋼'))); if (p.sta !== 34 || Math.round(p.food) !== 30) sf = false; }
-    ok('v0.32: mending a god weapon costs twice tungsten — 鐵 2; 鐵 4; 鐵 6 + 鎢鋼 2; 鐵 12 + 鎢鋼 4 — and 16 stamina, 20 food', gc.join(',') === '2+0,4+0,6+2,12+4' && sf && p.tools[0].dur === 199, [gc, p.sta, p.food]);
+    ok('v0.6.5: mending a god weapon costs twice tungsten — 鐵 2; 鐵 4; 鐵 6 + 鎢鋼 2; 鐵 12 + 鎢鋼 4 — and 16 stamina, 20 food', gc.join(',') === '2+0,4+0,6+2,12+4' && sf && p.tools[0].dur === 199, [gc, p.sta, p.food]);
     p.tools = keepT; p.tool = keepI; g.removeItem('鐵', 99); g.removeItem('鎢鋼', 99); g.barSig = ''; g.buildBag(); }
-  // —— v0.32／v0.33：滑鼠點遠處的格子，自己找路走到它旁邊（不踩上去）、面向它；點會動的生靈就跟著
+  // —— v0.6.5／v0.6.6：滑鼠點遠處的格子，自己找路走到它旁邊（不踩上去）、面向它；點會動的生靈就跟著
   { const X = p.x, Y = p.y; g.ents.list = g.ents.list.filter(e => e.type === '龍' || e.type === '鷹'); unarm(); p.sailing = false; p.swimming = false;
     for (let dy = -9; dy <= 9; dy++) for (let dx = -9; dx <= 9; dx++) w.set(X + dx, Y + dy, '草');
     const goTo = async (tx, ty, ms) => { g.walkTo(tx, ty); await until(() => !g.path && p.moveT <= 0, ms || 8000); };
     const faces = (tx, ty) => p.x + p.fx === tx && p.y + p.fy === ty && !(p.x === tx && p.y === ty);
     w.set(X + 5, Y, '木'); await goTo(X + 5, Y);
-    ok('v0.33: clicking a tree five east stops on the nearest of its eight neighbours (four east), facing it — not on it', p.x === X + 4 && p.y === Y && faces(X + 5, Y), [p.x - X, p.y - Y, p.fx, p.fy]);
+    ok('v0.6.6: clicking a tree five east stops on the nearest of its eight neighbours (four east), facing it — not on it', p.x === X + 4 && p.y === Y && faces(X + 5, Y), [p.x - X, p.y - Y, p.fx, p.fy]);
     w.set(X + 5, Y, '草'); p.x = p.rx = X; p.y = p.ry = Y; await goTo(X + 5, Y - 2);
-    ok('v0.39: clicking open ground (a grass tile) walks right onto it', p.x === X + 5 && p.y === Y - 2 && !g.path, [p.x - X, p.y - Y]);
-    ok('v0.39: what counts as open ground: bare ground, paper, grass, bridges and steps — not swamp, trees, rock or a tile with a creature on it', (() => { const t = (ch) => { w.set(X - 8, Y - 8, ch); return g.openGround(X - 8, Y - 8); }; const res = ['白', '土', '沙', '路', '草', '花', '橋', '階', '漠'].every(t) && !['沼', '木', '林', '山', '石', '磚', '門'].some(t); w.set(X - 8, Y - 8, '草'); const cow = g.ents.add('牛', X - 8, Y - 8, { moveT: 99, calm: 99 }); const occ = g.openGround(X - 8, Y - 8); g.ents.remove(cow); return res && !occ; })());
+    ok('v0.7.1: clicking open ground (a grass tile) walks right onto it', p.x === X + 5 && p.y === Y - 2 && !g.path, [p.x - X, p.y - Y]);
+    ok('v0.7.1: what counts as open ground: bare ground, paper, grass, bridges and steps — not swamp, trees, rock or a tile with a creature on it', (() => { const t = (ch) => { w.set(X - 8, Y - 8, ch); return g.openGround(X - 8, Y - 8); }; const res = ['白', '土', '沙', '路', '草', '花', '橋', '階', '漠'].every(t) && !['沼', '木', '林', '山', '石', '磚', '門'].some(t); w.set(X - 8, Y - 8, '草'); const cow = g.ents.add('牛', X - 8, Y - 8, { moveT: 99, calm: 99 }); const occ = g.openGround(X - 8, Y - 8); g.ents.remove(cow); return res && !occ; })());
     p.x = p.rx = X; p.y = p.ry = Y; for (let dy = -3; dy <= 3; dy++) w.set(X + 3, Y + dy, '磚');   // 一道南北向的磚，擋在東邊
     const path = g.findPath(X + 6, Y), last = path && path[path.length - 1];
-    ok('v0.32: clicking a tile behind a wall finds a way round it (never through the bricks), ending beside the tile', !!path && path.length >= 6 && path.every(([x, y]) => w.get(x, y) !== '磚' && !(x === X + 6 && y === Y)) && U.cheb(last[0], last[1], X + 6, Y) === 1, path && path.length);
+    ok('v0.6.5: clicking a tile behind a wall finds a way round it (never through the bricks), ending beside the tile', !!path && path.length >= 6 && path.every(([x, y]) => w.get(x, y) !== '磚' && !(x === X + 6 && y === Y)) && U.cheb(last[0], last[1], X + 6, Y) === 1, path && path.length);
     w.set(X + 6, Y, '木'); await goTo(X + 6, Y);
     ok('…walks there step by step and faces the clicked tile, ready for E or F', U.cheb(p.x, p.y, X + 6, Y) === 1 && faces(X + 6, Y), [p.x - X, p.y - Y]);
     w.set(X + 1, Y + 5, '山'); await goTo(X + 1, Y + 5);
-    ok('v0.32: clicking a tile you cannot stand on (a mountain) walks up beside it and faces it', U.cheb(p.x, p.y, X + 1, Y + 5) === 1 && faces(X + 1, Y + 5), [p.x - X, p.y - Y, p.fx, p.fy]);
+    ok('v0.6.5: clicking a tile you cannot stand on (a mountain) walks up beside it and faces it', U.cheb(p.x, p.y, X + 1, Y + 5) === 1 && faces(X + 1, Y + 5), [p.x - X, p.y - Y, p.fx, p.fy]);
     g.walkTo(X - 7, Y - 7); await sleep(250); await press('KeyD', 120);
-    ok('v0.32: pressing a direction key drops the clicked walk', !g.path && !g.follow, g.path && g.path.length);
+    ok('v0.6.5: pressing a direction key drops the clicked walk', !g.path && !g.follow, g.path && g.path.length);
     for (const [dx, dy] of [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]) w.set(X - 5 + dx, Y + 5 + dy, '磚');
     w.set(X - 5, Y + 5, '草'); await until(() => p.moveT <= 0, 2000); const was = [p.x, p.y]; const r = g.walkTo(X - 5, Y + 5);
-    ok('v0.32: a tile whose eight neighbours are all walls cannot be reached: a message, and no walking', !r && !g.path && g.msgText.indexOf('走不過去') >= 0 && p.x === was[0] && p.y === was[1]);
+    ok('v0.6.5: a tile whose eight neighbours are all walls cannot be reached: a message, and no walking', !r && !g.path && g.msgText.indexOf('走不過去') >= 0 && p.x === was[0] && p.y === was[1]);
     for (let dy = -9; dy <= 9; dy++) for (let dx = -9; dx <= 9; dx++) w.set(X + dx, Y + dy, '草');
     await until(() => p.moveT <= 0, 2000); p.x = p.rx = X; p.y = p.ry = Y; g.renderer.camInit = false; await sleep(80);
     const R = g.renderer, T = R.tile, cvs = document.getElementById('world'), at = (x, y) => [R.w / 2 - R.camX * T + (x + 0.5) * T, R.h / 2 - R.camY * T + (y + 0.5) * T];
     let [sxp, syp] = at(X - 4, Y);
     cvs.dispatchEvent(new MouseEvent('mousedown', { clientX: sxp, clientY: syp, button: 0, bubbles: true })); await sleep(30);
-    ok('v0.32: a real left click on a tile four away starts the walk there', !!g.path && g.pathGoal && g.pathGoal.x === X - 4 && g.pathGoal.y === Y && !g.follow, g.pathGoal);
+    ok('v0.6.5: a real left click on a tile four away starts the walk there', !!g.path && g.pathGoal && g.pathGoal.x === X - 4 && g.pathGoal.y === Y && !g.follow, g.pathGoal);
     cvs.dispatchEvent(new MouseEvent('mousemove', { clientX: sxp, clientY: syp, bubbles: true })); await sleep(30);
     ok('…the cell under the mouse and the path are drawn (mouse tracked)', !!g.mouse && g.mouse.x === sxp);
     await until(() => !g.path && p.moveT <= 0, 6000); g.mouse = null;
-    ok('v0.39: …and since it is open grass, the click walks right onto it', p.x === X - 4 && p.y === Y, [p.x - X, p.y - Y]);
+    ok('v0.7.1: …and since it is open grass, the click walks right onto it', p.x === X - 4 && p.y === Y, [p.x - X, p.y - Y]);
     p.x = p.rx = X; p.y = p.ry = Y; g.renderer.camInit = false; await sleep(80); w.set(X + 1, Y, '路'); [sxp, syp] = at(X + 1, Y);
     cvs.dispatchEvent(new MouseEvent('mousedown', { clientX: sxp, clientY: syp, button: 0, bubbles: true })); await until(() => !g.path && p.moveT <= 0, 3000);
-    ok('v0.39: clicking the empty path tile right beside you steps onto it (nothing there to take)', p.x === X + 1 && p.y === Y, [p.x - X, p.y - Y]);
+    ok('v0.7.1: clicking the empty path tile right beside you steps onto it (nothing there to take)', p.x === X + 1 && p.y === Y, [p.x - X, p.y - Y]);
     p.x = p.rx = X; p.y = p.ry = Y; g.renderer.camInit = false; await sleep(80); w.set(X + 1, Y, '草'); g.action = null; [sxp, syp] = at(X + 1, Y);
     cvs.dispatchEvent(new MouseEvent('mousedown', { clientX: sxp, clientY: syp, button: 0, bubbles: true })); await sleep(30);
-    ok('v0.39: clicking grass right beside you still gathers it, like E', p.x === X && !!g.action && g.action.ch === '草', [p.x - X, g.action && g.action.ch]);
+    ok('v0.7.1: clicking grass right beside you still gathers it, like E', p.x === X && !!g.action && g.action.ch === '草', [p.x - X, g.action && g.action.ch]);
     g.action = null; w.set(X + 1, Y, '草');
     p.x = p.rx = X; p.y = p.ry = Y; g.renderer.camInit = false; await sleep(80);
     const ox0 = g.ents.add('牛', X + 7, Y, { moveT: 99, calm: 99 }); await sleep(40); [sxp, syp] = at(ox0.rx, ox0.ry);
@@ -1592,105 +1592,127 @@ const result = await page.evaluate(async () => {
     const following = g.follow === ox0;
     await sleep(500); ox0.x = ox0.rx = X + 6; ox0.y = ox0.ry = Y + 5;   // 走到一半，牛挪了
     await until(() => !g.follow && p.moveT <= 0, 8000);
-    ok('v0.33: clicking a creature (either button) follows it, even when it moves, until it is right beside you and you face it', following && !g.follow && U.cheb(p.x, p.y, ox0.x, ox0.y) === 1 && faces(ox0.x, ox0.y) && g.msgText.indexOf('跟上了') >= 0, [following, p.x - X, p.y - Y, ox0.x - X, ox0.y - Y]);
+    ok('v0.6.6: clicking a creature (either button) follows it, even when it moves, until it is right beside you and you face it', following && !g.follow && U.cheb(p.x, p.y, ox0.x, ox0.y) === 1 && faces(ox0.x, ox0.y) && g.msgText.indexOf('跟上了') >= 0, [following, p.x - X, p.y - Y, ox0.x - X, ox0.y - Y]);
     g.ents.remove(ox0);
-    // v0.34：安全的路——先避開沼澤與霧障；繞不開才穿過去，並說一聲
+    // v0.6.7：安全的路——先避開沼澤與霧障；繞不開才穿過去，並說一聲
     for (let dy = -9; dy <= 9; dy++) for (let dx = -9; dx <= 9; dx++) w.set(X + dx, Y + dy, '草');
     p.x = p.rx = X; p.y = p.ry = Y; for (let dy = -4; dy <= 4; dy++) w.set(X + 3, Y + dy, '沼');
     const pb = g.findPath(X + 6, Y);
-    ok('v0.34: the clicked path goes round a swamp rather than through it', !!pb && pb.every(([x, y]) => w.get(x, y) !== '沼') && pb.some(([x, y]) => Math.abs(y - Y) >= 5), pb && pb.length);
+    ok('v0.6.7: the clicked path goes round a swamp rather than through it', !!pb && pb.every(([x, y]) => w.get(x, y) !== '沼') && pb.some(([x, y]) => Math.abs(y - Y) >= 5), pb && pb.length);
     for (let dy = -4; dy <= 4; dy++) w.set(X + 3, Y + dy, '草');
     const fogCells = []; for (let dy = -4; dy <= 4; dy++) fogCells.push((X + 3) + ',' + (Y + dy)); const fgw = w.addFog(fogCells, w.time + DAY);
     const pf = g.findPath(X + 6, Y);
-    ok('v0.34: …and round a fog bank too', !!pf && pf.every(([x, y]) => !w.fogAt(x, y)), pf && pf.length);
+    ok('v0.6.7: …and round a fog bank too', !!pf && pf.every(([x, y]) => !w.fogAt(x, y)), pf && pf.length);
     w.removeFog(fgw.id);
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === 2) w.set(X + 6 + dx, Y + dy, '沼');
     w.set(X + 6, Y, '木'); const plan = g.planPath(X + 6, Y); await goTo(X + 6, Y);
-    ok('v0.34: when every way crosses a swamp it still goes, and says so', !!plan && !plan.safe && U.cheb(p.x, p.y, X + 6, Y) === 1 && g.msgText.indexOf('只好穿過去') >= 0, [plan && plan.safe, p.x - X, p.y - Y]);
+    ok('v0.6.7: when every way crosses a swamp it still goes, and says so', !!plan && !plan.safe && U.cheb(p.x, p.y, X + 6, Y) === 1 && g.msgText.indexOf('只好穿過去') >= 0, [plan && plan.safe, p.x - X, p.y - Y]);
     for (let dy = -9; dy <= 9; dy++) for (let dx = -9; dx <= 9; dx++) w.set(X + dx, Y + dy, w.base(X + dx, Y + dy)); p.x = p.rx = X; p.y = p.ry = Y; }
-  // —— v0.34：= 捉、Q 餵、Shift+= 放大；Q 不再是囊往前一格；滑鼠左右鍵不分，點身旁一格跟 E 一樣
+  // —— v0.6.7：= 捉、Q 餵、Shift+= 放大；Q 不再是囊往前一格；滑鼠左右鍵不分，點身旁一格跟 E 一樣
   { const X = p.x, Y = p.y; await until(() => p.moveT <= 0, 2000); g.ents.list = g.ents.list.filter(e => e.type === '龍');
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) w.set(X + dx, Y + dy, '草');
     face(1, 0); w.set(X + 1, Y, '水'); const fish = g.ents.add('魚', X + 1, Y, { moveT: 99 }); const rnd0 = Math.random; Math.random = () => 0.01; const f0 = g.count('魚');
     await press('Equal', 20); Math.random = rnd0;
-    ok('v0.34: = catches the fish in front', g.count('魚') === f0 + 1 && !g.ents.list.includes(fish), [f0, g.count('魚')]);
+    ok('v0.6.7: = catches the fish in front', g.count('魚') === f0 + 1 && !g.ents.list.includes(fish), [f0, g.count('魚')]);
     const t0 = g.renderer.tile; window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Equal', shiftKey: true, bubbles: true })); await sleep(20); window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Equal', bubbles: true }));
-    ok('v0.34: Shift+= (the ＋ key) still zooms in', g.renderer.tile === Math.min(56, t0 + 4), [t0, g.renderer.tile]); g.renderer.tile = t0;
+    ok('v0.6.7: Shift+= (the ＋ key) still zooms in', g.renderer.tile === Math.min(56, t0 + 4), [t0, g.renderer.tile]); g.renderer.tile = t0;
     w.set(X + 1, Y, '草'); const eg = g.ents.add('鷹', X + 1, Y, { moveT: 99, tame: true, sta: 20 }); g.addItem('魚', 1); const sel0 = p.sel, fish1 = g.count('魚');
     await press('KeyQ', 20);
-    ok('v0.34: Q feeds the eagle in front a fish (and no longer steps the bag)', Math.abs(eg.sta - 60) < 1 && g.count('魚') === fish1 - 1 && p.sel === sel0, [eg.sta, g.count('魚'), p.sel, sel0]);
+    ok('v0.6.7: Q feeds the eagle in front a fish (and no longer steps the bag)', Math.abs(eg.sta - 60) < 1 && g.count('魚') === fish1 - 1 && p.sel === sel0, [eg.sta, g.count('魚'), p.sel, sel0]);
     g.ents.remove(eg); g.removeItem('魚', 99);
     g.addItem('磚', 1); hold('磚'); g.action = null; g.renderer.camInit = false; await sleep(80);
     const R = g.renderer, T = R.tile, cvs = document.getElementById('world'), cx = R.w / 2 - R.camX * T + (X + 1 + 0.5) * T, cy = R.h / 2 - R.camY * T + (Y + 0.5) * T;
     cvs.dispatchEvent(new MouseEvent('mousedown', { clientX: cx, clientY: cy, button: 2, bubbles: true })); await sleep(20);
-    ok('v0.34: either mouse button on the tile beside you acts like E (gathers), never places', w.get(X + 1, Y) === '草' && !!g.action && g.action.type === 'gather', [w.get(X + 1, Y), g.action && g.action.type]);
+    ok('v0.6.7: either mouse button on the tile beside you acts like E (gathers), never places', w.get(X + 1, Y) === '草' && !!g.action && g.action.type === 'gather', [w.get(X + 1, Y), g.action && g.action.type]);
     g.action = null; g.removeItem('磚', 9);
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) w.set(X + dx, Y + dy, w.base(X + dx, Y + dy)); }
-  // ============ v0.37：一日多長看難度（簡單 420、一般 360、困難 300） ============
+  // ============ v0.6.10：一日多長看難度（簡單 420、一般 360、困難 300） ============
   { const W = window.World, sv = JSON.parse(JSON.stringify(w.serialize())); sv.dayLen = 300; sv.time = 300 * 5 + 300 * 0.6; sv.scarecrows = { '0,0': sv.time + 100 };
     W.setDay(420); const we = new W(w.seed), fresh = we.time; we.restore(sv, 6); const keep = we.serialize().dayLen;
     W.setDay(360); const wn = new W(w.seed); wn.restore(w.serialize(), g.day());
-    ok('v0.37: an easy island starts at 420 × 0.26; a 300-s save read into it keeps day 6 and wakes at that early morning, countdowns kept', fresh === U.r4(420 * 0.26) && we.time === U.r4(420 * 5 + 420 * 0.26) && Math.abs(we.scarecrows.get('0,0') - (we.time + 100)) < 1e-6 && keep === 420, [fresh, we.time]);
-    ok('v0.37: a save made now at 360 reads back with its exact time', wn.time === U.r4(w.time) && wn.timeShift === 0 && W.DAY === DAY);
+    ok('v0.6.10: an easy island starts at 420 × 0.26; a 300-s save read into it keeps day 6 and wakes at that early morning, countdowns kept', fresh === U.r4(420 * 0.26) && we.time === U.r4(420 * 5 + 420 * 0.26) && Math.abs(we.scarecrows.get('0,0') - (we.time + 100)) < 1e-6 && keep === 420, [fresh, we.time]);
+    ok('v0.6.10: a save made now at 360 reads back with its exact time', wn.time === U.r4(w.time) && wn.timeShift === 0 && W.DAY === DAY);
     const t0 = w.time; w.time = DAY * 3 + DAY * 0.5; const mid = g.dayT(), d4 = g.day(); w.time = DAY * 3 + 300; const notYet = g.day(); w.time = t0;
-    ok('v0.37: the clock runs on 360-s days (300 s past day four\'s midnight is still day four)', mid === 0.5 && d4 === 4 && notYet === 4, [mid, d4, notYet]);
+    ok('v0.6.10: the clock runs on 360-s days (300 s past day four\'s midnight is still day four)', mid === 0.5 && d4 === 4 && notYet === 4, [mid, d4, notYet]);
     const r0 = U.trueRand, cb = w.onWeather, ra = w.rainUntil, rn = w.nextRainAt; w.onWeather = null; U.trueRand = () => 0; w.rainUntil = 0; w.nextRainAt = w.time; w.step(p.x, p.y); const rainLen = w.rainUntil - w.time;
     U.trueRand = r0; w.onWeather = cb; w.rainUntil = ra; w.nextRainAt = rn;
-    ok('v0.37: things counted in days follow the longer day (the shortest rain is a quarter of 360 = 90 s)', Math.abs(rainLen - 90) <= 0.5, rainLen); }
-  // ============ v0.42：八格存檔、暫停面板「存到」別格；東海青龍、蜃珠、船自己回命、舊存檔的龍換青鱗 ============
+    ok('v0.6.10: things counted in days follow the longer day (the shortest rain is a quarter of 360 = 90 s)', Math.abs(rainLen - 90) <= 0.5, rainLen); }
+  // ============ v0.8.2：落水的倒數框、木板多撐八息、青龍的水性；魔物誌 ============
+  { const E = g.ents, p0 = { x: p.x, y: p.y }, az = g.azure, az0 = p.azure, db = document.getElementById('debuffs');
+    E.list = E.list.filter(e => e.type !== '蜃' && e.type !== '青龍');
+    p.x = p.rx = az.x - 30; p.y = p.ry = az.y; E.px = p.x; E.py = p.y; p.sailing = false; p.ship = null; p.azure = false; p.hp = Math.max(p.hp, 80);
+    g.removeItem('木板', 99); g.addItem('木板', 2); p.swimming = true; p.swimT = 30; await sleep(150);
+    ok('v0.8.2: swimming shows a red flashing 溺 countdown at the lower right, with the planks you carry', !db.classList.contains('hidden') && /溺/.test(db.textContent) && /還有 \d+ 息/.test(db.textContent) && /木板 ×2（\+16 息）/.test(db.textContent) && getComputedStyle(db).animationName === 'low-flash', db.textContent);
+    p.swimT = 0.05; await until(() => g.count('木板') === 1, 2000);
+    ok('v0.8.2: when the countdown runs out, a plank from the bag buys eight more breaths', !p.dead && p.swimming && g.count('木板') === 1 && p.swimT > 7 && p.swimT <= 8, [p.swimT, g.count('木板')]);
+    p.swimT = 30; g.updateStats(1); const plain = 30 - p.swimT;   // 同一段同步的程式裡不會插進畫面更新，量得準
+    p.azure = true; p.swimT = 30; g.updateStats(1); const taught = 30 - p.swimT;
+    ok('v0.8.2: taught by the 青龍 (水性), the drowning countdown runs a quarter slower', Math.abs(plain - 1) < 1e-6 && Math.abs(taught - 0.75) < 1e-6, [plain, taught]);
+    p.swimming = false; p.swimT = 0; p.azure = az0; p.x = p.rx = p0.x; p.y = p.ry = p0.y; E.px = p.x; E.py = p.y; g.removeItem('木板', 99); await sleep(120);
+    ok('v0.8.2: back on land the 溺 box goes away', db.classList.contains('hidden'));
+    // 魔物誌：斃了第一頭蜃才翻開
+    p.codex = undefined; const jt0 = () => { g.toggleJournal(); const t = document.getElementById('journal-body').textContent; g.toggleJournal(); return t; };
+    const before = jt0(); g.kill(E.add('蜃', p.x + 3, p.y + 3, { moveT: 99, fogT: 999 })); g.removeItem('蜃碎片', 99); const after = jt0();
+    ok('v0.8.2: the 魔物誌 opens in the journal only after the first 蜃 is slain, with a card for it', before.indexOf('魔物誌') < 0 && after.indexOf('魔物誌') >= 0 && /海旁蜃氣象樓臺/.test(after) && p.codex['蜃'] === 1, after.slice(after.indexOf('魔物誌'), after.indexOf('魔物誌') + 60));
+    ok('v0.8.2: …and the 東海青龍 you met has a card too; ones you never met stay hidden', /東海青龍/.test(after) && /左青龍而右白虎/.test(after) && /沒遇過/.test(after)); }
+  // ============ v0.8：八格存檔、暫停面板「存到」別格；東海青龍、蜃珠、船自己回命、舊存檔的龍換青鱗 ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, slot0 = g.slot, GK = XIEYI.Game, sb = (n) => document.querySelector('#saveas .saveas-slot[data-slot="' + n + '"]');
-    ok('v0.42: eight save slots — slot 1 keeps the old key, slot 8 is xieyi.save.v5.8', GK.slotKey(1) === 'xieyi.save.v5' && GK.slotKey(8) === 'xieyi.save.v5.8');
+    ok('v0.8: eight save slots — slot 1 keeps the old key, slot 8 is xieyi.save.v5.8', GK.slotKey(1) === 'xieyi.save.v5' && GK.slotKey(8) === 'xieyi.save.v5.8');
     for (let n = 2; n <= 8; n++) if (n !== slot0) GK.clearSave(n);
     g.togglePause();
-    ok('v0.42: the pause panel lists eight slots to save to, this game’s own slot marked', document.querySelectorAll('#saveas .saveas-slot').length === 8 && document.querySelector('#saveas .saveas-slot.on').dataset.slot === String(slot0) && !hidden('pause'));
+    ok('v0.8: the pause panel lists eight slots to save to, this game’s own slot marked', document.querySelectorAll('#saveas .saveas-slot').length === 8 && document.querySelector('#saveas .saveas-slot.on').dataset.slot === String(slot0) && !hidden('pause'));
     const t1 = w.time; sb(2).click(); const s2 = GK.readSave(2);
-    ok('v0.42: clicking slot 2 copies this moment there; the game keeps its own slot for autosaves', !!s2 && s2.seed === g.seed && Math.abs(s2.world.time - t1) < 1e-3 && g.slot === slot0 && /抄到了第二格/.test(document.getElementById('saveas-note').textContent) && /這一局/.test(sb(slot0).textContent), document.getElementById('saveas-note').textContent);
+    ok('v0.8: clicking slot 2 copies this moment there; the game keeps its own slot for autosaves', !!s2 && s2.seed === g.seed && Math.abs(s2.world.time - t1) < 1e-3 && g.slot === slot0 && /抄到了第二格/.test(document.getElementById('saveas-note').textContent) && /這一局/.test(sb(slot0).textContent), document.getElementById('saveas-note').textContent);
     g.togglePause(); w.time += 5; g.save();
     g.togglePause(); sb(3).click(); g.togglePause();
     const s2b = GK.readSave(2), s3 = GK.readSave(3), s1 = GK.readSave(slot0);
-    ok('v0.42: later, slot 3 holds the later moment, slot 2 still the earlier one, and autosave went to the own slot', Math.abs(s2b.world.time - t1) < 1e-3 && Math.abs(s3.world.time - (t1 + 5)) < 1e-3 && Math.abs(s1.world.time - (t1 + 5)) < 1e-3, [s2b.world.time - t1, s3.world.time - t1, s1.world.time - t1]);
+    ok('v0.8: later, slot 3 holds the later moment, slot 2 still the earlier one, and autosave went to the own slot', Math.abs(s2b.world.time - t1) < 1e-3 && Math.abs(s3.world.time - (t1 + 5)) < 1e-3 && Math.abs(s1.world.time - (t1 + 5)) < 1e-3, [s2b.world.time - t1, s3.world.time - t1, s1.world.time - t1]);
     const other = JSON.parse(JSON.stringify(s3)); other.seed = 4242; localStorage.setItem(GK.slotKey(4), JSON.stringify(other));
     g.togglePause(); sb(4).click(); const armedText = sb(4).textContent, still = GK.readSave(4).seed; sb(4).click(); const after = GK.readSave(4).seed;
     sb(3).click(); const again3 = GK.readSave(3).world.time; g.togglePause();
-    ok('v0.42: another island’s save needs a second click to overwrite; a slot this game copied to a moment ago takes one', /再按一次/.test(armedText) && still === 4242 && after === g.seed && Math.abs(again3 - w.time) < 1e-3, [armedText, still, after]);
+    ok('v0.8: another island’s save needs a second click to overwrite; a slot this game copied to a moment ago takes one', /再按一次/.test(armedText) && still === 4242 && after === g.seed && Math.abs(again3 - w.time) < 1e-3, [armedText, still, after]);
     for (let n = 2; n <= 8; n++) if (n !== slot0) GK.clearSave(n);
     // 東海青龍：本島往東約六百格的深海上；四十格內現身；兩格內 E 求教
     const az = g.azure; let open = true; for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) if (w.get(az.x + dx, az.y + dy) !== '淼') open = false;
-    ok('v0.42: the 青龍 lives on open deep sea about six hundred tiles east of the island', az.x >= 560 && az.x <= 720 && Math.abs(az.y) <= 220 && open, az);
+    ok('v0.8: the 青龍 lives on open deep sea about six hundred tiles east of the island', az.x >= 560 && az.x <= 720 && Math.abs(az.y) <= 220 && open, az);
     E.list = E.list.filter(e => e.type === '龍' || e.tame);
     p.x = p.rx = az.x - 20; p.y = p.ry = az.y; p.sailing = true; p.swimming = false; p.ship = { kind: '孤帆', hp: 60, skulls: [], repairs: 0 }; E.px = p.x; E.py = p.y;
     await until(() => E.list.some(e => e.type === '青龍'), 5000);
     const dr = E.list.find(e => e.type === '青龍');
-    ok('v0.42: sailing within forty tiles, the 青龍 shows up on its own patch of sea', !!dr && U.cheb(dr.x, dr.y, az.x, az.y) <= 3, dr && [dr.x - az.x, dr.y - az.y]);
+    ok('v0.8: sailing within forty tiles, the 青龍 shows up on its own patch of sea', !!dr && U.cheb(dr.x, dr.y, az.x, az.y) <= 3, dr && [dr.x - az.x, dr.y - az.y]);
     if (dr) { p.x = p.rx = dr.x - 2; p.y = p.ry = dr.y; face(1, 0); g.msgUntil = 0; await sleep(120);
-      ok('v0.42: two tiles from it the hint line names the 東海青龍', /東海青龍/.test(document.getElementById('msg').textContent), document.getElementById('msg').textContent);
-      g.pressGather(); ok('v0.42: once taught, E only gets a word from the 青龍 (never an attack)', /去吧/.test(g.msgText) && dr.hp === G.DB['青龍'].hp, g.msgText); }
+      ok('v0.8: two tiles from it the hint line names the 東海青龍', /東海青龍/.test(document.getElementById('msg').textContent), document.getElementById('msg').textContent);
+      g.pressGather(); ok('v0.8: once taught, E only gets a word from the 青龍 (never an attack)', /去吧/.test(g.msgText) && dr.hp === G.DB['青龍'].hp, g.msgText); }
     const hp0 = p.ship.hp; g.mendShips(DAY);
-    ok('v0.42: taught by the 青龍, a 孤帆 mends itself — half its hull a day, full in two', Math.abs(p.ship.hp - Math.min(120, hp0 + 60)) < 1e-3, p.ship.hp);
+    ok('v0.8: taught by the 青龍, a 孤帆 mends itself — half its hull a day, full in two', Math.abs(p.ship.hp - Math.min(120, hp0 + 60)) < 1e-3, p.ship.hp);
     const pk = w.addShip(az.x - 12, az.y + 6, { kind: '方舟', hp: 20, skulls: [], repairs: 0 }); g.mendShips(DAY / 2);
-    ok('v0.42: …and a parked ship mends too (方舟: a quarter of 420 in half a day)', Math.abs(pk.hp - (20 + 105)) < 1e-3, pk.hp); w.removeShip(U.key(az.x - 12, az.y + 6));
+    ok('v0.8: …and a parked ship mends too (方舟: a quarter of 420 in half a day)', Math.abs(pk.hp - (20 + 105)) < 1e-3, pk.hp); w.removeShip(U.key(az.x - 12, az.y + 6));
     g.toggleMap(); await sleep(60); const mv = g.renderer.mapView; g.toggleMap();
-    ok('v0.42: with the scale (or once taught) the big map reaches out to mark the 青龍', !!mv && az.x >= mv.ox && az.x <= mv.ox + mv.N && az.y >= mv.oy && az.y <= mv.oy + mv.N, mv);
-    // v0.43：蜃死掉蜃碎片一或二片（64%／36%，真隨機），不再直接掉蜃珠
+    ok('v0.8: with the scale (or once taught) the big map reaches out to mark the 青龍', !!mv && az.x >= mv.ox && az.x <= mv.ox + mv.N && az.y >= mv.oy && az.y <= mv.oy + mv.N, mv);
+    // v0.8.1：蜃死掉蜃碎片一或二片（64%／36%，真隨機），不再直接掉蜃珠
     { const tr = U.trueRand; g.removeItem('蜃碎片', 99); g.removeItem('蜃珠', 9);
       U.trueRand = () => 0.5; g.kill(E.add('蜃', p.x + 4, p.y + 3, { moveT: 99, fogT: 999 })); const one = g.count('蜃碎片');
       U.trueRand = () => 0.2; g.kill(E.add('蜃', p.x + 4, p.y + 3, { moveT: 99, fogT: 999 })); U.trueRand = tr;
-      ok('v0.43: a slain 蜃 drops one 蜃碎片 (64%) or two (36%), not a whole pearl', one === 1 && g.count('蜃碎片') === 3 && g.count('蜃珠') === 0 && /蜃碎片/.test(toasts()), [one, g.count('蜃碎片')]); }
+      ok('v0.8.1: a slain 蜃 drops one 蜃碎片 (64%) or two (36%), not a whole pearl', one === 1 && g.count('蜃碎片') === 3 && g.count('蜃珠') === 0 && /蜃碎片/.test(toasts()), [one, g.count('蜃碎片')]); }
     p.sailing = false; p.ship = null; E.list = E.list.filter(e => e.type !== '青龍');
-    // v0.43：九片蜃碎片加海水瓶三，在火旺的鼎裡熬一顆蜃珠，八成三成；不成退碎片（困難只退八片），海水瓶不退
+    // v0.8.1：九片蜃碎片加海水瓶三，在火旺的鼎裡熬一顆蜃珠，八成三成；不成退碎片（困難只退八片），海水瓶不退
     p.x = p.rx = p0.x; p.y = p.ry = p0.y; E.px = p.x; E.py = p.y;
     { const tr = U.trueRand, kx = p0.x + 1, ky = p0.y, cnt = () => [g.count('蜃碎片'), g.count('海水瓶'), g.count('蜃珠')].join('/');
       w.set(kx, ky, '鼎'); w.addFuel(kx, ky, 300); face(1, 0); p.sta = 100;
-      g.removeItem('海水瓶', 99); g.removeItem('蜃碎片', 99); g.addItem('蜃碎片', 8); g.addItem('海水瓶', 3); hold('蜃碎片'); g.pressPlace();
-      ok('v0.43: eight shards are not enough — nothing is used up', cnt() === '8/3/0' && /9/.test(g.msgText), [cnt(), g.msgText]);
+      const jar = () => g.count('淡水瓶') + ':' + g.count('玻璃瓶');
+      g.removeItem('海水瓶', 99); g.removeItem('淡水瓶', 99); g.removeItem('玻璃瓶', 99); g.removeItem('蜃碎片', 99); g.addItem('蜃碎片', 9); g.addItem('海水瓶', 3); hold('蜃碎片'); g.pressPlace();
+      ok('v0.8.2: without the bottle of fresh water (熬 has four dots: three brine, one fresh) nothing is used up', cnt() === '9/3/0' && /淡水瓶/.test(g.msgText), [cnt(), g.msgText]);
+      g.removeItem('蜃碎片', 1); g.addItem('淡水瓶', 1); hold('蜃碎片'); g.pressPlace();
+      ok('v0.8.1: eight shards are not enough — nothing is used up', cnt() === '8/3/0' && jar() === '1:0' && /9/.test(g.msgText), [cnt(), g.msgText]);
       g.msgUntil = 0; await sleep(80); const hint = document.getElementById('msg').textContent;
-      ok('v0.43: facing a lit 鼎 with shards in hand, the hint says what brewing needs and the odds', /熬蜃珠（碎片 8\/9、海水瓶 3\/3，83%）/.test(hint), hint);
+      ok('v0.8.2: facing a lit 鼎 with shards in hand, the hint says what brewing needs and the odds', /熬蜃珠（碎片 8\/9、海水瓶 3\/3、淡水瓶 1\/1，83%）/.test(hint), hint);
       g.addItem('蜃碎片', 2); hold('蜃碎片'); U.trueRand = () => 0.9; g.pressPlace();
-      ok('v0.43: a failed brew (17%) gives all nine shards back on normal; the three bottles of brine are gone', cnt() === '10/0/0', cnt());
-      const dk = g.diff; g.diff = XIEYI.DIFF.hard; g.addItem('海水瓶', 3); hold('蜃碎片'); p.sta = 100; g.pressPlace(); g.diff = dk;
-      ok('v0.43: on hard a failed brew gives back only eight', cnt() === '9/0/0', cnt());
-      g.addItem('海水瓶', 3); hold('蜃碎片'); p.sta = 100; U.trueRand = () => 0.5; g.pressPlace(); U.trueRand = tr;
-      ok('v0.43: a successful brew (83%) turns nine shards and three brine into one 蜃珠', cnt() === '0/0/1' && /熬成一顆蜃珠/.test(toasts()), cnt());
+      ok('v0.8.2: a failed brew (17%) blows up — all four bottles are gone, the nine shards come back on normal', cnt() === '10/0/0' && jar() === '0:0' && /炸/.test(g.msgText), [cnt(), jar()]);
+      const dk = g.diff; g.diff = XIEYI.DIFF.hard; g.addItem('海水瓶', 3); g.addItem('淡水瓶', 1); hold('蜃碎片'); p.sta = 100; g.pressPlace(); g.diff = dk;
+      ok('v0.8.1: on hard a failed brew gives back only eight', cnt() === '9/0/0', cnt());
+      g.addItem('海水瓶', 3); g.addItem('淡水瓶', 1); hold('蜃碎片'); p.sta = 100; U.trueRand = () => 0.5; g.pressPlace(); U.trueRand = tr;
+      ok('v0.8.2: a successful brew (83%) turns nine shards and four bottles of water into one 蜃珠 and gives the four empty bottles back', cnt() === '0/0/1' && jar() === '0:4' && /熬成一顆蜃珠/.test(toasts()), [cnt(), jar()]);
+      g.removeItem('玻璃瓶', 9);
       w.set(kx, ky, w.base(kx, ky)); g.removeItem('蜃珠', 9); }
     // 舊存檔：龍跟著、沒求教過、囊滿了、睡過一張床——龍回東海，青鱗用小囊包著擱在床邊
     const bx = p0.x + 5, by = p0.y + 5; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) w.set(bx + dx, by + dy, '草'); w.set(bx, by, '床');
@@ -1700,53 +1722,55 @@ const result = await page.evaluate(async () => {
     p.azure = false; p.scaleTaken = false; g.load(old);
     const ring = (cx, cy) => { const a = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx || dy) a.push([cx + dx, cy + dy]); return a; };
     const sack = ring(bx, by).find(([x, y]) => w.get(x, y) === '囊'), inSack = sack ? (w.bags.get(U.key(sack[0], sack[1])) || []) : [];
-    ok('v0.42: an old save’s dragon flies home to the east sea — gone, and the scale counts as taken', !p.dragon && !E.list.some(e => e.type === '龍') && p.scaleTaken && !p.azure);
-    ok('v0.42: …leaving a 青鱗; the bag is full, so a 小囊 by the last bed slept in holds it', !!sack && inSack.some(it => it.n === '青鱗') && g.count('青鱗') === 0, [sack, inSack]);
-    ok('v0.42: …and a toast says where the 青龍 is and that it wants a 蜃珠', /龍回東海去了/.test(toasts()) && /蜃珠/.test(toasts()));
+    ok('v0.8: an old save’s dragon flies home to the east sea — gone, and the scale counts as taken', !p.dragon && !E.list.some(e => e.type === '龍') && p.scaleTaken && !p.azure);
+    ok('v0.8: …leaving a 青鱗; the bag is full, so a 小囊 by the last bed slept in holds it', !!sack && inSack.some(it => it.n === '青鱗') && g.count('青鱗') === 0, [sack, inSack]);
+    ok('v0.8: …and a toast says where the 青龍 is and that it wants a 蜃珠', /龍回東海去了/.test(toasts()) && /蜃珠/.test(toasts()));
     if (sack) { p.bag.pop(); const st = ring(sack[0], sack[1]).find(([x, y]) => w.get(x, y) === '草'); p.x = p.rx = st[0]; p.y = p.ry = st[1]; face(sack[0] - st[0], sack[1] - st[1]); g.msgUntil = 0; await sleep(120);
       const hint = document.getElementById('msg').textContent; g.pressGather();
-      ok('v0.42: the hint names what is in the 小囊; E takes the 青鱗 and the sack is gone', /小囊（青鱗）/.test(hint) && g.count('青鱗') === 1 && w.get(sack[0], sack[1]) !== '囊' && !w.bags.has(U.key(sack[0], sack[1])), hint); }
+      ok('v0.8: the hint names what is in the 小囊; E takes the 青鱗 and the sack is gone', /小囊（青鱗）/.test(hint) && g.count('青鱗') === 1 && w.get(sack[0], sack[1]) !== '囊' && !w.bags.has(U.key(sack[0], sack[1])), hint); }
     const n0 = w.ver; g.load(sv); p.x = p.rx = p0.x; p.y = p.ry = p0.y;
-    ok('v0.42: a save made after the teaching keeps its small dragon (brought back to your side if it had strayed)', p.azure && p.dragon && E.list.some(e => e.type === '龍'));
+    ok('v0.8: a save made after the teaching keeps the teaching', p.azure && !p.dragon && !E.list.some(e => e.type === '龍'));
+    { const v42 = JSON.parse(JSON.stringify(sv)); v42.player.dragon = true; v42.ents = (v42.ents || []).concat([{ t: '龍', x: p.x + 1, y: p.y, hp: 500 }]); g.load(v42);
+      ok('v0.8.2: a v0.8/v0.8.1 save whose small dragon followed after the teaching — the dragon merges into the soul ring', p.azure && !p.dragon && !E.list.some(e => e.type === '龍') && /小龍入了魂環/.test(toasts())); }
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) w.set(bx + dx, by + dy, w.base(bx + dx, by + dy)); }
-  // ============ v0.41：半友好的（無毒蛛、蟾、沒馴的鷹、野牛）被惹了發紅、變大、衝過來；不惹不打 ============
+  // ============ v0.7.3：半友好的（無毒蛛、蟾、沒馴的鷹、野牛）被惹了發紅、變大、衝過來；不惹不打 ============
   { const E = g.ents, X = p.x + 46, Y = p.y + 8, p0 = { x: p.x, y: p.y }; for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) w.set(X + dx, Y + dy, '草');
     E.list = E.list.filter(e => e.type === '龍' || e.tame); p.x = p.rx = X; p.y = p.ry = Y; E.px = p.x; E.py = p.y; calm();
     const ad = (t, dx, dy, ex) => E.add(t, X + dx, Y + dy, Object.assign({ moveT: 99, calm: 99 }, ex || {}));
     const sp = ad('蛛', -3, 0, { venom: false }), td = ad('蟾', 3, 0, { venom: false }), eg = ad('鷹', 0, -3), cow = ad('牛', 0, 4, { bx: 1, by: 0 }), tm = ad('鷹', -3, -3, { tame: true, angry: true }), dr = ad('鹿', 3, 3);
-    ok('v0.41: unprovoked, none of them counts as riled', ![sp, td, eg, cow].some(e => E.riled(e)));
+    ok('v0.7.3: unprovoked, none of them counts as riled', ![sp, td, eg, cow].some(e => E.riled(e)));
     for (const e of [sp, td, eg, cow, dr]) { e.angry = true; e.angryAt = w.time; } eg.angryT = 12;
-    ok('v0.41: provoked, the harmless spider, the toad, the wild eagle and the bison are riled; a tame eagle or a deer never is', [sp, td, eg, cow].every(e => E.riled(e)) && !E.riled(tm) && !E.riled(dr));
+    ok('v0.7.3: provoked, the harmless spider, the toad, the wild eagle and the bison are riled; a tame eagle or a deer never is', [sp, td, eg, cow].every(e => E.riled(e)) && !E.riled(tm) && !E.riled(dr));
     const R = g.renderer, calls = [], dg = R.drawGlyph; R.drawGlyph = function (ch, color, px, py, size, rot, alpha, kx, ky) { calls.push({ ch, color, size: size / R.tile, kx: kx || 1 }); return dg.apply(this, arguments); };
     R.camInit = false; await sleep(120); calls.length = 0; await sleep(60); R.drawGlyph = dg;
     const look = (ch) => calls.filter(c => c.ch === ch);
     const allRed = (ch, size) => look(ch).length > 0 && look(ch).every(c => c.color === G.INK.red && Math.abs(c.size - size) < 1e-6);
-    ok('v0.41: riled, the spider, toad and eagle are drawn red and a size up (0.85)', allRed('蛛', 0.85) && allRed('蟾', 0.85) && look('鷹').some(c => c.color === G.INK.red && Math.abs(c.size - 0.85) < 1e-6), calls.filter(c => '蛛蟾鷹'.indexOf(c.ch) >= 0).slice(0, 6).map(c => c.ch + c.size.toFixed(2) + c.color));
-    ok('v0.41: …and the bison red and an eighth bigger', look('牛').some(c => c.color === G.INK.red && Math.abs(c.size - 0.95 * 1.12) < 1e-6), look('牛').slice(0, 2));
+    ok('v0.7.3: riled, the spider, toad and eagle are drawn red and a size up (0.85)', allRed('蛛', 0.85) && allRed('蟾', 0.85) && look('鷹').some(c => c.color === G.INK.red && Math.abs(c.size - 0.85) < 1e-6), calls.filter(c => '蛛蟾鷹'.indexOf(c.ch) >= 0).slice(0, 6).map(c => c.ch + c.size.toFixed(2) + c.color));
+    ok('v0.7.3: …and the bison red and an eighth bigger', look('牛').some(c => c.color === G.INK.red && Math.abs(c.size - 0.95 * 1.12) < 1e-6), look('牛').slice(0, 2));
     // 無毒蟾惹了衝過來咬：傷二、不中毒
     for (const e of [sp, eg, cow, tm, dr]) E.remove(e); td.x = td.rx = X + 4; td.y = td.ry = Y; td.moveT = 0; td.calm = 0; td.atk = 0; const tx0 = td.x;
     const hp0 = p.hp; p.poisonT = 0; p.poisonPer = 0; await until(() => U.cheb(td.x, td.y, p.x, p.y) <= 1, 4000); await until(() => p.hp < hp0, 3000);
-    ok('v0.41: a provoked harmless toad charges and bites (2, no poison)', td.x < tx0 && Math.abs((hp0 - p.hp) - 2 * g.takenMult()) < 0.6 && p.poisonT === 0, [tx0 - td.x, hp0 - p.hp, p.poisonT]);
+    ok('v0.7.3: a provoked harmless toad charges and bites (2, no poison)', td.x < tx0 && Math.abs((hp0 - p.hp) - 2 * g.takenMult()) < 0.6 && p.poisonT === 0, [tx0 - td.x, hp0 - p.hp, p.poisonT]);
     td.angryAt = w.time - 21; td.moveT = 0; E.update(0.01, g);
-    ok('v0.41: twenty breaths later it calms down — no longer red, back to its own size', !td.angry && !E.riled(td));
+    ok('v0.7.3: twenty breaths later it calms down — no longer red, back to its own size', !td.angry && !E.riled(td));
     E.remove(td); p.hp = Math.max(p.hp, 80);
     for (let dy = -8; dy <= 8; dy++) for (let dx = -8; dx <= 8; dx++) w.set(X + dx, Y + dy, w.base(X + dx, Y + dy)); p.x = p.rx = p0.x; p.y = p.ry = p0.y; }
-  // ============ v0.40：野牛一乘二（橫著走拉扁、縱著走拉長）；主動找人的獸字大一號 ============
+  // ============ v0.7.2：野牛一乘二（橫著走拉扁、縱著走拉長）；主動找人的獸字大一號 ============
   { const X = p.x + 40, Y = p.y - 6, E = g.ents; for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) w.set(X + dx, Y + dy, '草');
     E.list = E.list.filter(e => e.type === '龍' || e.tame); const p0 = { x: p.x, y: p.y }; p.x = p.rx = X - 5; p.y = p.ry = Y + 5; E.px = p.x; E.py = p.y;
     const ox = E.add('牛', X, Y, { bx: 1, by: 0, moveT: 99, calm: 99 });
-    ok('v0.40: a bison takes two tiles — head and the tile behind it', E.at(X, Y) === ox && E.at(X - 1, Y) === ox && E.beastAt(X - 1, Y) === ox && !E.at(X + 1, Y) && E.cellsOf(ox).length === 2);
+    ok('v0.7.2: a bison takes two tiles — head and the tile behind it', E.at(X, Y) === ox && E.at(X - 1, Y) === ox && E.beastAt(X - 1, Y) === ox && !E.at(X + 1, Y) && E.cellsOf(ox).length === 2);
     p.x = p.rx = X - 2; p.y = p.ry = Y; face(1, 0);
-    ok('v0.40: you cannot walk into its hind tile', !g.tryStep(1, 0) && p.x === X - 2);
+    ok('v0.7.2: you cannot walk into its hind tile', !g.tryStep(1, 0) && p.x === X - 2);
     const hp0 = ox.hp; g.addItem('石劍', 1); hold('石劍'); p.atkT = 0; g.pressGather(); p.x = p.rx = X - 5; p.y = p.ry = Y + 5; E.px = p.x; E.py = p.y;
-    ok('v0.40: …but you can hit it there', ox.hp < hp0, [hp0, ox.hp]);
+    ok('v0.7.2: …but you can hit it there', ox.hp < hp0, [hp0, ox.hp]);
     const rr0 = Math.random; Math.random = () => 0; E.stepTo(ox, X + 5, Y, false, false);
-    ok('v0.40: walking east it lies east–west, the hind tile trailing behind', ox.x === X + 1 && ox.y === Y && ox.bx === 1 && ox.by === 0 && E.at(X, Y) === ox, [ox.x - X, ox.y - Y, ox.bx, ox.by]);
+    ok('v0.7.2: walking east it lies east–west, the hind tile trailing behind', ox.x === X + 1 && ox.y === Y && ox.bx === 1 && ox.by === 0 && E.at(X, Y) === ox, [ox.x - X, ox.y - Y, ox.bx, ox.by]);
     E.stepTo(ox, ox.x, Y - 6, false, false); Math.random = rr0;
-    ok('v0.40: turning north it lies north–south, the hind tile below its head', ox.x === X + 1 && ox.y === Y - 1 && ox.bx === 0 && ox.by === -1 && E.at(X + 1, Y) === ox, [ox.x - X, ox.y - Y, ox.bx, ox.by]);
+    ok('v0.7.2: turning north it lies north–south, the hind tile below its head', ox.x === X + 1 && ox.y === Y - 1 && ox.bx === 0 && ox.by === -1 && E.at(X + 1, Y) === ox, [ox.x - X, ox.y - Y, ox.bx, ox.by]);
     ox.x = X; ox.y = Y; ox.bx = 1; ox.by = 0; w.set(X - 2, Y + 1, '磚'); w.set(X - 1, Y + 1, '磚'); w.set(X, Y + 1, '草');
     const okDown = E.bodyFits(X, Y + 1, 0, 1, false, ox), blocked = (() => { w.set(X, Y, '草'); w.set(X - 1, Y + 2, '磚'); return !E.bodyFits(X - 1, Y + 3, 0, 1, false, ox); })();
-    ok('v0.40: a tile is only good for it if the tile behind its head is free too (a brick there blocks it)', okDown && blocked, [okDown, blocked]);
+    ok('v0.7.2: a tile is only good for it if the tile behind its head is free too (a brick there blocks it)', okDown && blocked, [okDown, blocked]);
     // 畫法：攔下 drawGlyph 看大小與拉長
     const R = g.renderer, calls = []; const dg = R.drawGlyph; R.drawGlyph = function (ch, color, px, py, size, rot, alpha, kx, ky) { calls.push({ ch, size: size / R.tile, kx: kx || 1, ky: ky || 1 }); return dg.apply(this, arguments); };
     for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) w.set(p.x + dx, p.y + dy, '草');
@@ -1757,40 +1781,40 @@ const result = await page.evaluate(async () => {
     R.camInit = false; await sleep(120); calls.length = 0; await sleep(60);   // 讓相機跟上、再收一兩幀
     const sz = (t) => calls.filter(c => c.ch === t).map(c => c.size);
     const one = (t) => (calls.find(c => c.ch === t) || {}).size, cow = calls.find(c => c.ch === '牛');
-    ok('v0.40: leopards, wolves, boars and venomous spiders are drawn a size up (0.85), still a little smaller than the tiger (0.95); snakes and harmless spiders stay as they were', Math.abs(one('虎') - 0.95) < 1e-6 && Math.abs(one('豹') - 0.85) < 1e-6 && Math.abs(one('狼') - 0.85) < 1e-6 && Math.abs(one('豬') - 0.85) < 1e-6 && Math.abs(one('蛇') - 0.55) < 1e-6 && [...new Set(sz('蛛').map(v => v.toFixed(2)))].sort().join() === '0.55,0.85', calls.filter(c => '虎豹狼豬蛇蛛'.indexOf(c.ch) >= 0).map(c => c.ch + c.size.toFixed(2)).join(' '));
-    ok('v0.40: a bison walking east–west is drawn stretched wide and flat', !!cow && cow.kx > 1.8 && cow.ky < 0.9, cow);
+    ok('v0.7.2: leopards, wolves, boars and venomous spiders are drawn a size up (0.85), still a little smaller than the tiger (0.95); snakes and harmless spiders stay as they were', Math.abs(one('虎') - 0.95) < 1e-6 && Math.abs(one('豹') - 0.85) < 1e-6 && Math.abs(one('狼') - 0.85) < 1e-6 && Math.abs(one('豬') - 0.85) < 1e-6 && Math.abs(one('蛇') - 0.55) < 1e-6 && [...new Set(sz('蛛').map(v => v.toFixed(2)))].sort().join() === '0.55,0.85', calls.filter(c => '虎豹狼豬蛇蛛'.indexOf(c.ch) >= 0).map(c => c.ch + c.size.toFixed(2)).join(' '));
+    ok('v0.7.2: a bison walking east–west is drawn stretched wide and flat', !!cow && cow.kx > 1.8 && cow.ky < 0.9, cow);
     ox.bx = 0; ox.by = 1; ox.rbx = 0; ox.rby = 1; calls.length = 0; await sleep(60); const cow2 = calls.find(c => c.ch === '牛');
-    ok('v0.40: …and walking north–south, tall and narrow', !!cow2 && cow2.ky > 1.8 && cow2.kx < 0.9, cow2);
+    ok('v0.7.2: …and walking north–south, tall and narrow', !!cow2 && cow2.ky > 1.8 && cow2.kx < 0.9, cow2);
     R.drawGlyph = dg; w.time = tDay; calm(); for (const e of show) E.remove(e); E.remove(ox); g.removeItem('石劍', 9); p.tools = p.tools.filter(t => t.n !== '石劍'); p.tool = -1;
     for (let dy = -8; dy <= 8; dy++) for (let dx = -8; dx <= 8; dx++) w.set(X + dx, Y + dy, w.base(X + dx, Y + dy));
     p.x = p.rx = p0.x; p.y = p.ry = p0.y; }
-  // ============ v0.39：有耐久的東西用過一半才能翻新；已有更好的衣甲，低一等的那列標出來 ============
+  // ============ v0.7.1：有耐久的東西用過一半才能翻新；已有更好的衣甲，低一等的那列標出來 ============
   { trim(['木', '石', '石子', '草', '土', '磚']); for (const k of ['襯', '甲', '褲', '盔', '靴', '帽']) g.takeOff(k); trim(['木', '石', '石子', '草', '土', '磚']);
     g.addItem('布甲', 1); hold('布甲'); g.pressPlace(); const vest = p.worn['甲'];
     g.addItem('麻布', 9); g.addItem('棉', 9); p.sta = 100; const mb0 = g.count('麻布'); g.craft('vest');
-    ok('v0.39: re-making a 布甲 you wear with more than half its life left is refused (還新)', vest.dur > g.lifeOf(vest) * 0.5 && g.count('麻布') === mb0 && g.msgText.indexOf('用過一半才能翻新') >= 0, g.msgText);
+    ok('v0.7.1: re-making a 布甲 you wear with more than half its life left is refused (還新)', vest.dur > g.lifeOf(vest) * 0.5 && g.count('麻布') === mb0 && g.msgText.indexOf('用過一半才能翻新') >= 0, g.msgText);
     g.toggleCraft(); g.craftCat = '全部'; g.buildCraft(); await sleep(30);
     const row = (n) => [...document.querySelectorAll('#craft-list .recipe')].find(r => r.querySelector('b').textContent.indexOf(n) === 0);
-    const r1 = row('布甲'); ok('v0.39: its craft row says 還新 and the 翻新 button is greyed out', !!r1 && r1.textContent.indexOf('還新') >= 0 && r1.textContent.indexOf('用過一半才能翻新') >= 0 && r1.querySelector('button').disabled, r1 && r1.textContent.slice(0, 60));
+    const r1 = row('布甲'); ok('v0.7.1: its craft row says 還新 and the 翻新 button is greyed out', !!r1 && r1.textContent.indexOf('還新') >= 0 && r1.textContent.indexOf('用過一半才能翻新') >= 0 && r1.querySelector('button').disabled, r1 && r1.textContent.slice(0, 60));
     vest.dur = g.lifeOf(vest) * 0.45; g.buildCraft(); const r2 = row('布甲');
-    ok('v0.39: once more than half is worn the row offers 翻新 again', !!r2 && !r2.querySelector('button').disabled && r2.textContent.indexOf('還新') < 0);
+    ok('v0.7.1: once more than half is worn the row offers 翻新 again', !!r2 && !r2.querySelector('button').disabled && r2.textContent.indexOf('還新') < 0);
     p.sta = 100; g.craft('vest');
-    ok('v0.39: and re-making it renews it to full life', Math.abs(vest.dur - g.lifeOf(vest)) < 1e-6 && g.count('麻布') < mb0, vest.dur / DAY);
+    ok('v0.7.1: and re-making it renews it to full life', Math.abs(vest.dur - g.lifeOf(vest)) < 1e-6 && g.count('麻布') < mb0, vest.dur / DAY);
     g.addItem('鐵盔', 1); g.buildCraft(); const r3 = row('布帽'), r4 = row('內襯'), r5 = row('鐵盔'), r6 = row('鎢鋼盔');
-    ok('v0.39: with a 鐵盔 in the bag the 布帽 row says 已有更好的「鐵盔」！; 鐵盔 itself and the stronger 鎢鋼盔 do not', !!r3 && r3.textContent.indexOf('已有更好的「鐵盔」！') >= 0 && (!r5 || r5.textContent.indexOf('已有更好的') < 0) && (!r6 || r6.textContent.indexOf('已有更好的') < 0), r3 && r3.textContent.slice(0, 40));
-    ok('v0.39: 內襯 has nothing stronger, so it never gets that label', !!r4 && r4.textContent.indexOf('已有更好的') < 0 && g.betterPiece('內襯') === null && g.betterPiece('布褲') === null);
+    ok('v0.7.1: with a 鐵盔 in the bag the 布帽 row says 已有更好的「鐵盔」！; 鐵盔 itself and the stronger 鎢鋼盔 do not', !!r3 && r3.textContent.indexOf('已有更好的「鐵盔」！') >= 0 && (!r5 || r5.textContent.indexOf('已有更好的') < 0) && (!r6 || r6.textContent.indexOf('已有更好的') < 0), r3 && r3.textContent.slice(0, 40));
+    ok('v0.7.1: 內襯 has nothing stronger, so it never gets that label', !!r4 && r4.textContent.indexOf('已有更好的') < 0 && g.betterPiece('內襯') === null && g.betterPiece('布褲') === null);
     g.toggleCraft();
     // 工具與漁網
     g.addItem('石刀', 1); const knife = p.tools.find(t => t.n === '石刀'); p.tool = p.tools.indexOf(knife); knife.dur = 30; g.addItem('石子', 9); const sz0 = g.count('石子'); p.sta = 100; g.craft('regrind');
-    ok('v0.39: a 石刀 with 30 of 40 left cannot be reground yet', knife.dur === 30 && g.count('石子') === sz0 && g.msgText.indexOf('用過一半才能重磨') >= 0, g.msgText);
-    knife.dur = 19; g.craft('regrind'); ok('v0.39: with 19 of 40 left it can', knife.dur === 40 && g.count('石子') < sz0);
+    ok('v0.7.1: a 石刀 with 30 of 40 left cannot be reground yet', knife.dur === 30 && g.count('石子') === sz0 && g.msgText.indexOf('用過一半才能重磨') >= 0, g.msgText);
+    knife.dur = 19; g.craft('regrind'); ok('v0.7.1: with 19 of 40 left it can', knife.dur === 40 && g.count('石子') < sz0);
     p.tools.splice(p.tools.indexOf(knife), 1); p.tool = -1;
     g.addItem('漁網', 1); g.addItem('棉', 9); g.addItem('麻', 9); const net = p.bag.find(x => x.n === '漁網'); net.dur = 20; hold('漁網'); const cm0 = g.count('棉'); p.sta = 100; g.craft('mendnet');
-    ok('v0.39: a net with 20 of 30 left cannot be reinforced yet', net.dur === 20 && g.count('棉') === cm0 && g.msgText.indexOf('用過一半才能加固') >= 0, g.msgText);
-    net.dur = 14; g.craft('mendnet'); ok('v0.39: with 14 of 30 left it can', net.dur === 30 && g.count('棉') < cm0);
-    ok('v0.39: never-used things count as new; 竹筏 and other things without durability are not affected', g.leftFrac({ n: '漁網' }) === 1 && g.leftFrac({ n: '竹筏', c: 1 }) === null && g.canRenew({ n: '竹筏', c: 1 }));
+    ok('v0.7.1: a net with 20 of 30 left cannot be reinforced yet', net.dur === 20 && g.count('棉') === cm0 && g.msgText.indexOf('用過一半才能加固') >= 0, g.msgText);
+    net.dur = 14; g.craft('mendnet'); ok('v0.7.1: with 14 of 30 left it can', net.dur === 30 && g.count('棉') < cm0);
+    ok('v0.7.1: never-used things count as new; 竹筏 and other things without durability are not affected', g.leftFrac({ n: '漁網' }) === 1 && g.leftFrac({ n: '竹筏', c: 1 }) === null && g.canRenew({ n: '竹筏', c: 1 }));
     for (const k of ['甲']) g.takeOff(k); trim(['木', '石', '石子', '草', '土', '磚']); }
-  // ============ v0.38：本島往外擴四成五（原本的地一格不動）、2500×2500 的紙與外島、新地形 ============
+  // ============ v0.7：本島往外擴四成五（原本的地一格不動）、2500×2500 的紙與外島、新地形 ============
   { const sd = w.seed, home0 = { x: p.x, y: p.y }, il = G.islet(sd);
     let same = true, oldLand = 0, newLand = 0, inner = true, isletSame = true;
     for (let y = -125; y <= 125; y++) for (let x = -125; x <= 125; x++) {
@@ -1800,112 +1824,112 @@ const result = await page.evaluate(async () => {
       if (!la && Math.hypot(x, y) < 0.55 * 85 && a !== b) inner = false;
       if (Math.hypot(x - il.cx, y - il.cy) <= 14 && a !== b) isletSame = false;
     }
-    ok('v0.38: every tile of the old island stays exactly as it was (old saves keep their land)', same, oldLand);
-    ok('v0.38: the island grows outward (seed 7: ' + oldLand + ' → ' + newLand + ' land tiles)', newLand / oldLand > 1.2 && newLand / oldLand < 1.9, newLand / oldLand);
-    ok('v0.38: ponds deep inside the island and the lighthouse islet with its causeway are untouched', inner && isletSame);
+    ok('v0.7: every tile of the old island stays exactly as it was (old saves keep their land)', same, oldLand);
+    ok('v0.7: the island grows outward (seed 7: ' + oldLand + ' → ' + newLand + ' land tiles)', newLand / oldLand > 1.2 && newLand / oldLand < 1.9, newLand / oldLand);
+    ok('v0.7: ponds deep inside the island and the lighthouse islet with its causeway are untouched', inner && isletSame);
     const pls = w.places.map(q => q.id + '@' + q.x + ',' + q.y).join(' ');
-    ok('v0.38: landmarks, steles and the spawn sit exactly where they were before', pls === 'ta@-12,14 si@-31,-17 cun@-26,-21 chuan@-53,-27 quan@18,23 mu@-29,-2 dong@20,33 deng@-93,-27' && [...w.steles.keys()].join(' ') === '21,0 -7,35 -43,20 -33,-49 47,-12' && g.spawn.x === 3 && g.spawn.y === -1, [pls, g.spawn]);
+    ok('v0.7: landmarks, steles and the spawn sit exactly where they were before', pls === 'ta@-12,14 si@-31,-17 cun@-26,-21 chuan@-53,-27 quan@18,23 mu@-29,-2 dong@20,33 deng@-93,-27' && [...w.steles.keys()].join(' ') === '21,0 -7,35 -43,20 -33,-49 47,-12' && g.spawn.x === 3 && g.spawn.y === -1, [pls, g.spawn]);
     const all = G.isles(sd), kinds = {}; for (const i of all) kinds[i.kind] = (kinds[i.kind] || 0) + 1;
-    ok('v0.38: about seventy outer islands of five kinds dot the 2500×2500 sea, none near home', all.length >= 50 && all.length <= 95 && Object.keys(kinds).length === 5 && all.every(i => G.isleOf(i.cx, i.cy, sd) === i && Math.hypot(i.cx, i.cy) >= 330), [all.length, kinds]);
+    ok('v0.7: about seventy outer islands of five kinds dot the 2500×2500 sea, none near home', all.length >= 50 && all.length <= 95 && Object.keys(kinds).length === 5 && all.every(i => G.isleOf(i.cx, i.cy, sd) === i && Math.hypot(i.cx, i.cy) >= 330), [all.length, kinds]);
     const sig = { '漠': '漠丘池棗', '火': '熔岩曜', '川': '川湖', '雪': '窟湯', '青': '草木' }, found = {};
     for (const k in sig) { const i = all.filter(q => q.kind === k).sort((a, b) => b.R - a.R)[0]; const got = new Set(); for (let y = Math.floor(i.cy - i.R); y <= i.cy + i.R; y++) for (let x = Math.floor(i.cx - i.R); x <= i.cx + i.R; x++) got.add(G.baseTile(x, y, sd)); found[k] = [...sig[k]].filter(c => got.has(c)).join(''); }
-    ok('v0.38: each kind of island has its own terrain (漠丘池棗 / 熔岩曜 / 川湖 / 窟 / 草木)', found['漠'].length >= 3 && found['火'] === '熔岩曜' && found['川'] === '川湖' && found['雪'].indexOf('窟') >= 0 && found['青'] === '草木', found);
+    ok('v0.7: each kind of island has its own terrain (漠丘池棗 / 熔岩曜 / 川湖 / 窟 / 草木)', found['漠'].length >= 3 && found['火'] === '熔岩曜' && found['川'] === '川湖' && found['雪'].indexOf('窟') >= 0 && found['青'] === '草木', found);
     // 登上一座外島
     const ri = all.filter(q => q.kind === '火').sort((a, b) => b.R - a.R)[0]; let spot = null;
     for (let r = 0; r < ri.R && !spot; r++) for (let a = 0; a < 360 && !spot; a += 10) { const x = Math.round(ri.cx + Math.cos(a * Math.PI / 180) * r), y = Math.round(ri.cy + Math.sin(a * Math.PI / 180) * r), d = G.DB[w.get(x, y)]; if (d.walk > 0 && d.kind !== 'water' && !w.nearChar(x, y, '熔', 2)) spot = [x, y]; }
     const c0 = p.cour, n0 = Object.keys(p.isles || {}).length;
     p.x = p.rx = spot[0]; p.y = p.ry = spot[1]; p.sailing = false; p.swimming = false; g.updateStats(0.01);
-    ok('v0.38: stepping onto an outer island for the first time names it and gives courage', (p.isles || {})[ri.id] === 1 && Object.keys(p.isles).length === n0 + 1 && p.cour > c0 && toasts().indexOf('登上火島') >= 0, [p.cour - c0, spot]);
-    g.hudSig = ''; g.updateHUD(); ok('v0.38: the status bar says which island you are on', document.getElementById('status').textContent.indexOf('火島 · ') >= 0, document.getElementById('status').textContent.slice(0, 80));
+    ok('v0.7: stepping onto an outer island for the first time names it and gives courage', (p.isles || {})[ri.id] === 1 && Object.keys(p.isles).length === n0 + 1 && p.cour > c0 && toasts().indexOf('登上火島') >= 0, [p.cour - c0, spot]);
+    g.hudSig = ''; g.updateHUD(); ok('v0.7: the status bar says which island you are on', document.getElementById('status').textContent.indexOf('火島 · ') >= 0, document.getElementById('status').textContent.slice(0, 80));
     w.markSeen(p.x, p.y, 9); const tb = performance.now(); g.renderer.drawBigMap(g, document.getElementById('bigmap')); const mapMs = performance.now() - tb, mv = g.renderer.mapView;
-    ok('v0.38: the big map widens to take in the far island and the home island, and draws quickly', mv.N > 400 && mv.ox <= -G.HOME_R && mv.ox + mv.N >= p.x && mapMs < 400, [mv, Math.round(mapMs)]);
+    ok('v0.7: the big map widens to take in the far island and the home island, and draws quickly', mv.N > 400 && mv.ox <= -G.HOME_R && mv.ox + mv.N >= p.x && mapMs < 400, [mv, Math.round(mapMs)]);
     p.cour = c0; delete p.isles[ri.id]; p.x = p.rx = home0.x; p.y = p.ry = home0.y; g.renderer.drawBigMap(g, document.getElementById('bigmap'));
-    w.revealAll(0, 0); ok('v0.38: from the tower you see the whole grown island', w.isSeen(G.HOME_R - 3, 0) && w.isSeen(0, -(G.HOME_R - 3)));
+    w.revealAll(0, 0); ok('v0.7: from the tower you see the whole grown island', w.isSeen(G.HOME_R - 3, 0) && w.isSeen(0, -(G.HOME_R - 3)));
     // 新地形：在家附近鋪一小塊試
     const X = home0.x + 34, Y = home0.y + 4, patch = (ch) => { for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) w.set(X + dx, Y + dy, ch); };
     patch('草'); p.x = p.rx = X; p.y = p.ry = Y; p.sailing = false; p.swimming = false; calm(); p.caveK = 0; p.heatT = 0; p.poisonT = 0;
     w.set(X, Y, '漠'); setDay(0.5); p.sta = 50; g.updateStats(1); const staD = 50 - p.sta;
-    ok('v0.38: in the desert by day stamina drains (−0.4 a second) instead of recovering', Math.abs(staD - 0.4) < 0.02, staD);
+    ok('v0.7: in the desert by day stamina drains (−0.4 a second) instead of recovering', Math.abs(staD - 0.4) < 0.02, staD);
     setDay(0.9); const fw = (g.wornWarm() ? 0.5 : 1) * (g.torchLit() ? 0.4 : 1); p.warm = 60; g.updateStats(1); const wD = 60 - p.warm;
     w.set(X, Y, '草'); p.warm = 60; g.updateStats(1); const wG = 60 - p.warm;
-    ok('v0.38: and at night the desert is colder than grass (warmth −0.8 a second more)', Math.abs((wD - wG) - 0.8 * fw) < 0.02, [wD, wG, fw]);
+    ok('v0.7: and at night the desert is colder than grass (warmth −0.8 a second more)', Math.abs((wD - wG) - 0.8 * fw) < 0.02, [wD, wG, fw]);
     setDay(0.5); calm(); w.set(X + 1, Y, '熔'); p.hp = 80; p.hurtT = 0; p.warm = 50; g.updateStats(1);
-    ok('v0.38: right next to lava you get burned (−1.5 a second) but it keeps you warm', Math.abs(p.hp - 78.5) < 0.02 && p.warm > 53, [p.hp, p.warm]);
+    ok('v0.7: right next to lava you get burned (−1.5 a second) but it keeps you warm', Math.abs(p.hp - 78.5) < 0.02 && p.warm > 53, [p.hp, p.warm]);
     w.set(X + 1, Y, '草'); w.set(X, Y, '湯'); p.hp = 50; p.san = 50; p.warm = 50; p.hurtT = 0; g.updateStats(1);
-    ok('v0.38: soaking in a hot spring warms you and restores life and calm', p.hp > 50.9 && p.san > 50.15 && p.warm > 53, [p.hp, p.san, p.warm]);
+    ok('v0.7: soaking in a hot spring warms you and restores life and calm', p.hp > 50.9 && p.san > 50.15 && p.warm > 53, [p.hp, p.san, p.warm]);
     w.set(X, Y, '窟'); for (let i = 0; i < 6; i++) g.updateStats(0.5); const cd = g.viewDark(), dd0 = g.darkness();
     w.set(X, Y, '草'); for (let i = 0; i < 6; i++) g.updateStats(0.5);
-    ok('v0.38: in a cave it is dark even at noon and light again outside (ghosts and beasts still go by the sun)', dd0 < 0.05 && cd > 0.8 && g.viewDark() < 0.1, [dd0, cd, g.viewDark()]);
+    ok('v0.7: in a cave it is dark even at noon and light again outside (ghosts and beasts still go by the sun)', dd0 < 0.05 && cd > 0.8 && g.viewDark() < 0.1, [dd0, cd, g.viewDark()]);
     face(1, 0); w.set(X + 1, Y, '川'); g.addItem('玻璃瓶', 1); hold('玻璃瓶'); const fw0 = g.count('淡水瓶'), sw0 = g.count('海水瓶'); g.action = null; g.pressGather();
-    ok('v0.38: a bottle dipped in a river comes up with fresh water, not sea water', g.count('淡水瓶') === fw0 + 1 && g.count('海水瓶') === sw0, g.msgText);
-    g.addItem('竹筏', 1); ok('v0.38: a raft floats on rivers and lakes too', g.pass(X + 1, Y)); g.removeItem('竹筏', 1);
+    ok('v0.7: a bottle dipped in a river comes up with fresh water, not sea water', g.count('淡水瓶') === fw0 + 1 && g.count('海水瓶') === sw0, g.msgText);
+    g.addItem('竹筏', 1); ok('v0.7: a raft floats on rivers and lakes too', g.pass(X + 1, Y)); g.removeItem('竹筏', 1);
     w.set(X + 1, Y, '曜'); g.finishGather({ x: X + 1, y: Y, ch: '曜', t: 0, dur: 0 });
-    ok('v0.38: an obsidian vein gives 黑曜石 and leaves 岩', g.count('黑曜石') === 1 && w.get(X + 1, Y) === '岩');
+    ok('v0.7: an obsidian vein gives 黑曜石 and leaves 岩', g.count('黑曜石') === 1 && w.get(X + 1, Y) === '岩');
     g.addItem('黑曜石', 1); g.addItem('木', 1); g.addItem('麻', 1); p.sta = 100; g.craft('obsidian'); const ob = p.tools.find(t => t.n === '曜刃');
-    ok('v0.38: two 黑曜石, a 木 and a 麻 make an 曜刃 that hits for 60', !!ob && G.ITEMS['曜刃'].dmg === 60 && G.ITEMS['曜刃'].tool === '刀' && g.count('黑曜石') === 0, ob);
-    if (ob) { p.tool = p.tools.indexOf(ob); ob.dur = 3; g.addItem('石子', 2); const st0 = g.count('石子'); g.craft('regrind'); ok('v0.38: an 曜刃 cannot be reground — it is brittle', ob.dur === 3 && g.count('石子') === st0 && g.msgText.indexOf('磨不回來') >= 0, g.msgText); p.tools.splice(p.tools.indexOf(ob), 1); p.tool = -1; g.removeItem('石子', 2); }
-    g.addItem('棗', 1); hold('棗'); p.food = 50; g.useItem(); ok('v0.38: a date is food (+15) and never ferments', Math.abs(p.food - 65) < 0.01 && !G.ITEMS['棗'].ferment, p.food);
+    ok('v0.7: two 黑曜石, a 木 and a 麻 make an 曜刃 that hits for 60', !!ob && G.ITEMS['曜刃'].dmg === 60 && G.ITEMS['曜刃'].tool === '刀' && g.count('黑曜石') === 0, ob);
+    if (ob) { p.tool = p.tools.indexOf(ob); ob.dur = 3; g.addItem('石子', 2); const st0 = g.count('石子'); g.craft('regrind'); ok('v0.7: an 曜刃 cannot be reground — it is brittle', ob.dur === 3 && g.count('石子') === st0 && g.msgText.indexOf('磨不回來') >= 0, g.msgText); p.tools.splice(p.tools.indexOf(ob), 1); p.tool = -1; g.removeItem('石子', 2); }
+    g.addItem('棗', 1); hold('棗'); p.food = 50; g.useItem(); ok('v0.7: a date is food (+15) and never ferments', Math.abs(p.food - 65) < 0.01 && !G.ITEMS['棗'].ferment, p.food);
     w.set(X + 2, Y, '窟'); const spi = g.ents.habitat('蛛', X + 2, Y, false); w.set(X + 2, Y, '丘'); const sna = g.ents.habitat('蛇', X + 2, Y, false); w.set(X + 2, Y, '漠'); const wol = g.ents.habitat('狼', X + 2, Y, true);
-    ok('v0.38: spiders live in caves, snakes in dunes, and wolves roam the desert at night', spi && sna && wol, [spi, sna, wol]);
+    ok('v0.7: spiders live in caves, snakes in dunes, and wolves roam the desert at night', spi && sna && wol, [spi, sna, wol]);
     for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) w.set(X + dx, Y + dy, w.base(X + dx, Y + dy));
     g.removeItem('淡水瓶', 9); g.removeItem('玻璃瓶', 9); g.removeItem('黑曜石', 9); g.removeItem('木', 1); g.removeItem('麻', 1); p.x = p.rx = home0.x; p.y = p.ry = home0.y; calm(); p.food = 100; p.warm = 100;
     // 舊存檔：船停在長出來的新陸地上 → 挪到最近的海
     let ext = null; for (let r = 60; r < 125 && !ext; r++) for (let a = 0; a < 360 && !ext; a += 3) { const x = Math.round(Math.cos(a * Math.PI / 180) * r), y = Math.round(Math.sin(a * Math.PI / 180) * r); if (G.DB[G.oldTile(x, y, sd)].kind === 'water' && G.DB[G.oldTile(x, y + 1, sd)].kind === 'water' && G.DB[G.baseTile(x, y, sd)].kind !== 'water' && G.DB[G.baseTile(x, y + 1, sd)].kind !== 'water') ext = [x, y]; }
     const sv = JSON.parse(JSON.stringify(w.serialize())); sv.ships = { [ext[0] + ',' + ext[1]]: { kind: '孤帆', hp: 100, skulls: [], repairs: 0, cells: [[ext[0], ext[1]], [ext[0], ext[1] + 1]] } }; sv.diff[ext[0] + ',' + ext[1]] = '舟'; sv.diff[ext[0] + ',' + (ext[1] + 1)] = '舟';
     const w6 = new window.World(sd); w6.restore(sv, g.day()); const sh = [...w6.ships.values()][0];
-    ok('v0.38: a ship an old save left where new land grew is moved to the nearest sea, the land under it restored', w6.movedShips === 1 && !!sh && sh.cells.every(([x, y]) => G.DB[w6.base(x, y)].kind === 'water') && w6.get(ext[0], ext[1]) === G.baseTile(ext[0], ext[1], sd), [w6.movedShips, sh && sh.cells, ext]);
+    ok('v0.7: a ship an old save left where new land grew is moved to the nearest sea, the land under it restored', w6.movedShips === 1 && !!sh && sh.cells.every(([x, y]) => G.DB[w6.base(x, y)].kind === 'water') && w6.get(ext[0], ext[1]) === G.baseTile(ext[0], ext[1], sd), [w6.movedShips, sh && sh.cells, ext]);
     g.save(); const svo = JSON.parse(localStorage.getItem('xieyi.save.v5')); delete svo.player.isleNews; g.load(svo);
-    ok('v0.38: loading a save from before the expansion tells you the island grew and the sea filled with islands', toasts().indexOf('島長大了') >= 0 && p.isleNews === true);
+    ok('v0.7: loading a save from before the expansion tells you the island grew and the sea filled with islands', toasts().indexOf('島長大了') >= 0 && p.isleNews === true);
   }
-  // ============ v0.37：鑿掉的鐵礦七到十日後在原地長回來（那時是石、草、白紙才行） ============
+  // ============ v0.6.10：鑿掉的鐵礦七到十日後在原地長回來（那時是石、草、白紙才行） ============
   { const X = p.x + 22, Y = p.y + 22, K = (x, y) => x + ',' + y, c0 = p.cour, r0 = U.trueRand;
     for (let i = 0; i < 4; i++) w.set(X + i, Y, '鐵');
     U.trueRand = () => 0; g.finishGather({ x: X, y: Y, ch: '鐵', t: 0, dur: 0 }); const lo = (w.ores.get(K(X, Y)) - w.time) / DAY;
     U.trueRand = () => 0.9999; g.finishGather({ x: X + 1, y: Y, ch: '鐵', t: 0, dur: 0 }); const hi = (w.ores.get(K(X + 1, Y)) - w.time) / DAY;
     U.trueRand = r0; g.finishGather({ x: X + 2, y: Y, ch: '鐵', t: 0, dur: 0 }); g.finishGather({ x: X + 3, y: Y, ch: '鐵', t: 0, dur: 0 });
-    ok('v0.37: a mined iron vein turns to 石 and is booked to grow back in 7–10 days (true random)', w.get(X, Y) === '石' && w.ores.size >= 4 && Math.abs(lo - 7) < 1e-3 && Math.abs(hi - 10) < 1e-2, [lo, hi]);
+    ok('v0.6.10: a mined iron vein turns to 石 and is booked to grow back in 7–10 days (true random)', w.get(X, Y) === '石' && w.ores.size >= 4 && Math.abs(lo - 7) < 1e-3 && Math.abs(hi - 10) < 1e-2, [lo, hi]);
     w.set(X + 1, Y, '草'); w.set(X + 2, Y, '白'); w.set(X + 3, Y, '磚');
     const sv = w.serialize(), w5 = new window.World(w.seed); w5.restore(JSON.parse(JSON.stringify(sv)), g.day());
-    ok('v0.37: the regrowth times are saved and read back', w5.ores.size === w.ores.size && Math.abs(w5.ores.get(K(X, Y)) - w.ores.get(K(X, Y))) < 1e-3);
+    ok('v0.6.10: the regrowth times are saved and read back', w5.ores.size === w.ores.size && Math.abs(w5.ores.get(K(X, Y)) - w.ores.get(K(X, Y))) < 1e-3);
     w.set(X + 5, Y, '石'); w.ores.set(K(X + 5, Y), w.time + DAY); w.regrowOres();
-    ok('v0.37: nothing grows back before its time', w.get(X + 5, Y) === '石' && w.ores.has(K(X + 5, Y)));
+    ok('v0.6.10: nothing grows back before its time', w.get(X + 5, Y) === '石' && w.ores.has(K(X + 5, Y)));
     for (const k of [K(X, Y), K(X + 1, Y), K(X + 2, Y), K(X + 3, Y)]) w.ores.set(k, w.time - 1);
     const ob = w.oreBlocked; w.oreBlocked = (x, y) => x === X && y === Y; w.regrowOres();
-    ok('v0.37: on time, 草 and 白紙 turn back into iron; a 磚 built there stops it for good', w.get(X + 1, Y) === '鐵' && w.get(X + 2, Y) === '鐵' && w.get(X + 3, Y) === '磚' && !w.ores.has(K(X + 1, Y)) && !w.ores.has(K(X + 3, Y)), [w.get(X + 1, Y), w.get(X + 2, Y), w.get(X + 3, Y)]);
-    ok('v0.37: someone standing on the 石 makes it wait instead of walling them in', w.get(X, Y) === '石' && w.ores.has(K(X, Y)));
+    ok('v0.6.10: on time, 草 and 白紙 turn back into iron; a 磚 built there stops it for good', w.get(X + 1, Y) === '鐵' && w.get(X + 2, Y) === '鐵' && w.get(X + 3, Y) === '磚' && !w.ores.has(K(X + 1, Y)) && !w.ores.has(K(X + 3, Y)), [w.get(X + 1, Y), w.get(X + 2, Y), w.get(X + 3, Y)]);
+    ok('v0.6.10: someone standing on the 石 makes it wait instead of walling them in', w.get(X, Y) === '石' && w.ores.has(K(X, Y)));
     w.oreBlocked = ob; w.regrowOres();
-    ok('v0.37: once they step off, the 石 turns back into iron', w.get(X, Y) === '鐵' && !w.ores.has(K(X, Y)));
+    ok('v0.6.10: once they step off, the 石 turns back into iron', w.get(X, Y) === '鐵' && !w.ores.has(K(X, Y)));
     w.ores.clear(); for (let i = 0; i < 6; i++) w.set(X + i, Y, '草'); g.removeItem('鐵礦', 99); g.removeItem('鎢礦', 99); p.cour = c0; }
-  // ============ v0.37：簡單餓得慢兩成 ============
+  // ============ v0.6.10：簡單餓得慢兩成 ============
   { const d0 = g.diff, f0 = p.food; p.food = 50; g.diff = XIEYI.DIFF.normal; g.updateStats(1); const dn = 50 - p.food; p.food = 50; g.diff = XIEYI.DIFF.easy; g.updateStats(1); const de = 50 - p.food; p.food = 50; g.diff = XIEYI.DIFF.hard; g.updateStats(1); const dh = 50 - p.food; g.diff = d0; p.food = f0;
-    ok('v0.37: on easy hunger falls 20% slower than normal (hard as normal)', Math.abs(de - dn * 0.8) < 1e-3 && Math.abs(dh - dn) < 1e-3 && Math.abs(dn - 0.14 * g.ironDrain()) < 1e-3 && XIEYI.DIFF.easy.hunger === 0.8, [dn, de, dh]); }
-  // ============ v0.37：魚多八成、鷹多兩成五 ============
+    ok('v0.6.10: on easy hunger falls 20% slower than normal (hard as normal)', Math.abs(de - dn * 0.8) < 1e-3 && Math.abs(dh - dn) < 1e-3 && Math.abs(dn - 0.14 * g.ironDrain()) < 1e-3 && XIEYI.DIFF.easy.hunger === 0.8, [dn, de, dh]); }
+  // ============ v0.6.10：魚多八成、鷹多兩成五 ============
   { const r0 = Math.random; Math.random = () => 0.99; const lo = g.ents.spawnCaps(false, 1); Math.random = () => 0.01; const hi = g.ents.spawnCaps(false, 1); Math.random = r0;
     let fs = 0, es = 0; for (let i = 0; i < 4000; i++) { const c = g.ents.spawnCaps(false, 1); fs += c['魚']; es += c['鷹']; }
-    ok('v0.37: nearby fish cap 8 → 14.4 on average (14 or 15), eagles 2 → 2.5 (2 or 3)', lo['魚'] === 14 && hi['魚'] === 15 && lo['鷹'] === 2 && hi['鷹'] === 3 && Math.abs(fs / 4000 - 14.4) < 0.06 && Math.abs(es / 4000 - 2.5) < 0.06, [fs / 4000, es / 4000]); }
-  // ============ v0.36／v0.37：製作欄各欄每列對齊（v0.37 拿掉衍生樹，品名全在同一欄） ============
+    ok('v0.6.10: nearby fish cap 8 → 14.4 on average (14 or 15), eagles 2 → 2.5 (2 or 3)', lo['魚'] === 14 && hi['魚'] === 15 && lo['鷹'] === 2 && hi['鷹'] === 3 && Math.abs(fs / 4000 - 14.4) < 0.06 && Math.abs(es / 4000 - 2.5) < 0.06, [fs / 4000, es / 4000]); }
+  // ============ v0.6.9／v0.6.10：製作欄各欄每列對齊（v0.6.10 拿掉衍生樹，品名全在同一欄） ============
   { g.addItem('燈帽', 1); g.toggleCraft(); g.craftCat = '全部'; g.buildCraft(); await sleep(60);
     const rows = [...document.querySelectorAll('#craft-list .recipe')], info = rows.map(r => ({ x: Math.round(r.querySelector('b').getBoundingClientRect().left), sta: Math.round(r.querySelector('.sta').getBoundingClientRect().left), choose: r.classList.contains('choose'), btn: Math.round(r.querySelector('.btns').getBoundingClientRect().left) }));
-    ok('v0.37: every item name starts in the same column (1 and 10 alike), no level indents', rows.length === G.RECIPES.length && new Set(info.map(r => r.x)).size === 1, [...new Set(info.map(r => r.x))]);
-    ok('v0.36: the stamina and button columns line up on every row (a wider 翻新 button no longer pushes them)', new Set(info.map(r => r.sta)).size === 1 && new Set(info.filter(r => !r.choose).map(r => r.btn)).size === 1, [[...new Set(info.map(r => r.sta))], [...new Set(info.filter(r => !r.choose).map(r => r.btn))]]);
-    ok('v0.36: the forge rows are named for what they make', G.RECIPES.find(r => r.id === 'forge').title === '鍛鋼具' && G.RECIPES.find(r => r.id === 'forgew').title === '鍛鎢鋼具');
+    ok('v0.6.10: every item name starts in the same column (1 and 10 alike), no level indents', rows.length === G.RECIPES.length && new Set(info.map(r => r.x)).size === 1, [...new Set(info.map(r => r.x))]);
+    ok('v0.6.9: the stamina and button columns line up on every row (a wider 翻新 button no longer pushes them)', new Set(info.map(r => r.sta)).size === 1 && new Set(info.filter(r => !r.choose).map(r => r.btn)).size === 1, [[...new Set(info.map(r => r.sta))], [...new Set(info.filter(r => !r.choose).map(r => r.btn))]]);
+    ok('v0.6.9: the forge rows are named for what they make', G.RECIPES.find(r => r.id === 'forge').title === '鍛鋼具' && G.RECIPES.find(r => r.id === 'forgew').title === '鍛鎢鋼具');
     g.toggleCraft(); g.removeItem('燈帽', 9); }
-  // ============ v0.36：光是從燈芯射出去的線，碰到牆角斜斜地切開，不是一格一格的方塊 ============
+  // ============ v0.6.9：光是從燈芯射出去的線，碰到牆角斜斜地切開，不是一格一格的方塊 ============
   { const R = g.renderer, lx = p.x - 30, ly = p.y - 30; for (let dy = -7; dy <= 7; dy++) for (let dx = -7; dx <= 7; dx++) w.set(lx + dx, ly + dy, '草');
     for (let dx = -1; dx <= 1; dx++) w.set(lx + dx, ly - 2, '磚');
     const sh = R.lightShape(w, lx + 0.5, ly + 0.5, 6);
     const inside = (x, y) => { const pl = sh.poly; let c = false; for (let i = 0, j = pl.length - 2; i < pl.length; j = i, i += 2) { const xi = pl[i], yi = pl[i + 1], xj = pl[j], yj = pl[j + 1]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
     const behind = inside(lx + 0.5, ly - 3.5), pastEnd = inside(lx + 5.5, ly - 3.5), near = inside(lx + 0.5, ly + 2.5), split = !inside(lx + 4.05, ly - 3.2) && inside(lx + 4.6, ly - 3.2);   // 斜邊從牆的右下角 45° 射出去：在 lx+4.2 處把同一格切開
-    ok('v0.36: a lamp\'s light is a polygon cast from the wick: right behind a wall is dark, past the wall\'s end the slanting ray gets through', !!sh && sh.poly.length > 16 && !behind && pastEnd && near && sh.rects.length >= 3, [behind, pastEnd, near, sh && sh.rects.length]);
+    ok('v0.6.9: a lamp\'s light is a polygon cast from the wick: right behind a wall is dark, past the wall\'s end the slanting ray gets through', !!sh && sh.poly.length > 16 && !behind && pastEnd && near && sh.rects.length >= 3, [behind, pastEnd, near, sh && sh.rects.length]);
     ok('…and the shadow edge runs on the slant from the wall\'s corner, cutting through a tile rather than along tile lines', split, [inside(lx + 4.05, ly - 3.2), inside(lx + 4.6, ly - 3.2)]);
     const again = R.lightShape(w, lx + 0.5, ly + 0.5, 6); w.set(lx + 5, ly + 5, '石'); const fresh = R.lightShape(w, lx + 0.5, ly + 0.5, 6);
     ok('…cached until the ground changes', again === sh && fresh !== sh);
     for (let dy = -7; dy <= 7; dy++) for (let dx = -7; dx <= 7; dx++) w.set(lx + dx, ly + dy, w.base(lx + dx, ly + dy)); }
-  // ============ v0.35：玩家看得到的數一律整數，零頭攢著補（每下 53.13 → −53 −53 −53 −53 −54 …） ============
+  // ============ v0.6.8：玩家看得到的數一律整數，零頭攢著補（每下 53.13 → −53 −53 −53 −53 −54 …） ============
   { const pd = g.ents.add('豹', p.x + 30, p.y + 30, { moveT: 99, calm: 99 }); pd.hp = 1000; const seq = [];
     for (let i = 0; i < 8; i++) { pd.hp -= 53.13; seq.push(g.shown('dmg', 53.13, pd)); }
     const sumShown = seq.reduce((a, b) => a + b, 0);
-    ok('v0.35: a 53.13 hit shows −53 four times, then −54 (the four 0.13s made 0.52), and the over-shown 0.48 is taken back later', seq.slice(0, 5).join(',') === '53,53,53,53,54' && seq.every(Number.isInteger) && Math.abs(sumShown - 53.13 * 8) < 0.5, seq);
+    ok('v0.6.8: a 53.13 hit shows −53 four times, then −54 (the four 0.13s made 0.52), and the over-shown 0.48 is taken back later', seq.slice(0, 5).join(',') === '53,53,53,53,54' && seq.every(Number.isInteger) && Math.abs(sumShown - 53.13 * 8) < 0.5, seq);
     ok('…and the beast\'s shown remaining life is its life minus the numbers you saw', g.shownHp(pd) === 1000 - sumShown, [g.shownHp(pd), 1000 - sumShown]);
     g.ents.remove(pd);
     const halves = []; for (let i = 0; i < 6; i++) halves.push(g.shown('test-half', 0.5));
@@ -1914,13 +1938,13 @@ const result = await page.evaluate(async () => {
     const near2 = (e) => e.type !== '龍' && U.cheb(e.x, e.y, p.x, p.y) <= 2; g.ents.list = g.ents.list.filter(e => !near2(e));   // 身邊別的生靈先請走，免得打到別隻
     const tg2 = g.ents.add('虎', p.x + 1, p.y, { moveT: 99, calm: 99 }); face(1, 0); p.atkT = 0; g.pressGather(); await sleep(30);
     const floats = g.fx.filter(f => f.type === 'float').map(f => f.text);
-    ok('v0.35: damage floats and the facing hint show whole numbers only', floats.length > 0 && floats.every(t => !/\d\.\d/.test(t)) && !/\d\.\d/.test(document.getElementById('msg').textContent), [floats.slice(-2), document.getElementById('msg').textContent.slice(0, 40)]);
+    ok('v0.6.8: damage floats and the facing hint show whole numbers only', floats.length > 0 && floats.every(t => !/\d\.\d/.test(t)) && !/\d\.\d/.test(document.getElementById('msg').textContent), [floats.slice(-2), document.getElementById('msg').textContent.slice(0, 40)]);
     g.ents.remove(tg2); g.ents.list = g.ents.list.filter(e => !near2(e)); p.tools = keepT2; p.tool = keepI2; g.barSig = ''; g.buildBag(); }
-  // ============ v0.35：裝著東西的櫃放得進櫃、拿得回來；磚旁邊亮的磚也亮；村裡的墟、門不會自己長回來 ============
+  // ============ v0.6.8：裝著東西的櫃放得進櫃、拿得回來；磚旁邊亮的磚也亮；村裡的墟、門不會自己長回來 ============
   { const X = p.x, Y = p.y; face(1, 0); const cx = X + 1, cy = Y, keep = w.get(cx, cy); w.set(cx, cy, '櫃'); w.chests.set(cx + ',' + cy, []);
     p.bag.push({ n: '櫃', c: 1, store: [{ n: '石', c: 3 }, { n: '木', c: 2 }] }); g.barSig = ''; g.openChest({ x: cx, y: cy }); await sleep(30);
     const bi = p.bag.findIndex(s => s.n === '櫃' && s.store); g.moveStack('bag', bi); const box = w.chests.get(cx + ',' + cy), inBox = box.find(s => s.n === '櫃');
-    ok('v0.35: a 櫃 with things in it goes into another 櫃, things and all, and the panel says how many', !!inBox && inBox.store.length === 2 && !p.bag.some(s => s.n === '櫃' && s.store) && [...document.querySelectorAll('#chest-grid .slot')].some(el => el.textContent.indexOf('2樣') >= 0));
+    ok('v0.6.8: a 櫃 with things in it goes into another 櫃, things and all, and the panel says how many', !!inBox && inBox.store.length === 2 && !p.bag.some(s => s.n === '櫃' && s.store) && [...document.querySelectorAll('#chest-grid .slot')].some(el => el.textContent.indexOf('2樣') >= 0));
     g.moveStack('chest', box.indexOf(inBox)); const back = p.bag.find(s => s.n === '櫃' && s.store);
     ok('…and comes back out with its things still inside', !!back && back.store.length === 2 && back.store[0].n === '石' && !box.some(s => s.n === '櫃'));
     g.closeChest(); p.bag.splice(p.bag.indexOf(back), 1); w.chests.delete(cx + ',' + cy); w.set(cx, cy, keep); g.barSig = ''; g.buildBag(); }
@@ -1928,11 +1952,11 @@ const result = await page.evaluate(async () => {
     w.set(lx, ly, '燈'); const vis = R.sight(w, lx, ly, 6), W = 13, at = (dx, dy) => vis[(dy + 6) * W + dx + 6];
     let ring = true, out = false; for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === 3 && !at(dx, dy)) ring = false;
     for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === 4 && at(dx, dy)) out = true;
-    ok('v0.35: a lamp in a brick room lights every brick of its walls (a brick next to a lit tile is lit), but nothing beyond them', !!vis && ring && !out, [ring, out]);
+    ok('v0.6.8: a lamp in a brick room lights every brick of its walls (a brick next to a lit tile is lit), but nothing beyond them', !!vis && ring && !out, [ring, out]);
     for (let dy = -5; dy <= 5; dy++) for (let dx = -5; dx <= 5; dx++) w.set(lx + dx, ly + dy, w.base(lx + dx, ly + dy)); }
   { const vil = w.places.find(q => q.id === 'cun'); let rx = null, ry = null;
     if (vil) for (let dy = 0; dy < vil.h && rx === null; dy++) for (let dx = 0; dx < vil.w; dx++) if (w.base(vil.x + dx, vil.y + dy) === '墟') { rx = vil.x + dx; ry = vil.y + dy; break; }
-    ok('v0.35: blank paper over a village 墟 is written back as earth, not as the ruin again (墟 never mends itself)', rx !== null && w.rewriteBlank(rx, ry) === '土' && w.rewriteBlank(p.x, p.y) === w.base(p.x, p.y), [rx, ry]); }
+    ok('v0.6.8: blank paper over a village 墟 is written back as earth, not as the ruin again (墟 never mends itself)', rx !== null && w.rewriteBlank(rx, ry) === '土' && w.rewriteBlank(p.x, p.y) === w.base(p.x, p.y), [rx, ry]); }
   g.save(); const sv = JSON.parse(localStorage.getItem('xieyi.save.v5'));
   ok('save v5 keeps sanity, courage, scarecrows and chests', sv && sv.v === 5 && typeof sv.player.san === 'number' && typeof sv.player.cour === 'number' && sv.world.scarecrows && sv.world.chests && sv.player.places.ta === 2);
   // —— 三格存檔：第一格沿用舊鍵；每格帶摘要
@@ -1942,7 +1966,7 @@ const result = await page.evaluate(async () => {
     ok('summary of a save names island, difficulty, day, night, level and time', m.seed === g.seed && m.diff === g.diff.name && m.day === g.day() && m.level === g.level() && /^第 \d+ 日$/.test(m.dayText) && /\d\d\/\d\d \d\d:\d\d/.test(m.whenText), m);
     const old = JSON.parse(JSON.stringify(sv)); delete old.brief; const mo = XIEYI.Game.summary(old);
     ok('an old save without a brief still gets day, night and level from time and courage', mo.day === m.day && mo.night === m.night && mo.level === m.level && mo.deaths === p.deaths);
-    const t0 = w.time; w.time = 0; ok('v0.37: a save card names only the day — 第 N 日, no night', (() => { const at = (tt) => { w.time = tt; return XIEYI.Game.summary({ world: { time: tt }, player: {}, savedAt: 1 }).dayText; }; return at(0) === '第 1 日' && at(DAY * 0.83) === '第 1 日' && at(DAY * 1.4) === '第 2 日' && at(DAY * 1.1) === '第 2 日'; })()); w.time = t0;
+    const t0 = w.time; w.time = 0; ok('v0.6.10: a save card names only the day — 第 N 日, no night', (() => { const at = (tt) => { w.time = tt; return XIEYI.Game.summary({ world: { time: tt }, player: {}, savedAt: 1 }).dayText; }; return at(0) === '第 1 日' && at(DAY * 0.83) === '第 1 日' && at(DAY * 1.4) === '第 2 日' && at(DAY * 1.1) === '第 2 日'; })()); w.time = t0;
     g.slot = 2; g.save(); const s2 = XIEYI.Game.readSave(2); g.slot = 1;
     ok('saving while in slot 2 writes slot 2 only and leaves slot 1 as it was', !!s2 && s2.seed === g.seed && XIEYI.Game.readSave(1).savedAt === sv.savedAt && XIEYI.Game.readSave(3) === null);
     XIEYI.Game.clearSave(2); ok('clearing slot 2 empties only slot 2', XIEYI.Game.readSave(2) === null && !!XIEYI.Game.readSave(1));
@@ -1965,9 +1989,9 @@ try {
   await page.evaluate(() => { const g = XIEYI.game; g.slot = 1; g.save(); const s = JSON.parse(localStorage.getItem('xieyi.save.v5')), s3 = JSON.parse(JSON.stringify(s)); s3.seed = 99; s3.savedAt = s.savedAt - 60000; s3.diff = 'hard'; s3.brief.level = 5; localStorage.setItem('xieyi.save.v5.3', JSON.stringify(s3)); localStorage.removeItem('xieyi.save.v5.2'); localStorage.removeItem('xieyi.slot'); });
   await page.goto(base, { waitUntil: 'load' });
   const cards = await page.$$eval('.save-card', (cs) => cs.map(c => ({ slot: c.dataset.slot, on: c.classList.contains('on'), empty: c.classList.contains('empty'), text: c.textContent })));
-  ok2('v0.42: start page shows eight save cards, four to a row', cards.length === 8 && cards.map(c => c.slot).join('') === '12345678' && await page.$eval('#saves', e => getComputedStyle(e).gridTemplateColumns.split(' ').length) === 4);
+  ok2('v0.8: start page shows eight save cards, four to a row', cards.length === 8 && cards.map(c => c.slot).join('') === '12345678' && await page.$eval('#saves', e => getComputedStyle(e).gridTemplateColumns.split(' ').length) === 4);
   ok2('the newest save (slot 1) is selected by default', cards[0].on && cards.slice(1).every(c => !c.on));
-  ok2('an occupied card tells island, difficulty, day, courage and time (no night, no slept-nights — v0.37)', /島 #7/.test(cards[0].text) && /一般/.test(cards[0].text) && /第 \d+ 日/.test(cards[0].text) && !/夜/.test(cards[0].text) && /膽氣第 \d+ 重/.test(cards[0].text) && !/睡過/.test(cards[0].text) && /存於 \d\d\/\d\d/.test(cards[0].text), cards[0].text);
+  ok2('an occupied card tells island, difficulty, day, courage and time (no night, no slept-nights — v0.6.10)', /島 #7/.test(cards[0].text) && /一般/.test(cards[0].text) && /第 \d+ 日/.test(cards[0].text) && !/夜/.test(cards[0].text) && /膽氣第 \d+ 重/.test(cards[0].text) && !/睡過/.test(cards[0].text) && /存於 \d\d\/\d\d/.test(cards[0].text), cards[0].text);
   ok2('slot 3 shows its own island, difficulty and courage', /島 #99/.test(cards[2].text) && /困難/.test(cards[2].text) && /膽氣第 5 重/.test(cards[2].text), cards[2].text);
   ok2('slot 2 is empty and says so', cards[1].empty && /空格/.test(cards[1].text) && !/繼續/.test(cards[1].text));
   await page.click('.save-card[data-slot="3"] .save-no');
@@ -1975,15 +1999,15 @@ try {
   await page.keyboard.press('Enter'); await started();
   const r1 = await page.evaluate(() => ({ slot: XIEYI.game.slot, seed: XIEYI.game.seed, diff: XIEYI.game.diff.key, last: localStorage.getItem('xieyi.slot'), day: XIEYI.DAY, wday: window.World.DAY, d: XIEYI.game.day(), bday: JSON.parse(localStorage.getItem('xieyi.save.v5.3')).brief.day }));
   ok2('Enter continues the selected slot: slot 3, island 99, hard', r1.slot === 3 && r1.seed === 99 && r1.diff === 'hard' && r1.last === '3', r1);
-  ok2('v0.37: the hard island runs 300-s days; the save made on 360-s days keeps its day number', r1.day === 300 && r1.wday === 300 && r1.d === r1.bday, r1);
+  ok2('v0.6.10: the hard island runs 300-s days; the save made on 360-s days keeps its day number', r1.day === 300 && r1.wday === 300 && r1.d === r1.bday, r1);
   await page.goto(base, { waitUntil: 'load' });
   ok2('the last played slot is selected after reload', await page.$eval('.save-card.on', c => c.dataset.slot) === '3');
   { await page.click('.diffrow button[data-diff="easy"]'); const de = await page.$eval('#diff-desc', e => e.textContent); await page.click('.diffrow button[data-diff="hard"]'); const dh = await page.$eval('#diff-desc', e => e.textContent); await page.click('.diffrow button[data-diff="normal"]'); const dn = await page.$eval('#diff-desc', e => e.textContent);
-    ok2('v0.37: the difficulty note tells how long a day is (四百二十／三百六十／三百息)', /一日四百二十息/.test(de) && /一日三百六十息/.test(dn) && /一日三百息/.test(dh), [de, dn, dh]); }
+    ok2('v0.6.10: the difficulty note tells how long a day is (四百二十／三百六十／三百息)', /一日四百二十息/.test(de) && /一日三百六十息/.test(dn) && /一日三百息/.test(dh), [de, dn, dh]); }
   await page.click('.save-card[data-slot="2"] .save-no'); await page.fill('#seed', '123'); await page.click('#btn-new'); await started();
   const r2 = await page.evaluate(() => { XIEYI.game.save(); return { slot: XIEYI.game.slot, seed: XIEYI.game.seed, s2: JSON.parse(localStorage.getItem('xieyi.save.v5.2')).seed, s1: JSON.parse(localStorage.getItem('xieyi.save.v5')).seed, s3: JSON.parse(localStorage.getItem('xieyi.save.v5.3')).seed, dl: JSON.parse(localStorage.getItem('xieyi.save.v5.2')).world.dayLen }; });
   ok2('落筆 on an empty slot starts island 123 in slot 2 and leaves slots 1 and 3 alone', r2.slot === 2 && r2.seed === 123 && r2.s2 === 123 && r2.s1 === 7 && r2.s3 === 99, r2);
-  ok2('v0.37: a new normal island saves 360-s days', r2.dl === 360, r2);
+  ok2('v0.6.10: a new normal island saves 360-s days', r2.dl === 360, r2);
   await page.goto(base, { waitUntil: 'load' });
   await page.click('.save-card[data-slot="1"] .save-no'); await page.click('#btn-new'); await page.waitForTimeout(150);
   const armed = await page.evaluate(() => ({ started: !!window.XIEYI, text: document.getElementById('btn-new').textContent }));
@@ -2002,7 +2026,15 @@ try {
   await page.goto(base + '?autostart=1&seed=9&slot=2', { waitUntil: 'load' }); await started();
   const c2 = await page.evaluate(() => ({ slot: XIEYI.game.slot, cour: XIEYI.game.player.cour, carry: localStorage.getItem('xieyi.carry') }));
   ok2('courage carried over the sea waits for its own slot: slot 1 gets none, slot 2 gets 500 and the note is spent', c1.slot === 1 && c1.cour === 0 && c1.carry === '500@2' && c2.slot === 2 && c2.cour === 500 && c2.carry === null, { c1, c2 });
-  // 起始頁上的「生存之道」在起始頁上面（v0.25.1 前被起始頁蓋住）；起始頁沒有手柄設定
+  // v0.8.2：遊戲裡換難度——按兩次、存檔、重新讀進來，第幾日幾時照舊，只換一日多長
+  { await page.goto(base + '?autostart=1&seed=31&slot=4', { waitUntil: 'load' }); await started();
+    const b0 = await page.evaluate(() => { const g = XIEYI.game; g.world.time = XIEYI.DAY * 2 + XIEYI.DAY * 0.4; g.togglePause(); const r = { day: g.day(), frac: g.dayT(), diff: g.diff.key, buttons: document.querySelectorAll('#pause-diff button').length, on: document.querySelector('#pause-diff button.on').dataset.diff }; document.querySelector('#pause-diff button[data-diff="easy"]').click(); r.armed = document.querySelector('#pause-diff button[data-diff="easy"]').textContent; r.still = g.diff.key; return r; });
+    ok2('v0.8.2: the pause panel has the three difficulties, this one marked; the first click only asks', b0.buttons === 3 && b0.on === 'normal' && /再按一次換成簡單/.test(b0.armed) && b0.still === 'normal', b0);
+    await Promise.all([page.waitForNavigation({ waitUntil: 'load' }), page.evaluate(() => document.querySelector('#pause-diff button[data-diff="easy"]').click())]); await started();
+    const b1 = await page.evaluate(() => { const g = XIEYI.game; return { slot: g.slot, seed: g.seed, diff: g.diff.key, DAY: XIEYI.DAY, day: g.day(), frac: g.dayT(), toast: document.getElementById('toasts').textContent, saved: JSON.parse(localStorage.getItem('xieyi.save.v5.4')).diff, resume: localStorage.getItem('xieyi.resume') }; });
+    ok2('v0.8.2: the second click saves, reloads and goes straight back in — same slot and island, now easy with 420-s days', b1.slot === 4 && b1.seed === 31 && b1.diff === 'easy' && b1.DAY === 420 && b1.saved === 'easy' && b1.resume === null, b1);
+    ok2('v0.8.2: …the day and the time of day stay as they were, and a toast says so', b1.day === b0.day && Math.abs(b1.frac - b0.frac) < 0.01 && /難度換成了簡單/.test(b1.toast), [b0.day, b0.frac, b1.day, b1.frac]); }
+  // 起始頁上的「生存之道」在起始頁上面（v0.5.6 前被起始頁蓋住）；起始頁沒有手柄設定
   await page.goto(base, { waitUntil: 'load' });
   const ptop = () => page.evaluate(() => { const e = document.elementFromPoint(innerWidth / 2, innerHeight / 2); return e && e.closest('.overlay') && e.closest('.overlay').id; });
   ok2('the start page has no 手柄設定 button', await page.evaluate(() => !document.getElementById('btn-pad') && document.getElementById('start').textContent.indexOf('手柄') < 0));

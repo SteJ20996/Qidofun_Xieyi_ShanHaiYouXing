@@ -3,7 +3,7 @@
   'use strict';
   const U = window.U, G = window.G, DB = G.DB;
   const FONT = '"LXGW WenKai TC", "BiauKai", "DFKai-SB", "標楷體", "Kaiti TC", "Kaiti SC", "STKaiti", "KaiTi", "Noto Serif TC", "Noto Serif SC", "Noto Serif CJK TC", "PingFang TC", "WenQuanYi Zen Hei", serif';   // 簡體字霞鶩文楷 TC 也有，缺的幾個落到 SC 字型
-  const L = (s) => (window.I18N ? window.I18N.t(s) : s);   // 畫布上的字：選了簡體就轉（v0.24）
+  const L = (s) => (window.I18N ? window.I18N.t(s) : s);   // 畫布上的字：選了簡體就轉（v0.5.4）
   const MINI = {
     '淼': '#4a6f8f', '水': '#6f93b0', '沙': '#d9c89a', '石': '#9c9a93', '山': '#6e6c75', '雪': '#e8ecf2',
     '草': '#b9c98f', '花': '#d29b8e', '木': '#8aa86f', '林': '#5e8a55', '森': '#3b5f3a', '竹': '#7fa36b', '田': '#d1c572',
@@ -12,10 +12,10 @@
     '果': '#c9654a', '灶': '#d9593c', '鼎': '#b4452c', '包': '#2a2724', '囊': '#5a3e2b', '煤': '#2a2724', '鐵': '#8a5a3a', '網': '#5a86a8', '罟': '#4f7a9c', '罾': '#446e90', '路': '#c9b27a', '門': '#9a7a55', '井': '#4a6f8f',
     '棉': '#e8e2d0', '礫': '#b9b4a8', '磚': '#9a5a40', '墟': '#8a8378', '窗': '#c09a6a', '沼': '#6b6a3c', '棧': '#9a6b45', '床': '#a06a4a', '橋': '#9a6b45', '漁': '#5a86a8', '麻': '#a9b07a', '偶': '#b08a5a', '櫃': '#7a4e2d', '舟': '#7a4e2d',
     '塔': '#2a2724', '寺': '#5a3e2b', '船': '#5a3e2b', '泉': '#4a6f8f', '墓': '#6e6c75', '洞': '#2a2724', '燈': '#e0a020',
-    '漠': '#e3cf98', '丘': '#d6bb7a', '池': '#5f9cc0', '棗': '#7d9a55', '熔': '#d2502a', '岩': '#5d5a62', '曜': '#2b2133', '川': '#5f9cc0', '湖': '#5a92b8', '湯': '#8cc3d0', '窟': '#3a3028'   // v0.38
+    '漠': '#e3cf98', '丘': '#d6bb7a', '池': '#5f9cc0', '棗': '#7d9a55', '熔': '#d2502a', '岩': '#5d5a62', '曜': '#2b2133', '川': '#5f9cc0', '湖': '#5a92b8', '湯': '#8cc3d0', '窟': '#3a3028'   // v0.7
   };
 
-  // 光照（v0.31；v0.36 改成射線）：每道光從燈芯往外射線，碰到磚、門、墟的邊就停，圍出一個多邊形——影子的邊沿著牆角斜斜射出去，不是一格一格的方塊。
+  // 光照（v0.6.4；v0.6.9 改成射線）：每道光從燈芯往外射線，碰到磚、門、墟的邊就停，圍出一個多邊形——影子的邊沿著牆角斜斜射出去，不是一格一格的方塊。
   // 夜色與暖光畫在一張每格 LM_PX 點的小畫布上（多邊形裁切＋放射漸層），再平滑放大蓋上去；多邊形按地上的字的版本（world.ver）與燈芯位置快取。各種光的顏色：
   const LM_PX = 10, LAMP = [255, 192, 96], BEACON = [255, 214, 130], FIRE = [255, 138, 58], STOVE = [255, 158, 70], TORCH = [255, 172, 82], DRAGON = [236, 214, 160], AZURE = [150, 230, 205];
   const smooth = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
@@ -82,7 +82,7 @@
       if (any) {
         const W = 2 * R + 1, R2 = (R + 0.5) * (R + 0.5); vis = new Uint8Array(W * W);
         for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) if (dx * dx + dy * dy <= R2 && world.clear(lx, ly, lx + dx, ly + dy)) vis[(dy + R) * W + dx + R] = 1;
-        // 擋光的字（磚、門、墟）：旁邊（八鄰）有一格看得見、不擋光的亮處，它朝光的那一面就亮（v0.35）
+        // 擋光的字（磚、門、墟）：旁邊（八鄰）有一格看得見、不擋光的亮處，它朝光的那一面就亮（v0.6.8）
         const lit = []; const op = (dx, dy) => { const d = DB[world.get(lx + dx, ly + dy)]; return !!(d && d.opaque); };
         for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
           const i = (dy + R) * W + dx + R; if (vis[i] || dx * dx + dy * dy > R2 || !op(dx, dy)) continue;
@@ -93,7 +93,7 @@
       if (this.sightCache.size > 600) this.sightCache.clear();
       this.sightCache.set(key, { ver, vis }); return vis;
     }
-    // 一道光照得到的範圍（v0.36）：從燈芯 (cx, cy) 對每個牆角射三條線（正中與左右各偏一點），找最近碰到的擋光邊，連成多邊形；
+    // 一道光照得到的範圍（v0.6.9）：從燈芯 (cx, cy) 對每個牆角射三條線（正中與左右各偏一點），找最近碰到的擋光邊，連成多邊形；
     // 被照到的擋光格子本身（旁邊有看得見的亮處）另記成方塊一起照亮。附近沒有擋光的字就回 null（整個圓都亮）
     lightShape(world, cx, cy, r) {
       const key = Math.round(cx * 8) + ',' + Math.round(cy * 8) + ',' + Math.ceil(r), ver = world.ver || 0, hit = this.shapeCache.get(key);
@@ -167,7 +167,7 @@
       });
       return { cols, rows, x: ox + x0 * T, y: oy + y0 * T, w: (x1 - x0 + 1) * T, h: (y1 - y0 + 1) * T, glow, px: P / T };
     }
-    // 霧障（v0.31）：霧是一塊連續的形，每幀照它此刻的位置與形狀算出每格蓋了幾成，蓋得多的格子濃、邊上蓋一點的淡，
+    // 霧障（v0.6.4）：霧是一塊連續的形，每幀照它此刻的位置與形狀算出每格蓋了幾成，蓋得多的格子濃、邊上蓋一點的淡，
     // 那一團霧畫在蓋到的部分的中心，所以看起來是整片順著風飄過去、邊緣一直在變；新起的霧淡入，散掉或吹散的霧淡出
     drawFog(g, ox, oy, x0, x1, y0, y1, dt, now) {
       const ctx = this.ctx, T = this.tile, world = g.world, seen = this.fogSeen;
@@ -218,7 +218,7 @@
       if (warded) this.drawGlyph('骨', G.INK.red, cx, cy - size * 0.42, T * 0.42, 0, 0.9);
       ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     }
-    drawGlyph(ch, color, px, py, size, rot, alpha, kx, ky) {   // kx、ky：橫、縱拉長幾倍（野牛的身子，v0.40）
+    drawGlyph(ch, color, px, py, size, rot, alpha, kx, ky) {   // kx、ky：橫、縱拉長幾倍（野牛的身子，v0.7.2）
       const ctx = this.ctx, s = this.dpr, c = rot ? Math.cos(rot) : 1, sn = rot ? Math.sin(rot) : 0, ax = kx || 1, ay = ky || 1;
       ctx.setTransform(s * c * ax, s * sn * ax, -s * sn * ay, s * c * ay, px * s, py * s);
       const a = alpha === undefined ? 1 : alpha;
@@ -259,8 +259,8 @@
         const burning = world.isBurning(x, y);
         const d = DB[ch];
         const lit = ch === '灶' && world.stoveLit(x, y);
-        const lr = ch === '燈' && world.isBig(x, y) ? 10 : d.light;   // 島外那盞燈塔照得最遠（v0.37 起燈都多照一格：燈 6、燈塔 10）
-        let lavaSkip = false;   // 熔岩連成一片：每二乘二只點一盞（那一塊裡第一格熔岩，半徑 4），光差不多、算得少到四分之一；落單的熔岩照樣亮（v0.38）
+        const lr = ch === '燈' && world.isBig(x, y) ? 10 : d.light;   // 島外那盞燈塔照得最遠（v0.6.10 起燈都多照一格：燈 6、燈塔 10）
+        let lavaSkip = false;   // 熔岩連成一片：每二乘二只點一盞（那一塊裡第一格熔岩，半徑 4），光差不多、算得少到四分之一；落單的熔岩照樣亮（v0.7）
         if (d.lava) { const bx = x & ~1, by = y & ~1; for (const [cx, cy] of [[bx, by], [bx + 1, by], [bx, by + 1], [bx + 1, by + 1]]) if (DB[world.get(cx, cy)].lava) { lavaSkip = cx !== x || cy !== y; break; } }
         if (!lavaSkip && (lr > 0 || burning || lit)) lights.push({ x, y, r: Math.max(d.lava ? 4 : lr, burning ? 2.5 : 0, lit ? 3 : 0), c: burning || d.kind === 'fire' || d.lava ? FIRE : lit ? STOVE : lr >= 9 ? BEACON : LAMP });
         if (ch === '白' || world.isBig(x, y) || (ch === '舟' && world.shipCells.has(U.key(x, y)))) continue;      // 大字地標、停著的船整體另畫
@@ -305,7 +305,7 @@
           this.drawGlyph('魄', d.ink, px, py + Math.sin(now * 3 + e.bob) * 3 - (1 - fade) * T * 0.6, T * (1.0 + (1 - fade) * 0.5), wob, (e.frozen ? 0.5 : 0.78) * fade);
           continue;
         }
-        if (e.type === '青龍') {     // 東海青龍（v0.42）：比蜃還大的青字，身下一圈青水旋著，自己帶著光
+        if (e.type === '青龍') {     // 東海青龍（v0.8）：比蜃還大的青字，身下一圈青水旋著，自己帶著光
           ctx.save(); ctx.strokeStyle = 'rgba(36,118,107,0.4)'; ctx.lineWidth = 2.5;
           for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(px, py, T * (0.9 + i * 0.3), -now * (0.6 + i * 0.2) + i, -now * (0.6 + i * 0.2) + i + 3.6); ctx.stroke(); }
           ctx.restore();
@@ -320,15 +320,15 @@
           this.drawGlyph('蜃', d.ink, px, py + Math.sin(now * 1.2 + e.bob) * 3, T * 1.45, Math.sin(now * 0.8 + e.bob) * 0.06, 1);
           continue;
         }
-        if (e.type === '牛') {       // 野牛一乘二（v0.40）：字跟著身子拉——橫著走拉扁、縱著走拉長；轉身時在兩樣之間漸變
+        if (e.type === '牛') {       // 野牛一乘二（v0.7.2）：字跟著身子拉——橫著走拉扁、縱著走拉長；轉身時在兩樣之間漸變
           const kk = Math.min(1, dt * 10); e.rbx = e.rbx === undefined ? e.bx : e.rbx + (e.bx - e.rbx) * kk; e.rby = e.rby === undefined ? e.by : e.rby + (e.by - e.rby) * kk;
           const hw = Math.abs(e.rbx) / Math.max(1e-6, Math.abs(e.rbx) + Math.abs(e.rby)), cx = px - e.rbx * T / 2, cy = py - e.rby * T / 2;
-          const rl = g.ents.riled(e), big = rl ? 1.12 : 1;   // 惹了：發紅、大一圈（v0.41）
+          const rl = g.ents.riled(e), big = rl ? 1.12 : 1;   // 惹了：發紅、大一圈（v0.7.3）
           this.drawGlyph('牛', rl ? G.INK.red : d.ink, cx, cy, T * 0.95 * big, 0, 1, 0.8 + 1.15 * hw, 0.8 + 1.15 * (1 - hw));
           if (e.provoked > 0 && U.cheb(e.x, e.y, p.x, p.y) <= 7) { ctx.save(); ctx.fillStyle = G.INK.red; ctx.font = 'bold ' + Math.round(T * 0.42) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.fillText('怒', px + T * 0.4, py - T * 0.42); ctx.restore(); }
           continue;
         }
-        // 主動找人的獸（v0.40）：豹、狼、野豬、毒蛛畫大一號，比虎小一點；蛇照舊。半友好的（無毒蛛、蟾、沒馴的鷹）被惹了也發紅、大一號（v0.41）
+        // 主動找人的獸（v0.7.2）：豹、狼、野豬、毒蛛畫大一號，比虎小一點；蛇照舊。半友好的（無毒蛛、蟾、沒馴的鷹）被惹了也發紅、大一號（v0.7.3）
         const riled = g.ents.riled(e);
         const size = e.type === '虎' ? 0.95 : e.type === '龍' ? 1.1 : (e.type === '豹' || e.type === '狼' || e.type === '豬' || (e.type === '蛛' && e.venom) || riled) ? 0.85 : e.type === '鹿' ? 0.8 : e.type === '魚' ? 0.6 : 0.55;
         const bobY = e.type === '鳥' ? Math.sin(now * 5 + e.bob) * 3 : e.type === '龍' ? Math.sin(now * 3 + e.bob) * 4 : e.type === '魚' ? Math.sin(now * 2 + e.bob) * 1.5 : 0;
@@ -382,7 +382,7 @@
           ctx.strokeRect(ox + mx * T + 2, oy + my * T + 2, (Mx - mx + 1) * T - 4, (My - my + 1) * T - 4); ctx.restore();
         }
       }
-      // —— 滑鼠（v0.32）：指著的格子淡淡框一下；點過的路畫成一串小點，點的那格（或跟著的生靈）一個圈
+      // —— 滑鼠（v0.6.5）：指著的格子淡淡框一下；點過的路畫成一串小點，點的那格（或跟著的生靈）一個圈
       if (g.mouse) {
         const mx = Math.floor((g.mouse.x - ox) / T), my = Math.floor((g.mouse.y - oy) / T), far = U.cheb(mx, my, p.x, p.y) > 1;
         ctx.save(); ctx.strokeStyle = far ? 'rgba(47,88,120,0.45)' : 'rgba(180,57,42,0.4)'; ctx.lineWidth = 1.2; ctx.setLineDash([3, 4]); ctx.strokeRect(ox + mx * T + 4, oy + my * T + 4, T - 8, T - 8); ctx.restore();
@@ -425,9 +425,9 @@
       // —— 霧障：一片片白霧順著風飄
       if (world.fogs.size || this.fogSeen.size) this.drawFog(g, ox, oy, x0, x1, y0, y1, dt, now);
       // —— 夜色與光：光照圖平滑放大蓋上去；光源再點一個亮芯
-      const dark = g.viewDark();   // 洞窟裡白天也黑（v0.38）
+      const dark = g.viewDark();   // 洞窟裡白天也黑（v0.7）
       this.rainA = (this.rainA || 0) + ((world.raining() ? 1 : 0) - (this.rainA || 0)) * Math.min(1, dt / 1.5);   // 起雨收雨各淡入淡出一息半
-      const glowK = Math.max(dark, 0.55 * this.rainA);   // 下雨的白天，燈也透出一點微光（v0.31）
+      const glowK = Math.max(dark, 0.55 * this.rainA);   // 下雨的白天，燈也透出一點微光（v0.6.4）
       if (g.torchLit()) lights.push({ x: p.x, y: p.y, cx: p.rx + 0.5, cy: p.ry + 0.5, r: 3, c: TORCH });
       const lm = dark > 0.02 || (glowK > 0.02 && lights.length) ? this.lightMap(g, ox, oy, x0, x1, y0, y1, lights, dark, glowK, now) : null;
       this.lastLm = lm;   // 測試看得到這一幀有沒有夜色、暖光
@@ -531,13 +531,13 @@
       const dk = g.darkness(); if (dk > 0.02) { m.fillStyle = 'rgba(12,16,36,' + (0.35 * dk) + ')'; m.fillRect(0, 0, S, S); }
     }
 
-    // 全圖：走過的地方才有墨，地標蓋朱印（v0.38：紙大到 2500×2500，地圖照走過的範圍縮放——只在本島時跟以前一樣大，出了海就拉遠）
+    // 全圖：走過的地方才有墨，地標蓋朱印（v0.7：紙大到 2500×2500，地圖照走過的範圍縮放——只在本島時跟以前一樣大，出了海就拉遠）
     drawBigMap(g, cv) {
       const w = g.world, p = g.player, S = cv.width, m = cv.getContext('2d'), CHK = 16;
       let x0 = -G.HOME_R, y0 = -G.HOME_R, x1 = G.HOME_R, y1 = G.HOME_R;
       for (const k of w.explored.keys()) { const [cx, cy] = U.unkey(k); x0 = Math.min(x0, cx * CHK); y0 = Math.min(y0, cy * CHK); x1 = Math.max(x1, cx * CHK + CHK - 1); y1 = Math.max(y1, cy * CHK + CHK - 1); }
       x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y);
-      const az = (p.scaleTaken || p.azure) && g.azure;   // 拿到青鱗以後，東海青龍的所在也畫進來（v0.42）
+      const az = (p.scaleTaken || p.azure) && g.azure;   // 拿到青鱗以後，東海青龍的所在也畫進來（v0.8）
       if (az) { x0 = Math.min(x0, az.x - 12); y0 = Math.min(y0, az.y - 12); x1 = Math.max(x1, az.x + 12); y1 = Math.max(y1, az.y + 12); }
       const N = Math.min(2 * G.WORLD_R, Math.ceil(Math.max(x1 - x0, y1 - y0) * 1.06) + 8), px = S / N;
       const ox = Math.round((x0 + x1) / 2 - N / 2), oy = Math.round((y0 + y1) / 2 - N / 2);
@@ -566,7 +566,7 @@
       m.fillStyle = 'rgba(200,198,192,0.85)';
       for (const f of w.fogs.values()) for (const k of f.cells) { const [x, y] = U.unkey(k); if (w.isSeen(x, y)) m.fillRect(X(x), Y(y), px + 0.4, px + 0.4); }
       m.textAlign = 'center'; m.textBaseline = 'middle';
-      // 外島：登上過的寫島名（v0.38）
+      // 外島：登上過的寫島名（v0.7）
       for (const id in (p.isles || {})) { const [ci, cj] = U.unkey(id), isl = G.isleAt(ci, cj, w.seed); if (!isl) continue; m.font = F(5, 12); m.fillStyle = 'rgba(28,26,23,0.8)'; m.fillText(L(isl.name), X(isl.cx), Y(isl.cy - isl.R * 0.85)); }
       // 碑
       m.font = F(2.6, 9); m.fillStyle = '#1c1a17';
