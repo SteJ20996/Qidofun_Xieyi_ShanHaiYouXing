@@ -54,10 +54,21 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 #status { font: 16px var(--font); color: var(--ink-2); background: rgba(239,229,207,.75); padding: 6px 12px; border: 1px solid rgba(28,26,23,.35); border-radius: 4px; }
 #status b { font-size: 20px; color: var(--ink); }
 #mapwrap { --cour: 0%; width: 166px; height: 166px; border-radius: 50%; padding: 8px; background: conic-gradient(#d4af37 var(--cour), rgba(28,26,23,.18) 0); box-shadow: 0 2px 6px rgba(0,0,0,.15); }
-/* 魂環（v0.8.2）：膽氣環外面一圈，三等分——上右青龍、下朱雀、左上白虎；求教過的那一分才上色 */
-#soulring { --q: rgba(28,26,23,.16); --z: rgba(28,26,23,.16); --b: rgba(28,26,23,.16); padding: 6px; border-radius: 50%; background: conic-gradient(var(--q) 0 118deg, transparent 118deg 122deg, var(--z) 122deg 238deg, transparent 238deg 242deg, var(--b) 242deg 358deg, transparent 358deg); }
-#soulring.q { --q: #24766b; } #soulring.z { --z: #c0392b; } #soulring.b { --b: #e6e0d2; }
-#soulring.b { box-shadow: inset 0 0 0 1px rgba(28,26,23,.25); }
+/* 魂環（v0.8.2；v0.8.3 跟膽氣環隔開十二點）：膽氣環外面一圈，三等分——上右青龍（龍魂）、下朱雀（鳳翎）、左上白虎（虎魄）；求教過的那一分才上色。
+   圈本身六點寬，用遮罩只留外緣一圈；內外各一道細墨線，白虎那一分在紙色上也看得清 */
+#soulring { --q: rgba(28,26,23,.10); --z: rgba(28,26,23,.10); --b: rgba(28,26,23,.10); position: relative; padding: 18px; border-radius: 50%; }
+#soulring::before, #soulring::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
+#soulring::before { background: conic-gradient(var(--q) 0 118deg, transparent 118deg 122deg, var(--z) 122deg 238deg, transparent 238deg 242deg, var(--b) 242deg 358deg, transparent 358deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 6px)); mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 6px)); }
+#soulring::after { background: radial-gradient(farthest-side, transparent calc(100% - 7px), rgba(28,26,23,.32) calc(100% - 7px) calc(100% - 6px), transparent calc(100% - 6px) calc(100% - 1px), rgba(28,26,23,.32) calc(100% - 1px)); }
+#soulring.q { --q: #24766b; } #soulring.z { --z: #c0392b; } #soulring.b { --b: #fbf8f1; }
+/* 玄武的四次取經：魂環正北四顆小珠——空心是還沒到、朱紅潤點是取過、墨黑打叉是錯過（v0.8.3 使用者定） */
+#jingbeads { position: absolute; top: -2px; left: 50%; transform: translateX(-50%); display: flex; gap: 3px; z-index: 1; }
+#jingbeads i { width: 9px; height: 9px; border-radius: 50%; box-sizing: border-box; border: 1.5px solid rgba(28,26,23,.7); background: var(--paper); position: relative; }
+#jingbeads i.got { border-color: #8f2a1f; background: radial-gradient(circle at 35% 30%, #f4a08c 0 18%, #c0392b 45%, #8f2a1f 100%); }
+#jingbeads i.miss { border-color: #1c1a17; background: #1c1a17; }
+#jingbeads i.miss::before, #jingbeads i.miss::after { content: ''; position: absolute; left: 50%; top: 1px; bottom: 1px; width: 1.5px; background: var(--paper); transform: translateX(-50%) rotate(45deg); }
+#jingbeads i.miss::after { transform: translateX(-50%) rotate(-45deg); }
 /* 右下的減益框（v0.8.2 先放溺水）：紅框一閃一閃 */
 #debuffs { position: absolute; right: calc(18px + env(safe-area-inset-right, 0px)); bottom: calc(150px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 14px; background: rgba(239,229,207,.92); border: 2px solid var(--red); border-radius: 6px; color: var(--red); font-family: var(--font); animation: low-flash 1s infinite; z-index: 3; }
 #debuffs b { font: 30px/1 var(--font); }
@@ -106,6 +117,11 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 #hotbar, #bagbar { display: flex; flex-wrap: wrap; max-width: 860px; gap: 5px; align-items: stretch; padding: 4px; border-radius: 8px; border: 1px dashed transparent; }
 #hotbar.active, #bagbar.active { border-color: rgba(180,57,42,.6); background: rgba(239,229,207,.35); }
 .slot.bag { width: 43px; height: 54px; overflow: hidden; }
+/* 船在囊裡、櫃裡一艘一條寬格（v0.8.3）：孤帆兩格、方舟五格寬；船名橫寫，底下一道淡淡的水紋 */
+.slot.bag.wide { width: calc(var(--span) * 43px + (var(--span) - 1) * var(--gap, 5px)); flex: none; }
+.panel .grid .slot.bag.wide { --gap: 6px; }
+.slot.bag.ship { background: linear-gradient(to top, rgba(47,88,120,.16) 0 9px, transparent 9px), rgba(239,229,207,.8); }
+.slot.bag.ship .shipname { font: 22px/1 var(--font); letter-spacing: .25em; color: var(--ink); margin-top: 8px; display: block; text-align: center; }
 .slot.bag .ch { font-size: 26px; }
 .slot.bag .ch.word { font-size: 17px; }
 .slot .ch.word.long { font-size: 11px; letter-spacing: -1px; }
@@ -130,11 +146,16 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 .saveas-slot.on { outline: 2px solid var(--red); }
 .saveas-slot.empty span { color: var(--dim); }
 .panel .saveas button.saveas-slot.arm b { color: var(--paper); }
-/* 魔物誌的卡片（v0.8.2） */
-.codex { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 6px 0; }
-.codex-card { border: 1px solid rgba(28,26,23,.35); background: rgba(255,248,234,.6); padding: 8px 10px; }
-.codex-card .cx-head { display: flex; align-items: baseline; gap: 8px; } .codex-card .cx-ch { font: 30px/1 var(--font); }
-.codex-card .cx-from { font-size: 12px; color: var(--dim); margin: 4px 0; } .codex-card p { margin: 2px 0; font-size: 14px; }
+/* 魔物誌（v0.8.3）：一排三張，遇過的寫全，沒遇過的蓋著（淡、虛框、一個「？」） */
+.codex { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 6px 0 4px; }
+.codex-card { border: 1px solid rgba(28,26,23,.35); background: rgba(255,248,234,.7); padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; min-height: 150px; }
+.codex-card .cx-head { display: flex; align-items: baseline; gap: 8px; } .codex-card .cx-ch { font: 34px/1 var(--font); }
+.codex-card .cx-head b { font: 18px var(--font); } .codex-card .cx-tag { margin-left: auto; font-size: 12px; color: var(--dim); border: 1px solid rgba(28,26,23,.25); padding: 0 6px; border-radius: 3px; }
+.codex-card .cx-from { font-size: 12px; color: var(--dim); margin: 2px 0 4px; line-height: 1.5; } .codex-card p { margin: 0; font-size: 14px; line-height: 1.55; }
+.codex-card .cx-where { margin-top: auto; padding-top: 4px; font-size: 12px; color: var(--red-2); }
+.codex-card.locked { background: rgba(239,229,207,.4); border-style: dashed; color: var(--dim); }
+.codex-card.locked .cx-ch { color: rgba(28,26,23,.25); } .codex-card .cx-hint { font-style: italic; }
+.tabs button.on { outline: 2px solid var(--red); }
 #pause-diff button.on { outline: 2px solid var(--red); }
 .panel button.arm { background: var(--red); border-color: var(--red); color: var(--paper); }
 #diff-desc { margin-left: 6px; }
