@@ -1647,6 +1647,77 @@ const result = await page.evaluate(async () => {
     const r0 = U.trueRand, cb = w.onWeather, ra = w.rainUntil, rn = w.nextRainAt; w.onWeather = null; U.trueRand = () => 0; w.rainUntil = 0; w.nextRainAt = w.time; w.step(p.x, p.y); const rainLen = w.rainUntil - w.time;
     U.trueRand = r0; w.onWeather = cb; w.rainUntil = ra; w.nextRainAt = rn;
     ok('v0.6.10: things counted in days follow the longer day (the shortest rain is a quarter of 360 = 90 s)', Math.abs(rainLen - 90) <= 0.5, rainLen); }
+  // ============ v0.8.7：封豨（大魔王）與戰鬥的規矩：進地界先問、鎖難度、逃跑、鎖血與神獸護駕、存讀檔接著打、獨力記成就 ============
+  { const E = g.ents, p0 = { x: p.x, y: p.y }, DB = G.DB, DIFF = XIEYI.DIFF, z = G.zones(g.seed).find(o => o.id === '封豨'), put = (x, y) => { p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; };
+    const keep = { azure: p.azure, bai: p.bai, zhu: p.zhu, cour: p.cour, bag: p.bag.slice(), tools: p.tools.slice(), tool: p.tool }, dk = g.diff;
+    const hog = () => E.list.find(o => o.type === '豨');
+    p.fight = null; p.bosses = {}; p.feats = []; p.inBoss = {}; p.lockT = 0; p.guardT = 0; E.list = E.list.filter(o => o.type !== '豨' && o.type !== '豬');
+    // 進地界先問
+    p.sailing = true; p.ship = World.newShip('孤帆'); put(z.x + 103, z.y); g.updateStats(0.05); put(z.x + 98, z.y); g.updateStats(0.05);
+    const ask = document.getElementById('bossask-text').textContent;
+    ok('v0.8.7: sailing into 封豨\'s ground (桑林, radius 100) asks first — locked difficulty, the cost of fleeing, half courage on death, the guard', !hidden('bossask') && /封豨/.test(ask) && /逃跑/.test(ask) && /膽氣只減一半/.test(ask) && /獨力/.test(ask), ask);
+    g.bossNo(); ok('v0.8.7: 先不 steps you back out', p.x === z.x + 103 && !p.fight && hidden('bossask'), [p.x, z.x]);
+    put(z.x + 98, z.y); g.updateStats(0.05); g.bossYes(); const h = hog();
+    ok('v0.8.7: 進去 starts the fight; 封豨 stands in its den, a two-by-two body with 3000 life', !!p.fight && !!h && E.at(h.x + 1, h.y + 1) === h && E.at(h.x, h.y + 1) === h && E.at(h.x + 1, h.y) === h && h.hp === 3000 && U.dist(h.x + 1, h.y + 1, z.x, z.y) < 6, h && [h.x, h.y, z.x, z.y]);
+    g.changeDiff('easy'); ok('v0.8.7: in a boss fight the difficulty cannot change', g.inBossFight() && /換不了難度/.test(g.msgText) && g.diff === dk);
+    // 招式：撞（力）、拱地（震，台上不受）、豕突（力，蓄力一息多）
+    p.sailing = false; p.ship = null; put(h.x + 2, h.y); w.set(p.x, p.y, '草'); p.hp = 100; p.azure = false; p.bai = false; p.zhu = false;
+    const d1 = g.bossHit(h, 20, '力', '撞'); ok('v0.8.7: its blows are 力 — armour counts', Math.abs(d1 - U.r4(20 * g.takenMult())) < 1e-6 && /封豨撞（力）/.test(g.msgText), [d1, g.msgText]);
+    const ringTo = () => { h.ring = { r: 0, hit: false, cx: p.x + 0.5 - 3, cy: p.y + 0.5 }; h.state = 'chase'; for (let k = 0; k < 40 && h.ring; k++) E.hogTimers(h, g, p, 0.05); };
+    p.hp = 100; ringTo(); ok('v0.8.7: rooting the ground sends out a ring of 震 (22, armour does not count)', Math.abs(100 - p.hp - U.r4(22 * g.baseTaken())) < 1e-6, 100 - p.hp);
+    w.set(p.x, p.y, '台'); p.hp = 100; ringTo(); ok('v0.8.7: …which does not reach you on a 台', p.hp === 100 && /震不上來/.test(g.msgText), g.msgText); w.set(p.x, p.y, '草');
+    p.hp = 100; for (let i = 3; i <= 7; i++) for (const dy of [0, 1]) w.set(h.x + i, h.y + dy, '草'); put(h.x + 7, h.y); h.state = 'chase'; h.chargeCD = 0; h.quakeCD = 99; h.callCD = 99; h.eatCD = 99; h.moveT = 0; h.atk = 9; E.update(0.01, g);
+    ok('v0.8.7: from three to ten tiles off it winds up a charge (豕突), the path marked', h.state === 'wind' && h.cdx === 1 && h.cdy === 0, [h.state, h.cdx, h.cdy]);
+    h.windT = 0; E.hogTimers(h, g, p, 0.01); for (let i = 0; i < 14 && h.state === 'charge'; i++) { h.moveT = 0; E.update(0.01, g); }
+    ok('v0.8.7: …then charges straight in — 40, 力', Math.abs(100 - p.hp - U.r4(40 * g.takenMult())) < 1e-6 && /豕突/.test(g.msgText), [100 - p.hp, g.msgText]);
+    // 護駕：一般命只剩一點時鎖血一息半，之後求教過的神獸擋六息；一場只一次；困難不鎖
+    g.diff = DIFF.normal; p.azure = true; p.hp = 5; p.fight.locked = false; g.bossHit(h, 40, '力', '豕突');
+    ok('v0.8.7: a killing blow on normal leaves you at 1 and locks you for 1.5 breaths', p.hp === 1 && p.lockT === 1.5 && /命懸一線/.test(toasts()), [p.hp, p.lockT]);
+    ok('v0.8.7: while locked it cannot hurt you', g.bossHit(h, 40, '力', '撞') === 0 && p.hp === 1);
+    g.bossTick(1.6); ok('v0.8.7: then 青龍 comes to guard for 6 breaths, and the fight is no longer solo', p.guardT === 6 && !p.fight.solo && p.fight.guardBy === '青龍' && /青龍護駕/.test(toasts()), [p.guardT, p.fight.guardBy]);
+    const hg = p.hp; ok('v0.8.7: …blocking 封豨 entirely', g.bossHit(h, 40, '力', '撞') === 0 && /擋下/.test(g.msgText));
+    g.bossTick(1); ok('v0.8.7: …while your life comes back 4 a breath', Math.abs(p.hp - hg - 4) < 1e-6, p.hp - hg);
+    p.guardT = 0; p.hp = 5; g.bossHit(h, 40, '力', '撞'); const once = p.hp; p.hp = 100;
+    ok('v0.8.7: the lock comes only once a fight', once === 0);
+    p.fight.locked = false; g.diff = DIFF.hard; p.hp = 5; g.bossHit(h, 40, '力', '撞'); const hardHp = p.hp; p.hp = 100; g.diff = dk;
+    ok('v0.8.7: on hard there is no lock and no guard', hardHp === 0 && !(p.lockT > 0));
+    g.bossSig = ''; await sleep(150); const bb = document.getElementById('bossbar');
+    ok('v0.8.7: a life bar for 封豨 shows its mane and whether you fight alone', !bb.classList.contains('hidden') && /封豨/.test(bb.textContent) && /鬃鬃鬃/.test(bb.textContent) && /3000／3000/.test(bb.textContent), bb.textContent);
+    // 存讀檔接著打
+    h.hp = 1700; p.fight.solo = true; g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot)));
+    ok('v0.8.7: the fight is saved with 封豨\'s life and place', sv.player.fight && sv.player.fight.hp === 1700 && sv.player.fight.x === h.x);
+    g.load(sv); g.updateStats(0.05); const h2 = hog();
+    ok('v0.8.7: read back, the fight goes on — 封豨 returns with the life it had', !!p.fight && !!h2 && h2.hp === 1700 && h2.x === sv.player.fight.x, h2 && h2.hp);
+    // 荐食、群豕
+    { const fx = h2.x + 3, fy = h2.y; w.set(fx, fy, '木'); h2.state = 'eat'; h2.food = [fx, fy]; h2.eatLeft = 0.01; h2.hpAtEat = h2.hp; E.hogTimers(h2, g, p, 0.05);
+      ok('v0.8.7: eating a mulberry (荐食) gives back 5% of its life and leaves bare earth', h2.hp === 1850 && w.get(fx, fy) === '土' && h2.state === 'chase', [h2.hp, w.get(fx, fy)]);
+      w.set(fx, fy, '木'); h2.state = 'eat'; h2.food = [fx, fy]; h2.eatLeft = 2; h2.hpAtEat = h2.hp; h2.hp -= 100; E.hogTimers(h2, g, p, 0.05);
+      ok('v0.8.7: hit hard while eating, it gets nothing', h2.hp === 1750 && w.get(fx, fy) === '木' && /打斷/.test(g.msgText), [h2.hp, g.msgText]);
+      h2.state = 'chase'; h2.eatCD = 0; h2.callCD = 99; put(h2.x + 12, h2.y); E.hogAct(h2, g, p, false, false);
+      ok('v0.8.7: below six tenths it goes for a tree', h2.state === 'goeat' && !!h2.food, h2.state);
+      h2.state = 'chase'; h2.eatCD = 99; h2.hp = 1400; h2.callCD = 0; E.list = E.list.filter(o => o.type !== '豬'); E.hogAct(h2, g, p, false, false);
+      ok('v0.8.7: from half its life it calls boars (群豕)', E.count('豬') === 2 && /群豕/.test(g.msgText), E.count('豬')); }
+    // 逃跑：暫停面板按兩次；走出地界也算
+    p.cour = g.levelAt(10) + 1; g.togglePause(); const fb = document.getElementById('pause-flee');
+    ok('v0.8.7: in a fight the pause panel has a 逃跑 button, and says the difficulty is locked', !fb.classList.contains('hidden') && /換不了難度/.test(document.getElementById('pause-diff-note').textContent));
+    fb.click(); ok('v0.8.7: the first press only arms it', !!p.fight && /再按一次/.test(fb.textContent));
+    fb.click(); ok('v0.8.7: the second press flees — three levels of courage, 封豨 goes home to heal', !p.fight && g.level() === 7 && !hog() && hidden('pause') && /逃出封豨的地界/.test(toasts()), g.level());
+    p.inBoss = {}; put(z.x + 98, z.y); g.updateStats(0.05); g.bossYes(); put(z.x + 120, z.y); g.updateStats(0.05);
+    ok('v0.8.7: walking out of the ground is fleeing too', !p.fight && /出了地界/.test(toasts()));
+    // 死在戰中：膽氣減半，戰事散了
+    p.inBoss = {}; put(z.x + 98, z.y); g.updateStats(0.05); g.bossYes(); p.cour = 100; p.lastHit = { kind: '力', by: '封豨', big: true, t: w.time }; p.hp = 0; g.die('傷');
+    ok('v0.8.7: dying in the fight ends it; 封豨 goes home; half the courage is kept', !p.fight && !hog() && /封豨回桑林去了/.test(document.getElementById('dead-text').textContent) && p.deathKeep === 0.5, document.getElementById('dead-text').textContent);
+    g.respawn(); ok('v0.8.7: …courage 100 → 50', p.cour === 50, p.cour);
+    // 獨力斃之：記成就（寫明難度）
+    p.inBoss = {}; put(z.x + 98, z.y); g.updateStats(0.05); g.bossYes(); const h3 = hog(); const c0 = p.cour; g.kill(h3);
+    ok('v0.8.7: slain alone — recorded with the difficulty as a feat, courage up, meat', p.bosses['封豨'] && p.bosses['封豨'].solo && p.feats.length === 1 && /禽封豨於桑林 · 一般 · 獨力/.test(p.feats[0].text) && p.cour > c0 && !p.fight && /禽封豨於桑林/.test(toasts()) && /\+6%/.test(toasts()), p.feats);
+    g.journalTab = 'see'; g.toggleJournal(); const jt = document.getElementById('journal-body').textContent; g.toggleJournal();
+    ok('v0.8.7: the journal lists the boss and the feat', /大魔王/.test(jt) && /成就/.test(jt) && /獨力/.test(jt), jt.slice(-120));
+    p.inBoss = {}; put(z.x + 98, z.y); g.updateStats(0.05); ok('v0.8.7: once slain, its ground no longer asks', hidden('bossask') && !p.fight);
+    // 收拾
+    p.azure = keep.azure; p.bai = keep.bai; p.zhu = keep.zhu; p.cour = keep.cour; p.bag = keep.bag; p.tools = keep.tools; p.tool = keep.tool; g.barSig = ''; g.courSig = '';
+    p.bosses = {}; p.feats = []; p.inBoss = {}; p.fight = null; p.lockT = 0; p.guardT = 0; p.hp = 100; E.list = E.list.filter(o => o.type !== '豨' && o.type !== '豬');
+    p.creatures = p.creatures.filter(c => c !== '豨'); if (p.codex) delete p.codex['封豨']; p.sailing = false; p.ship = null; put(p0.x, p0.y); }
   // ============ v0.8.6：心打愜意、懼；燧石、火蝕；蠱雕（啼、撲）、朱羽、朱雀（氣順、鳳翎） ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, DB = G.DB, zhu0 = p.zhu, put = (x, y) => { p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; };
     E.list = E.list.filter(o => o.type !== '雕' && o.type !== '朱雀'); p.sailing = false; p.ship = null; p.swimming = false;
@@ -1781,6 +1852,7 @@ const result = await page.evaluate(async () => {
     ok('v0.8.4: 桑林\'s heart is solid walkable ground for 38 tiles around', ring(sl, 38, (t) => DB[t].walk > 0 && DB[t].kind !== 'water') === 0);
     ok('v0.8.5: 不周山 (radius 120) is land for 102 tiles around, with a ring of mountains round a basin', bz.r === 120 && bz.solid === 102 && ring(bz, 102, (t) => DB[t].kind !== 'water') === 0 && DB[w.get(bz.x, bz.y)].walk > 0 && ['山', '煤', '鐵', '磊'].indexOf(w.get(bz.x - 52, bz.y)) >= 0);
     // 登上桑林：記下來、長膽氣、狀態列寫地名
+    p.inBoss = { '封豨': true };   // 桑林在封豨的地界裡（v0.8.7）：當作已經答過「進去」，這裡只測登島
     p.zones = {}; p.x = p.rx = sl.x; p.y = p.ry = sl.y; w.set(p.x, p.y, '草'); E.px = p.x; E.py = p.y; p.sailing = false; p.ship = null; p.swimming = false; const c0 = p.cour; g.updateStats(0.05);
     ok('v0.8.4: landing on 桑林 the first time: noted, courage up, and the 淮南子 line on it', p.zones['封豨'] === 1 && p.cour > c0 && /登上桑林/.test(toasts()) && /禽封豨於桑林/.test(toasts()) && /^桑林 · /.test(g.placeName()), [p.cour - c0, g.placeName()]);
     const c1 = p.cour; g.updateStats(0.05); ok('v0.8.4: …only the first time', p.cour === c1);
@@ -1798,7 +1870,7 @@ const result = await page.evaluate(async () => {
     ok('v0.8.4: an old save hears about the four sides of the paper; its 蜃碎片 are now 蜃殘體', /紙的四方/.test(toasts()) && /不周山/.test(toasts()) && g.count('蜃殘體') >= 5 && g.count('蜃碎片') === 0 && p.zoneNews === true, g.count('蜃殘體'));
     g.load(sv);
     ok('v0.8.4: the places visited are kept across a save', p.zones && p.zones['封豨'] === 1 && p.zones['修蛇'] === 1);
-    g.removeItem('蜃殘體', 99); p.zones = zones0 || {}; p.cour = cour0; g.courSig = ''; p.x = p.rx = p0.x; p.y = p.ry = p0.y; E.px = p.x; E.py = p.y; }
+    g.removeItem('蜃殘體', 99); p.inBoss = {}; p.zones = zones0 || {}; p.cour = cour0; g.courSig = ''; p.x = p.rx = p0.x; p.y = p.ry = p0.y; E.px = p.x; E.py = p.y; }
   // ============ v0.8.3：魂環隔開、玄武四顆珠；水性減半；船一艘一欄（兩格／五格）、落水放船下水；魔物誌十二張 ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, az = g.azure, az0 = p.azure, ring = document.getElementById('soulring'), bag0 = p.bag.slice();
     const rs = getComputedStyle(ring), mw = document.getElementById('mapwrap').getBoundingClientRect(), rr = ring.getBoundingClientRect();

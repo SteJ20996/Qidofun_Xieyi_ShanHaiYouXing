@@ -28,6 +28,12 @@
   // 蠱雕（v0.8.6，小魔王）：在人五到八格外盤旋；每 HARPY_DIVE 息撲下來抓一下（力），貼著停 HARPY_LINGER 息（出手的時候），再飛回六格外；
   // 十格內每 HARPY_CRY_GAP 息一聲啼（心，遊戲端結算）。朱雀（v0.8.6，神獸）：棲在丹穴，沒帶朱羽的人走進 PHOENIX_AWAY 格，牠就飛開
   const HARPY_RING = [5, 8], HARPY_DIVE = [6, 9], HARPY_LINGER = 0.9, HARPY_CRY_GAP = 9, HARPY_CRY_R = 10, HARPY_DIVE_STEP = 0.16, HARPY_RISE_STEP = 0.2, HARPY_SENSE = 16, PHOENIX_AWAY = 5;
+  // 封豨（v0.8.7，大魔王）：二乘二，左上角在 (x, y)。追人一步 HOG.step 息；貼著撞（力）；豕突：蓄 HOG.wind 息（腳下揚塵、地上畫出衝的路），
+  // 再直衝 HOG.len 格（力）；拱地：蓄 HOG.rootT 息，震一圈圈往外傳到 HOG.ringR 格（震，台橋棧船上不受）；命剩六成以下去吃桑（荐食）回命，
+  // 吃的時候挨打超過命上限的 HOG.eatBreak 就吃不成；命剩一半起每 HOG.callGap 息叫兩頭野豬（群豕）。不離桑林島心 HOG.leash 格
+  const HOG = { step: 0.42, melee: 20, meleeGap: 1.8, charge: 40, chargeStep: 0.08, len: 10, wind: 1.2, chargeGap: [7, 10], quake: 22, rootT: 1.0, ringR: 7, ringT: 1.4, quakeGap: [11, 14],
+    eatAt: 0.6, eatT: 2.5, eatHeal: 0.05, eatGap: 20, eatBreak: 0.03, eatFind: 10, callAt: 0.5, callGap: 25, callN: 2, callCap: 4, leash: 40, stun: 1.5 };
+  const HOG_FOOD = '木林森果竹';
   const TOOTH_TURN = 1.2, TOOTH_STEP = 0.36, TOOTH_GAP = 1.8, TOOTH_FRONT = 0.38, TOOTH_SENSE = 12, TIGER_SEE = 40, TIGER_ROAR_R = 6, TIGER_ROAR_GAP = 10;
   const GHOST_KEEP = 6, GHOST_HOVER = 9, GHOST_BURN = 3, GHOST_DASH = 2.5, GHOST_DASH_GAP = [8, 14], GHOST_DASH_STEP = 0.22, GHOST_SNUFF_R = 2;
 
@@ -44,9 +50,11 @@
       this.dashT = GHOST_DASH_GAP[0];   // 下一次撲燈還有幾息（玩家身上有光的夜裡才倒數）
     }
     // 野牛一乘二（v0.7.2 使用者定）：頭在 (x, y)，身子沿著走的方向拖一格，尾在 (x − bx, y − by)；橫著走身子橫、縱著走身子直
+    hogRect(e, x, y) { const ax = x === undefined ? e.x : x, ay = y === undefined ? e.y : y; return [[ax, ay], [ax + 1, ay], [ax, ay + 1], [ax + 1, ay + 1]]; }   // 封豨的四格
+    rectDist(e, x, y) { return e.type === '豨' ? Math.max(Math.max(e.x - x, 0, x - e.x - 1), Math.max(e.y - y, 0, y - e.y - 1)) : U.cheb(e.x, e.y, x, y); }   // 到身子最近一格的距離
     tail(e) { return e.type === '牛' ? [e.x - (e.bx === undefined ? 1 : e.bx), e.y - (e.by || 0)] : null; }
-    cellsOf(e) { const t = this.tail(e); return t ? [[e.x, e.y], t] : [[e.x, e.y]]; }
-    covers(e, x, y) { if (e.x === x && e.y === y) return true; const t = this.tail(e); return !!t && t[0] === x && t[1] === y; }
+    cellsOf(e) { if (e.type === '豨') return this.hogRect(e); const t = this.tail(e); return t ? [[e.x, e.y], t] : [[e.x, e.y]]; }
+    covers(e, x, y) { if (e.x === x && e.y === y) return true; if (e.type === '豨') return x >= e.x && x <= e.x + 1 && y >= e.y && y <= e.y + 1; const t = this.tail(e); return !!t && t[0] === x && t[1] === y; }
     turn(e, dx, dy) { if (dx && dy) return e.bx ? [Math.sign(dx), 0] : [0, Math.sign(dy)]; return dx ? [Math.sign(dx), 0] : [0, Math.sign(dy)]; }   // 斜著走：身子照舊橫或直，換頭的朝向
     bodyFits(x, y, bx, by, night, self) { const tx = x - bx, ty = y - by; return this.canStand('牛', tx, ty, night) && !this.beastAt(tx, ty, self) && !(this.px === tx && this.py === ty); }   // 尾那一格站得上去、沒有別的獸、不是人
     bisonRoom(x, y, night) { for (const [bx, by] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (this.bodyFits(x, y, bx, by, night, null)) return [bx, by]; return null; }
@@ -65,7 +73,7 @@
     rammable(x, y) { const ch = this.world.get(x, y); return RAMMABLE.indexOf(ch) >= 0 && (ch === '墟' || this.world.base(x, y) !== ch); }   // 人造的磚門窗，與所有的墟
     riled(e) { return !!e.angry && (e.type === '蛛' || e.type === '蟾' || e.type === '牛' || (e.type === '鷹' && !e.tame)); }   // 半友好的被惹了（v0.7.3：畫面上發紅變大）
     isHostile(o) {           // 會主動找人的：虎豹狼蛇、野豬、毒蛛；惹了才找人的：無毒蛛、蟾、野牛、沒馴的鷹
-      return '虎豹狼蛇豬齒雕'.indexOf(o.type) >= 0 || (o.type === '蛛' && o.venom) || (o.angry && (o.type === '蛛' || o.type === '蟾' || o.type === '牛' || (o.type === '鷹' && !o.tame)));
+      return '虎豹狼蛇豬齒雕豨'.indexOf(o.type) >= 0 || (o.type === '蛛' && o.venom) || (o.angry && (o.type === '蛛' || o.type === '蟾' || o.type === '牛' || (o.type === '鷹' && !o.tame)));
     }
     hostileNear(p, r) {      // 玩家 r 格內最近的敵對獸（鷹替你打的對象）
       let best = null, bd = Infinity;
@@ -119,6 +127,7 @@
       if (type === '魄') return d.kind !== 'fire';
       if (type === '鳥' || type === '龍' || type === '鷹' || type === '雕') return d.kind !== 'fire';
       if (type === '朱雀') return d.kind !== 'water' && d.kind !== 'fire';   // 朱雀不離丹穴的陸地（v0.8.6）
+      if (type === '豨') return d.walk > 0 && !d.shelter && !d.gate && !d.bog && d.kind !== 'water' && d.kind !== 'object' && d.kind !== 'place';   // 封豨：上不了台階，不進屋
       if (type === '魚' || type === '蜃') return d.kind === 'water';
       if (type === '青龍') return ch === '淼';   // 東海青龍只在深海上盤著（v0.8）
       if (type === '白虎' && d.kind === 'water') return false;
@@ -224,6 +233,85 @@
       return best;
     }
 
+    // ---------- 封豨（v0.8.7） ----------
+    hogFits(e, x, y) {   // 四格都站得上去、沒有別的獸、不是人
+      for (const [cx, cy] of this.hogRect(e, x, y)) { if (!this.canStand('豨', cx, cy, true) || (this.px === cx && this.py === cy)) return false; const o = this.beastAt(cx, cy, e); if (o) return false; }
+      return true;
+    }
+    hogToward(e, tx, ty, away) {   // 往 (tx, ty) 走一步（away 就是走開）；擋路的人造磚門窗墟撞一下
+      let best = null, bd = away ? -1 : Infinity;
+      for (const [dx, dy] of N8) { const nx = e.x + dx, ny = e.y + dy; if (!this.hogFits(e, nx, ny)) continue; const dd = U.dist(nx + 0.5, ny + 0.5, tx, ty) + Math.random() * 0.2; if (away ? dd > bd : dd < bd) { bd = dd; best = [nx, ny]; } }
+      if (best) { e.x = best[0]; e.y = best[1]; return true; }
+      return false;
+    }
+    hogWall(e, g, dx, dy) {   // 前面那排有人造的磚門窗墟，撞一下
+      for (const [cx, cy] of this.hogRect(e, e.x + dx, e.y + dy)) if (!this.covers(e, cx, cy) && this.rammable(cx, cy)) { this.ram(e, g, cx, cy); return true; }
+      return false;
+    }
+    hogTimers(e, g, p, dt) {   // 不跟著步子走的倒數：招式的冷卻、蓄力、震圈、吃
+      for (const k of ['chargeCD', 'quakeCD', 'eatCD', 'callCD', 'windT', 'rootT', 'stunT']) if (e[k] > 0) e[k] = Math.max(0, e[k] - dt);
+      const ring = e.ring;
+      if (ring) {   // 震一圈圈往外傳：圈走過人那一格的時候打一下
+        ring.r += dt * HOG.ringR / HOG.ringT;
+        const dd = Math.hypot(p.x + 0.5 - ring.cx, p.y + 0.5 - ring.cy);
+        if (!ring.hit && Math.abs(dd - ring.r) < 0.75) { ring.hit = true; if (g.bossHit) g.bossHit(e, HOG.quake, '震', '拱地'); }
+        if (ring.r > HOG.ringR + 0.5) e.ring = null;
+      }
+      if (e.state === 'eat') {
+        e.eatLeft -= dt;
+        if (e.hpAtEat - e.hp >= DB['豨'].hp * HOG.eatBreak) { e.state = 'chase'; e.eatCD = HOG.eatGap; if (g.hogEat) g.hogEat(e, false); }
+        else if (e.eatLeft <= 0) {
+          e.state = 'chase'; e.eatCD = HOG.eatGap; const [tx, ty] = e.food;
+          if (HOG_FOOD.indexOf(this.world.get(tx, ty)) >= 0) { this.world.set(tx, ty, '土'); e.hp = Math.min(DB['豨'].hp, e.hp + DB['豨'].hp * HOG.eatHeal); if (g.hogEat) g.hogEat(e, true); }
+        }
+      }
+      if (e.state === 'wind' && e.windT <= 0) { e.state = 'charge'; e.chargeLeft = HOG.len; e.chargeHit = false; e.moveT = 0; }
+      if (e.state === 'root' && e.rootT <= 0) { e.state = 'chase'; e.ring = { r: 0, hit: false, cx: e.x + 1, cy: e.y + 1 }; if (g.hogQuake) g.hogQuake(e); }
+    }
+    hogFood(e) {   // 十格內最近的一棵樹（桑）
+      let best = null, bd = Infinity;
+      for (let dy = -HOG.eatFind; dy <= HOG.eatFind + 1; dy++) for (let dx = -HOG.eatFind; dx <= HOG.eatFind + 1; dx++) {
+        const x = e.x + dx, y = e.y + dy; if (HOG_FOOD.indexOf(this.world.get(x, y)) < 0) continue; const dd = Math.abs(dx) + Math.abs(dy); if (dd < bd) { bd = dd; best = [x, y]; }
+      }
+      return best;
+    }
+    hogAct(e, g, p, night, sheltered) {
+      const d = this.rectDist(e, p.x, p.y), den = g.hogDen, frac = e.hp / DB['豨'].hp, cx = e.x + 1, cy = e.y + 1;
+      if (e.stunT > 0) { e.moveT = 0.2; return; }
+      if (e.state === 'eat' || e.state === 'wind' || e.state === 'root') { e.moveT = 0.15; return; }
+      if (e.state === 'charge') {   // 直衝：前面那排有人就撞上；撞到台上的人、磚、山就停下來（撞在台邊還暈一下）
+        const nx = e.x + e.cdx, ny = e.y + e.cdy, rect = this.hogRect(e, nx, ny);
+        if (rect.some(([x, y]) => x === p.x && y === p.y)) {
+          if (this.world.get(p.x, p.y) === '台') { e.stunT = HOG.stun; if (g.hogStun) g.hogStun(e); }
+          else if (!e.chargeHit) { e.chargeHit = true; if (g.bossHit) g.bossHit(e, HOG.charge, '力', '豕突'); }
+          e.state = 'chase'; e.moveT = 0.6; return;
+        }
+        if (this.hogFits(e, nx, ny) && (!den || U.dist(nx + 1, ny + 1, den.x, den.y) <= HOG.leash)) { e.x = nx; e.y = ny; e.chargeLeft--; e.moveT = HOG.chargeStep; if (e.chargeLeft <= 0) { e.state = 'chase'; e.moveT = 0.6; } return; }
+        this.hogWall(e, g, e.cdx, e.cdy); e.state = 'chase'; e.moveT = 0.6; return;
+      }
+      if (e.state === 'goeat') {
+        const [tx, ty] = e.food;
+        if (HOG_FOOD.indexOf(this.world.get(tx, ty)) < 0 || e.goLeft-- <= 0) { e.state = 'chase'; e.eatCD = 4; }
+        else if (this.rectDist(e, tx, ty) <= 1) { e.state = 'eat'; e.eatLeft = HOG.eatT; e.hpAtEat = e.hp; if (g.hogEat) g.hogEat(e, null); e.moveT = 0.15; return; }
+        else { e.moveT = HOG.step; if (!this.hogToward(e, tx + 0.5, ty + 0.5, false)) { e.state = 'chase'; e.eatCD = 4; } return; }
+      }
+      // 群豕：命剩一半起，隔一陣叫兩頭野豬
+      if (frac <= HOG.callAt && !(e.callCD > 0) && this.count('豬') < HOG.callCap) {
+        e.callCD = HOG.callGap; let n = 0;
+        for (let k = 0; k < 12 && n < HOG.callN; k++) { const x = cx + Math.round((Math.random() - 0.5) * 6), y = cy + Math.round((Math.random() - 0.5) * 6); if (this.canStand('豬', x, y, night) && !this.at(x, y) && !(x === p.x && y === p.y)) { this.add('豬', x, y, { moveT: 0.5 }); n++; } }
+        if (n && g.hogCall) g.hogCall(e, n);
+      }
+      if (frac < HOG.eatAt && !(e.eatCD > 0)) { const f = this.hogFood(e); if (f) { e.state = 'goeat'; e.food = f; e.goLeft = 30; e.moveT = 0.2; return; } e.eatCD = 6; }
+      if (den && U.dist(cx, cy, den.x, den.y) > HOG.leash) { e.moveT = HOG.step; this.hogToward(e, den.x, den.y, false); return; }   // 不離桑林
+      if (!(e.chargeCD > 0) && d >= 3 && d <= HOG.len && !sheltered) {   // 豕突：蓄力，衝的方向這時定下
+        e.state = 'wind'; e.windT = HOG.wind; e.cdx = p.x < e.x ? -1 : p.x > e.x + 1 ? 1 : 0; e.cdy = p.y < e.y ? -1 : p.y > e.y + 1 ? 1 : 0;   // 人跟身子同一排就直著衝，不斜 e.chargeCD = HOG.chargeGap[0] + Math.random() * (HOG.chargeGap[1] - HOG.chargeGap[0]); e.moveT = 0.15; if (g.hogWind) g.hogWind(e); return;
+      }
+      if (!(e.quakeCD > 0) && d <= 6) { e.state = 'root'; e.rootT = HOG.rootT; e.quakeCD = HOG.quakeGap[0] + Math.random() * (HOG.quakeGap[1] - HOG.quakeGap[0]); e.moveT = 0.15; return; }
+      if (d <= 1) { if (!(e.atk > 0) && g.bossHit) { g.bossHit(e, HOG.melee, '力', '撞'); e.atk = HOG.meleeGap; } e.moveT = 0.4; return; }
+      e.moveT = HOG.step;
+      if (!this.hogToward(e, p.x + 0.5, p.y + 0.5, false)) { const sx = Math.sign(p.x - e.x), sy = Math.sign(p.y - e.y); if (!this.hogWall(e, g, sx, sy)) this.hogWall(e, g, sx, 0) || this.hogWall(e, g, 0, sy); }
+    }
+
     update(dt, g) {
       const p = g.player, w = this.world, night = g.darkness() > 0.5;
       // 魄撲燈：玩家身上有光的夜裡，每八到十四息，最近一隻徘徊的魄撲上來
@@ -293,7 +381,7 @@
         if (d <= 9) g.saw(e.type);
         if (!e.heard && d <= 8 && this.isHostile(e) && w.clear(e.x, e.y, p.x, p.y)) { e.heard = true; if (g.beastCall) g.beastCall(e); }   // 走近了先聽見牠（各有各的聲音）
         else if (e.heard && d > 14) e.heard = false;
-        if (e.type !== '龍' && !e.tame && d > 48) { this.list.splice(i, 1); continue; }
+        if (e.type !== '龍' && e.type !== '豨' && !e.tame && d > 48) { this.list.splice(i, 1); continue; }   // 封豨由遊戲端收（逃跑、死了、斃了）
         if (e.type === '鷹') {
           if (e.tame) { e.sta = Math.min(100, e.sta + dt); e.hp = Math.min(DB['鷹'].hp, e.hp + 0.3 * dt); }   // 體力每息回一點，傷慢慢好
           if (e.angryT > 0) { e.angryT -= dt; if (e.angryT <= 0) e.angry = false; }
@@ -320,6 +408,7 @@
           e.cryT = (e.cryT === undefined ? 3 : e.cryT) - dt; if (e.cryT <= 0 && d <= HARPY_CRY_R) { e.cryT = HARPY_CRY_GAP + Math.random() * 2; if (g.harpyCry) g.harpyCry(e); }
           if (e.mode === 'circle') e.diveT = (e.diveT === undefined ? HARPY_DIVE[0] : e.diveT) - dt;
         }
+        if (e.type === '豨') this.hogTimers(e, g, p, dt);
         if (e.type === '齒') { e.turnT = (e.turnT === undefined ? TOOTH_TURN : e.turnT) - dt; if (e.turnT <= 0) { e.turnT = TOOTH_TURN; this.faceTo(e, p.x, p.y); } }   // 一息多才轉一回身
         if (e.type === '白虎') {   // 沒帶虎符的人進了六格：一聲嘯，地跟著抖
           e.roarT = (e.roarT === undefined ? 2 : e.roarT) - dt;
@@ -367,6 +456,7 @@
           else { e.moveT = 1 + Math.random() * 1.5; if (Math.random() < 0.5) this.wander(e, night, null); }
           continue;
         }
+        if (e.type === '豨') { this.hogAct(e, g, p, night, sheltered); continue; }
         if (e.type === '雕') {     // 蠱雕：盤旋 → 撲下來抓一下、貼著停一會兒 → 飛回高處
           if (e.mode === 'dive') {
             if (d <= 1) { if (e.atk <= 0) { g.hit(e, DB['雕'].atk); e.atk = 1.2; } e.mode = 'rise'; e.moveT = HARPY_LINGER; }
@@ -503,7 +593,7 @@
           else { e.moveT = 1 + Math.random() * 2; if (Math.random() < 0.4) this.wander(e, night, e.type === '蟾' ? '草沙土水' : null); }
         }
         // 山海衣：七格內主動攻擊的獸行動慢一倍
-        if (g.totemNear && this.isHostile(e) && e.type !== '鷹' && g.totemNear(e.x, e.y)) e.moveT *= 2;
+        if (g.totemNear && this.isHostile(e) && e.type !== '鷹' && e.type !== '豨' && g.totemNear(e.x, e.y)) e.moveT *= 2;   // 大魔王不吃山海衣這一套
       }
     }
 

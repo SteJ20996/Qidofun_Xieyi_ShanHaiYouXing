@@ -320,6 +320,16 @@
           this.drawGlyph('盾', '#8a6a3c', px + sx * T * 0.62, py + sy * T * 0.62 + bob, T * 0.72, Math.atan2(sy, sx) * 0.15, 0.95);
           continue;
         }
+        if (e.type === '豨') {       // 封豨（v0.8.7）：二乘二的「豨」，頭上一圈「鬃」（三、五、六個，剩三成全紅）；蓄力時地上畫出要衝的路；拱地時一圈震往外傳
+          const cx = ox + (e.rx + 1) * T, cy = oy + (e.ry + 1) * T, frac = e.hp / d.hp, mane = frac > 0.5 ? 3 : frac > 0.3 ? 5 : 6, red = frac <= 0.3;
+          if (e.state === 'wind') { ctx.save(); ctx.fillStyle = 'rgba(180,57,42,0.15)'; for (let k = 1; k <= 10; k++) for (const [ax, ay] of g.ents.hogRect(e, e.x + e.cdx * k, e.y + e.cdy * k)) ctx.fillRect(ox + ax * T, oy + ay * T, T, T); ctx.restore(); }
+          if (e.ring) { ctx.save(); ctx.strokeStyle = 'rgba(90,62,43,0.55)'; ctx.lineWidth = T * 0.25; ctx.beginPath(); ctx.arc(ox + e.ring.cx * T, oy + e.ring.cy * T, Math.max(0.1, e.ring.r * T), 0, 7); ctx.stroke(); ctx.restore(); }
+          const sh = (e.state === 'wind' || e.state === 'root') ? Math.sin(now * 40) * 2 : 0;
+          for (let k = 0; k < mane; k++) { const a = Math.PI * (1.05 + 0.9 * k / Math.max(1, mane - 1)); this.drawGlyph('鬃', red ? G.INK.red : '#3d2a1c', cx + Math.cos(a) * T * 1.3, cy + Math.sin(a) * T * 1.2, T * 0.62, a + Math.PI / 2, 0.95); }
+          this.drawGlyph('豨', red ? '#8f2c20' : d.ink, cx + sh, cy, T * 2.1, 0, 1);
+          if (e.state === 'eat') this.drawGlyph('食', G.INK.plant, cx + T * 1.1, cy - T * 1.1, T * 0.55, 0, 0.9);
+          continue;
+        }
         if (e.type === '雕') {       // 蠱雕（v0.8.6）：灰黑的「雕」字頭上一點角；在高處盤旋時畫得高、地上一團影子，撲下來時落到地面
           const k = Math.min(1, dt * 6), want = e.mode === 'circle' ? 1 : e.mode === 'rise' ? 0.6 : 0; e.alt = e.alt === undefined ? want : e.alt + (want - e.alt) * k;
           const lift = e.alt * T * 0.55, flap = Math.sin(now * 7 + e.bob) * 0.08;
@@ -395,6 +405,11 @@
           ctx.save(); ctx.strokeStyle = 'rgba(47,88,120,0.5)'; ctx.lineWidth = 1.5;
           for (let i = 0; i < 2; i++) { const r = T * (0.35 + ((now * 0.8 + i * 0.5) % 1) * 0.45); ctx.globalAlpha = 1 - ((now * 0.8 + i * 0.5) % 1); ctx.beginPath(); ctx.ellipse(px, py + T * 0.25, r, r * 0.4, 0, 0, 7); ctx.stroke(); }
           ctx.restore();
+        }
+        if (p.guardT > 0 && p.fight && p.fight.guardBy) {   // 神獸護駕（v0.8.7）：擋在你身邊，一圈光
+          const gk = { '青龍': ['龍', G.INK.azure], '白虎': ['虎', '#7f8ea3'], '朱雀': ['雀', '#c23b22'] }[p.fight.guardBy] || ['龍', G.INK.azure];
+          ctx.save(); ctx.strokeStyle = gk[1]; ctx.globalAlpha = 0.35 + 0.2 * Math.sin(now * 4); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(px, py, T * 1.1, 0, 7); ctx.stroke(); ctx.restore();
+          this.drawGlyph(gk[0], gk[1], px - T * 0.95, py - T * 0.55 + Math.sin(now * 2) * 3, T * 1.1, 0, 0.9);
         }
         this.drawGlyph('人', G.INK.black, px, py - (p.sailing ? T * 0.12 : 0) + (p.swimming ? T * 0.12 + Math.sin(now * 3) * 2 : 0), T * 1.18, rot, p.swimming ? 0.8 : 1);
         ctx.save(); ctx.fillStyle = G.INK.red; ctx.beginPath(); ctx.arc(px + T * 0.34, py + T * 0.36, T * 0.07, 0, 7); ctx.fill(); ctx.restore();
@@ -552,6 +567,7 @@
         else if (e.type === '青龍') { m.fillStyle = '#24766b'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '白虎') { m.fillStyle = '#f6f1e4'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); m.strokeStyle = '#2f2a24'; m.strokeRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '齒') { m.fillStyle = '#6b4a2f'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
+        else if (e.type === '豨') { m.fillStyle = '#5a3e2b'; m.fillRect(i * px - 2, j * px - 2, px * 2 + 4, px * 2 + 4); }
         else if (e.type === '雕') { m.fillStyle = '#4a4f5c'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
         else if (e.type === '朱雀') { m.fillStyle = '#c23b22'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '豹' || e.type === '狼' || e.type === '蛇') { m.fillStyle = '#8a2a1a'; m.fillRect(i * px, j * px, px + 1, px + 1); }
