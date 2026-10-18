@@ -117,7 +117,7 @@
     '青龍': { s: 24, kind: 'beast', light: 4, ink: INK.azure, hp: 9999, name: '青龍', flavor: '東海青龍，盤在本島往東約六百格的深海上，不近人也不避人。帶一顆蜃珠（蜃殘體九塊在鼎裡熬成）去求教，牠教你行船的水性：孤帆、方舟從此自己慢慢回命，落了水也撐得久些；右上角的魂環亮起青龍那三分之一。' },
     '齒': { s: 15, kind: 'beast', ink: INK.brown, hp: 650, atk: 21, name: '鑿齒', flavor: '鑿齒（v0.8.5；v0.8.6 使用者調成命六百五、一撞二十一）：齒長如鑿，手裡一面盾，在西邊的外島上鑿石頭。命六百五十，一撞二十一。牠面朝哪邊盾就在哪邊：從正面三格打上去只有一成傷，要繞到身側或背後；牠轉身慢，一息多才轉一回。斃之得鑿齒殘體一或二塊。' },
     '白虎': { s: 13, kind: 'beast', ink: '#f6f1e4', hp: 9999, name: '白虎', flavor: '白虎（v0.8.5），四象之西，伏在虎嶺上，四十格內才看得見。不近人也不避人；沒帶虎符的人走到六格內，牠一聲嘯，地跟著抖（震）。帶一枚虎符去，兩格內按 E 求教，牠教你抗震：震的傷害少四分之一；魂環亮起虎魄那三分之一。' },
-    '豨': { s: 14, kind: 'beast', ink: INK.brown, hp: 3000, atk: 20, name: '封豨', flavor: '封豨（v0.8.7，大魔王）：桑林裡的大豬，二乘二，命三千，頭上一圈鬃，越惱鬃越多。豕突：蓄力一息多、直衝十格（力四十），撞在台邊會暈；拱地：震一圈圈往外傳（震二十二，站在台、橋、棧上不受）；貼著撞（力二十）。命剩六成去啃桑回命（荐食），吃的時候打牠就吃不成；剩一半起叫野豬（群豕）。《淮南子·本經訓》：「禽封豨於桑林。」' },
+    '豨': { s: 14, kind: 'beast', ink: INK.brown, hp: 3000, atk: 20, name: '封豨', flavor: '封豨（v0.8.7，大魔王）：桑林裡的大豬，二乘二，命三千，頭上一圈鬃，越惱鬃越多。豕突：蓄力一息多、直衝十格（力四十）；拱地：震一圈圈往外傳（震二十二，站在橋、棧上不受；牠拱得動台，台擋不住）；貼著撞（力二十）。命剩六成去啃桑回命（荐食），吃的時候打牠就吃不成；剩一半起叫野豬（群豕）。《淮南子·本經訓》：「禽封豨於桑林。」' },
     '雕': { s: 16, kind: 'beast', ink: '#4a4f5c', hp: 520, atk: 16, name: '蠱雕', flavor: '蠱雕（v0.8.6，小魔王）：像雕，頭上一隻角，在南邊的海上與外島上空盤旋。命五百二十。隔一陣一聲啼，像嬰兒在哭，聽得心裡發慌（心：愜意掉，懼得一息多出不了手）；再一陣從天上撲下來抓人（力十六），抓完又飛回高處。牠在天上時只有彈弓打得到，撲下來貼著你時才是出手的時候。斃之得蠱雕殘體一或二塊。' },
     '朱雀': { s: 17, kind: 'beast', light: 3, ink: '#c23b22', hp: 9999, name: '朱雀', flavor: '朱雀（v0.8.6），四象之南，棲在丹穴，四十格內才看得見。沒帶朱羽的人走近，牠就飛開，總離人五格以上；帶著朱羽，牠落下來等你。兩格內按 E 求教，牠教你氣順：窒與心的傷害少四分之一；魂環亮起鳳翎那三分之一。' },
     '玄武': { s: 13, kind: 'beast', ink: '#1c1a17', hp: 9999, name: '玄武', flavor: '玄武（v0.8.8），四象之北，龜與蛇，伏在玄洲島心，像一塊很久沒動的石頭，四十格內才看得見。不收信物：兩格內按 E 取經，每打一隻大魔王之前取一卷，四次。取經是一場試煉，玄武吐一個墨寫的影子讓你先打一回。' },
@@ -466,6 +466,10 @@
     const isl = isleAt(Math.floor(x / ISLE_CELL), Math.floor(y / ISLE_CELL), seed);
     return isl && Math.hypot(x - isl.cx, y - isl.cy) <= isl.R * 1.25 ? isl : null;
   }
+  function isleWell(isl, seed) {   // 漠島的綠洲、雪島的溫泉保證在哪（v0.8.9）
+    const a = U.rand2(isl.key, 3, seed + 709) * Math.PI * 2;
+    return { x: Math.round(isl.cx + Math.cos(a) * isl.R * 0.3), y: Math.round(isl.cy + Math.sin(a) * isl.R * 0.3) };
+  }
   function isleTile(x, y, seed) {
     const isl = isleOf(x, y, seed); if (!isl) return '淼';
     const q = Math.hypot(x - isl.cx, y - isl.cy) / isl.R, s = seed + 701 + isl.key;
@@ -476,6 +480,11 @@
     if (h < 0.395) return '水';
     if (h < 0.415 && U.rand2(x, y, s + 61) < FLINT_BEACH) return '燧';   // 海邊的燧石（v0.8.6）
     const d = U.rand2(x, y, s + 5), m = U.fbm(x / 40 + 300, y / 40 - 300, s + 17, 3);
+    if ((isl.kind === '漠' || isl.kind === '雪') && h >= 0.415) {   // v0.8.9：每座漠島保證一處綠洲、每座雪島保證一處溫泉（離島心三成島半徑的地方）
+      const w = isleWell(isl, seed), dw = Math.hypot(x - w.x, y - w.y);
+      if (isl.kind === '漠' && dw <= 3.2) return dw <= 1.6 ? '池' : d < 0.4 ? '棗' : '草';
+      if (isl.kind === '雪' && dw <= 1.6) return '湯';
+    }
     if (isl.kind === '漠') {           // 漠島：大漠、沙丘，零星的綠洲（池、椰棗、草），岩丘裡有一點煤鐵
       if (h < 0.415) return d < 0.85 ? '漠' : '礫';
       const oa = U.fbm(x / 16 + 77, y / 16 - 77, s + 23, 2);
@@ -683,6 +692,33 @@
     return out;
   }
 
+  // v0.8.9：有些種子的碑在山裡或內陸水中的沙洲上，走不到。不搬碑（舊存檔記著讀過哪塊），從碑往外找一條最省的路接到走得到的地：
+  // 山石礦鑿成石地、水填成沙堤。跟碑、地標一樣蓋在底稿上（World.chunk 裡），原本的陸地（oldTile）本身一格不動
+  function stelePaths(seed, steles) {
+    const main = mainland(seed), out = [], R = SEA_EDGE;
+    const cost = (t) => { const d = DB[t]; return t === '灘' || t === '淼' ? 60 : d.walk > 0 && d.kind !== 'water' ? 1 : d.kind === 'water' ? 4 : 3; };   // 灘不碰（燈塔的灘道要照舊只在退潮走得到）
+    for (const st of steles) {
+      if (main.has(st.x + ',' + st.y)) continue;
+      const dist = new Map([[st.x + ',' + st.y, 0]]), from = new Map(), open = [[0, st.x, st.y]];
+      let end = null;
+      while (open.length && !end) {
+        let bi = 0; for (let i = 1; i < open.length; i++) if (open[i][0] < open[bi][0]) bi = i;
+        const [c, x, y] = open.splice(bi, 1)[0], k = x + ',' + y;
+        if (c > dist.get(k)) continue;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy, nk = nx + ',' + ny; if (Math.abs(nx) > R || Math.abs(ny) > R) continue;
+          if (main.has(nk) && oldTile(nx, ny, seed) !== '灘') { from.set(nk, k); end = nk; break; }   // 接到隨時走得到的地（不是退潮才露出來的灘）
+          const nc = c + cost(oldTile(nx, ny, seed)); if (nc < (dist.has(nk) ? dist.get(nk) : Infinity)) { dist.set(nk, nc); from.set(nk, k); open.push([nc, nx, ny]); }
+        }
+      }
+      for (let k = end && from.get(end); k && k !== st.x + ',' + st.y; k = from.get(k)) {
+        const [x, y] = k.split(',').map(Number), t = oldTile(x, y, seed), dd = DB[t];
+        if (t !== '灘' && !(dd.walk > 0 && dd.kind !== 'water')) out.push([x, y, dd.kind === 'water' ? '沙' : '石']);
+      }
+    }
+    return out;
+  }
+
   // 八處地標。每處一段話，連起來是一個小故事：這座島是誰寫的。
   const VILLAGE = ['墟墟墟門墟墟墟', '墟草草草草草墟', '墟草草草草草墟', '門草草井草草門', '墟草草草草草墟', '墟草草草草草墟', '墟墟墟門墟墟墟'];   // 七乘七，井在正中
   const PLACES = [
@@ -782,5 +818,5 @@
   }
 
   RECIPES.forEach(r => { r.cat = '材料'; for (const c in CAT_OF) if (CAT_OF[c].indexOf(r.id) >= 0) r.cat = c; });
-  root.G = { INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, WORLD_R, HOME_R, HOME_K, isleAt, isleOf, isles, ISLE_CELL, ISLE_NAMES, azureAt, zones, zoneAt, ZONE_DEFS };
+  root.G = { stelePaths, isleWell, INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, WORLD_R, HOME_R, HOME_K, isleAt, isleOf, isles, ISLE_CELL, ISLE_NAMES, azureAt, zones, zoneAt, ZONE_DEFS };
 })();

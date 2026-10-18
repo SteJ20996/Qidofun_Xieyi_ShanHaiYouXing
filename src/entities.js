@@ -29,10 +29,10 @@
   // 十格內每 HARPY_CRY_GAP 息一聲啼（心，遊戲端結算）。朱雀（v0.8.6，神獸）：棲在丹穴，沒帶朱羽的人走進 PHOENIX_AWAY 格，牠就飛開
   const HARPY_RING = [5, 8], HARPY_DIVE = [6, 9], HARPY_LINGER = 0.9, HARPY_CRY_GAP = 9, HARPY_CRY_R = 10, HARPY_DIVE_STEP = 0.16, HARPY_RISE_STEP = 0.2, HARPY_SENSE = 16, PHOENIX_AWAY = 5;
   // 封豨（v0.8.7，大魔王）：二乘二，左上角在 (x, y)。追人一步 HOG.step 息；貼著撞（力）；豕突：蓄 HOG.wind 息（腳下揚塵、地上畫出衝的路），
-  // 再直衝 HOG.len 格（力）；拱地：蓄 HOG.rootT 息，震一圈圈往外傳到 HOG.ringR 格（震，台橋棧船上不受）；命剩六成以下去吃桑（荐食）回命，
+  // 再直衝 HOG.len 格（力）；拱地：蓄 HOG.rootT 息，震一圈圈往外傳到 HOG.ringR 格（震，橋棧船上不受；v0.8.9 起牠拱得動台，台上照樣挨震、挨撞）；命剩六成以下去吃桑（荐食）回命，
   // 吃的時候挨打超過命上限的 HOG.eatBreak 就吃不成；命剩一半起每 HOG.callGap 息叫兩頭野豬（群豕）。不離桑林島心 HOG.leash 格
   const HOG = { step: 0.42, melee: 20, meleeGap: 1.8, charge: 40, chargeStep: 0.08, len: 10, wind: 1.2, chargeGap: [7, 10], quake: 22, rootT: 1.0, ringR: 7, ringT: 1.4, quakeGap: [11, 14],
-    eatAt: 0.6, eatT: 2.5, eatHeal: 0.05, eatGap: 20, eatBreak: 0.03, eatFind: 10, callAt: 0.5, callGap: 25, callN: 2, callCap: 4, leash: 40, stun: 1.5 };
+    eatAt: 0.6, eatT: 2.5, eatHeal: 0.05, eatGap: 20, eatBreak: 0.03, eatFind: 10, callAt: 0.5, callGap: 25, callN: 2, callCap: 4, leash: 40 };
   const HOG_FOOD = '木林森果竹';
   const TOOTH_TURN = 1.2, TOOTH_STEP = 0.36, TOOTH_GAP = 1.8, TOOTH_FRONT = 0.38, TOOTH_SENSE = 12, TIGER_SEE = 40, TIGER_ROAR_R = 6, TIGER_ROAR_GAP = 10;
   const GHOST_KEEP = 6, GHOST_HOVER = 9, GHOST_BURN = 3, GHOST_DASH = 2.5, GHOST_DASH_GAP = [8, 14], GHOST_DASH_STEP = 0.22, GHOST_SNUFF_R = 2;
@@ -78,7 +78,7 @@
     hostileNear(p, r) {      // 玩家 r 格內最近的敵對獸（鷹替你打的對象）
       let best = null, bd = Infinity;
       for (const o of this.list) {
-        if (!this.isHostile(o) || o.hp <= 0) continue;
+        if (!this.isHostile(o) || o.hp <= 0 || (o.type === '雕' && o.mode === 'circle')) continue;   // 天上盤旋的蠱雕，鷹也追不上（v0.8.9）
         const d = U.cheb(o.x, o.y, p.x, p.y); if (d <= r && d < bd) { bd = d; best = o; }
       }
       return best;
@@ -249,7 +249,7 @@
       return false;
     }
     hogTimers(e, g, p, dt) {   // 不跟著步子走的倒數：招式的冷卻、蓄力、震圈、吃
-      for (const k of ['chargeCD', 'quakeCD', 'eatCD', 'callCD', 'windT', 'rootT', 'stunT']) if (e[k] > 0) e[k] = Math.max(0, e[k] - dt);
+      for (const k of ['chargeCD', 'quakeCD', 'eatCD', 'callCD', 'windT', 'rootT']) if (e[k] > 0) e[k] = Math.max(0, e[k] - dt);
       const ring = e.ring;
       if (ring) {   // 震一圈圈往外傳：圈走過人那一格的時候打一下
         ring.r += dt * HOG.ringR / HOG.ringT;
@@ -277,13 +277,11 @@
     }
     hogAct(e, g, p, night, sheltered) {
       const d = this.rectDist(e, p.x, p.y), den = e.den || g.hogDen, frac = e.hp / (e.max || DB['豨'].hp), cx = e.x + 1, cy = e.y + 1;   // 墨影（v0.8.8）帶著自己的命上限與窩
-      if (e.stunT > 0) { e.moveT = 0.2; return; }
       if (e.state === 'eat' || e.state === 'wind' || e.state === 'root') { e.moveT = 0.15; return; }
-      if (e.state === 'charge') {   // 直衝：前面那排有人就撞上；撞到台上的人、磚、山就停下來（撞在台邊還暈一下）
+      if (e.state === 'charge') {   // 直衝：前面那排有人就撞上（站在台上也一樣，v0.8.9）；撞到磚、山就停下來
         const nx = e.x + e.cdx, ny = e.y + e.cdy, rect = this.hogRect(e, nx, ny);
-        if (rect.some(([x, y]) => x === p.x && y === p.y)) {
-          if (this.world.get(p.x, p.y) === '台') { e.stunT = HOG.stun; if (g.hogStun) g.hogStun(e); }
-          else if (!e.chargeHit) { e.chargeHit = true; if (g.bossHit) g.bossHit(e, HOG.charge, '力', '豕突'); }
+        if (rect.some(([x, y]) => x === p.x && y === p.y)) {   // v0.8.9 使用者定：台不管用——站在台上照樣撞上
+          if (!e.chargeHit) { e.chargeHit = true; if (g.bossHit) g.bossHit(e, HOG.charge, '力', '豕突'); }
           e.state = 'chase'; e.moveT = 0.6; return;
         }
         if (this.hogFits(e, nx, ny) && (!den || U.dist(nx + 1, ny + 1, den.x, den.y) <= HOG.leash)) { e.x = nx; e.y = ny; e.chargeLeft--; e.moveT = HOG.chargeStep; if (e.chargeLeft <= 0) { e.state = 'chase'; e.moveT = 0.6; } return; }
@@ -298,7 +296,7 @@
       // 群豕：命剩一半起，隔一陣叫兩頭野豬
       if (frac <= HOG.callAt && !(e.callCD > 0) && this.count('豬') < HOG.callCap) {
         e.callCD = HOG.callGap; let n = 0;
-        for (let k = 0; k < 12 && n < HOG.callN; k++) { const x = cx + Math.round((Math.random() - 0.5) * 6), y = cy + Math.round((Math.random() - 0.5) * 6); if (this.canStand('豬', x, y, night) && !this.at(x, y) && !(x === p.x && y === p.y)) { this.add('豬', x, y, e.shade ? { moveT: 0.5, shade: '豕影' } : { moveT: 0.5 }); n++; } }
+        for (let k = 0; k < 12 && n < HOG.callN; k++) { const x = cx + Math.round((Math.random() - 0.5) * 6), y = cy + Math.round((Math.random() - 0.5) * 6); if (this.canStand('豬', x, y, night) && !this.at(x, y) && !(x === p.x && y === p.y)) { this.add('豬', x, y, e.shade ? { moveT: 0.5, shade: '豕影' } : { moveT: 0.5, callBy: '封豨' }); n++; } }
         if (n && g.hogCall) g.hogCall(e, n);
       }
       if (frac < HOG.eatAt && !(e.eatCD > 0)) { const f = this.hogFood(e); if (f) { e.state = 'goeat'; e.food = f; e.goLeft = 30; e.moveT = 0.2; return; } e.eatCD = 6; }
@@ -551,7 +549,8 @@
             const tgt = e.sta >= 6 ? this.hostileNear(p, 6) : null;
             if (tgt) {
               if (U.cheb(e.x, e.y, tgt.x, tgt.y) <= 1) {
-                if (e.atk <= 0) { tgt.hp -= 20; tgt.angry = true; tgt.foe = e; e.sta -= 6; e.atk = 1.5; g.eagleHit(e, tgt); if (tgt.hp <= 0) g.kill(tgt); }
+                if (e.atk <= 0) { tgt.hp -= tgt.type === '齒' && this.shielded(tgt, e.x, e.y) ? 2 : 20; tgt.angry = true;   // 鷹從正面啄鑿齒，也只吃一成（v0.8.9）
+                  tgt.foe = e; e.sta -= 6; e.atk = 1.5; g.eagleHit(e, tgt); if (tgt.hp <= 0) g.kill(tgt); }
                 e.moveT = 0.4;
               } else { e.moveT = 0.2; this.stepTo(e, tgt.x, tgt.y, false, night); }
             } else if (d > 3) { e.moveT = 0.2; this.stepTo(e, p.x, p.y, false, night); }

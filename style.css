@@ -69,6 +69,8 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 #jingbeads i.miss { border-color: #1c1a17; background: #1c1a17; }
 #jingbeads i.miss::before, #jingbeads i.miss::after { content: ''; position: absolute; left: 50%; top: 1px; bottom: 1px; width: 1.5px; background: var(--paper); transform: translateX(-50%) rotate(45deg); }
 #jingbeads i.miss::after { transform: translateX(-50%) rotate(-45deg); }
+#jingbeads i.ask { border-color: #1c1a17; background: #1c1a17; }
+#jingbeads i.ask::before { content: '?'; position: absolute; inset: 0; color: var(--paper); font: bold 7px/7px sans-serif; text-align: center; }
 /* 右下的減益框（v0.8.2 先放溺水）：紅框一閃一閃 */
 #debuffs { position: absolute; right: calc(18px + env(safe-area-inset-right, 0px)); bottom: calc(150px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 14px; background: rgba(239,229,207,.92); border: 2px solid var(--red); border-radius: 6px; color: var(--red); font-family: var(--font); animation: low-flash 1s infinite; z-index: 3; }
 #debuffs b { font: 30px/1 var(--font); }
