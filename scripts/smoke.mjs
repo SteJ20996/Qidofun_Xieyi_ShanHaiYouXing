@@ -37,6 +37,7 @@ const result = await page.evaluate(async () => {
   const trim = (keep) => { p.bag = p.bag.filter(s => keep.indexOf(s.n) >= 0); p.sel = 0; g.barSig = ''; };
   const toasts = () => document.getElementById('toasts').textContent;
   const hidden = (id) => document.getElementById(id).classList.contains('hidden');
+  const bagCells = () => [...document.querySelectorAll('#bagbar .slot')].reduce((a, e) => a + (+e.style.getPropertyValue('--span') || 1), 0);   // 船一艘一條寬格（v0.8.3），照寬算格數
   const takeYes = () => { if (!hidden('takeask')) document.getElementById('takeask-yes').click(); };   // 拆人造的東西會先問，測試裡直接答「拆」
   const calm = () => { p.san = 100; p.insane = false; p.ctrl = true; p.zeroSan = 0; p.hp = Math.max(p.hp, 60); p.knock = 0; setDay(0.53); g.ents.list = g.ents.list.filter(e => e.type !== '魄'); g.action = null; g.keys.clear(); };   // 測試裡真實時間會過，夜裡魄把愜意吸到零人就「手腳不聽使喚」；長等待之後先弄清醒
   const goNextTo = (x, y) => { w.set(x - 1, y, '草'); p.x = p.rx = x - 1; p.y = p.ry = y; face(1, 0); };
@@ -356,7 +357,7 @@ const result = await page.evaluate(async () => {
   g.diff = XIEYI.DIFF.normal; w.time = tSave;
   // 錦囊：囊多兩格、具欄多一格，最多八個（v0.6.10；v0.4.13–v0.6.9 六個、更早四個）
   g.addItem('錦囊', 1); hold('錦囊'); g.useItem(); await sleep(60);
-  ok('a pouch adds two bag slots and one tool slot', p.pouches === 1 && g.slots() === 18 && g.toolSlots() === 7 && document.querySelectorAll('#bagbar .slot').length === 18 && document.querySelectorAll('#toolbar .slot').length === 7);
+  ok('a pouch adds two bag slots and one tool slot', p.pouches === 1 && g.slots() === 18 && g.toolSlots() === 7 && bagCells() === 18 && document.querySelectorAll('#toolbar .slot').length === 7);
   p.pouches = 8; g.addItem('錦囊', 1); hold('錦囊'); g.useItem();
   ok('no more than eight pouches: 32 bag slots and 14 tool slots', p.pouches === 8 && g.count('錦囊') === 1 && g.slots() === 32 && g.toolSlots() === 14);
   g.removeItem('錦囊', 1); p.pouches = 0; g.barSig = '';
@@ -507,7 +508,8 @@ const result = await page.evaluate(async () => {
     old.dur = 7; old.rf = 6; g.save(); const svn = JSON.parse(localStorage.getItem('xieyi.save.v5')); const nrec = Object.values(svn.world.nets).find(v => v[1] === PX + 1 && v[2] === PY);
     ok('the save keeps an old net\'s durability and mends', !!nrec && nrec[6] === 7 && nrec[7] === 6, nrec);
     g.load(svn); const old2 = w.netAt(PX + 1, PY); ok('and loading brings them back', !!old2 && old2.dur === 7 && old2.rf === 6, old2);
-    g.pressGather(); takeYes();
+    const shipsTmp = p.bag.filter(x => G.item(x.n) && G.item(x.n).span); p.bag = p.bag.filter(x => !shipsTmp.includes(x));   // 船佔的格先挪開，免得囊滿（v0.8.3 起孤帆兩格、方舟五格）
+    g.pressGather(); takeYes(); p.bag.push(...shipsTmp); g.barSig = '';
     ok('taken back, the old net becomes a cast net in the bag with its durability', w.get(PX + 1, PY) === '水' && p.bag.some(x => x.n === '漁網' && x.dur === 7 && x.rf === 6), bag());
     for (const [x, y, c] of area) w.set(x, y, c); g.ents.list = g.ents.list.filter(e => e.type !== '魚');
     g.removeItem('棉', 99); g.removeItem('麻', 99); p.cour = 0;
@@ -1399,13 +1401,19 @@ const result = await page.evaluate(async () => {
     ok('a plank laid on the swamp makes a boardwalk you walk on as on flat ground', w.get(cx + 1, cy) === '棧' && D['棧'].walk === 1 && g.count('木板') === 0 && D['棧'].to === '沼');
     g.addItem('磚', 1); hold('磚'); put(cx + 1, cy, '沼'); g.pressPlace();
     ok('nothing else can be set down on a swamp', w.get(cx + 1, cy) === '沼' && g.count('磚') === 1);
-    // 油脂：斃野豬野牛四分之一得；棉一油脂一做三根蠟燭
+    // 油脂（v0.8.3）：斃野豬野牛 35% 得一份（真隨機），要裝在麻布包裡（一包八份，包不會用掉）；棉一油脂一做三根蠟燭
     p.bag = []; g.barSig = '';
-    const b2 = E.add('豬', cx + 4, cy + 4, { moveT: 99 }); window.U.trueRand = () => 0.1; g.kill(b2);
-    const b3 = E.add('牛', cx + 4, cy + 4, { moveT: 99 }); window.U.trueRand = () => 0.9; g.kill(b3); window.U.trueRand = tr;
-    ok('a slain boar gives 3 meat and (a quarter of the time) fat; a bison gives 4 meat', g.count('肉') === 7 && g.count('油脂') === 1, bag());
+    const b0 = E.add('豬', cx + 4, cy + 4, { moveT: 99 }); window.U.trueRand = () => 0.1; g.kill(b0); window.U.trueRand = tr;
+    ok('v0.8.3: with no 麻布包 the boar\'s fat cannot be carried and is lost', g.count('油脂') === 0 && /沒有空的麻布包/.test(g.msgText), g.msgText);
+    p.bag = []; g.addItem('麻布', 2); g.addItem('麻', 1); p.sta = p.staMax; g.craft('oilbag'); const ob = () => p.bag.find(s => s.n === '麻布包');
+    ok('v0.8.3: 麻布二、麻一 sew an empty 麻布包; the bag slot reads 油 0/8', g.count('麻布包') === 1 && ob().oil === 0 && g.count('麻布') === 0 && (() => { g.barSig = ''; g.buildBag(); return /油 0\/8/.test(document.getElementById('bagbar').textContent); })(), bag());
+    const b2 = E.add('豬', cx + 4, cy + 4, { moveT: 99 }); window.U.trueRand = () => 0.34; g.kill(b2);
+    const b3 = E.add('牛', cx + 4, cy + 4, { moveT: 99 }); g.kill(b3);
+    const b4 = E.add('牛', cx + 4, cy + 4, { moveT: 99 }); window.U.trueRand = () => 0.36; g.kill(b4); window.U.trueRand = tr;
+    ok('v0.8.3: boar and bison each give one portion of fat 35% of the time, into the 麻布包', g.count('肉') === 11 && g.count('油脂') === 2 && ob().oil === 2, bag());
     g.addItem('棉', 1); p.sta = p.staMax; g.craft('candle2');
-    ok('棉一油脂一 makes three candles', g.count('蠟燭') === 3 && g.count('油脂') === 0, bag());
+    ok('棉一油脂一 makes three candles — the fat comes out of the bag, the bag stays', g.count('蠟燭') === 3 && g.count('油脂') === 1 && ob().oil === 1 && g.count('麻布包') === 1, bag());
+    ob().oil = 8; ok('v0.8.3: a full bag takes no more fat', !g.canAdd('油脂', 1) && g.addItem('油脂', 1) === 1);
     // 製作欄：v0.6.10 起照配方表一條一條列，不畫衍生樹
     g.craftCat = '燈火'; const vr = g.visibleRecipes().map(r => r.id), want = G.RECIPES.filter(r => r.cat === '燈火').map(r => r.id);
     ok('v0.6.10: craft panel 燈火 lists its recipes in table order, no parent/child levels', vr.join() === want.join() && typeof g.craftTree !== 'function' && typeof g.craftParents !== 'function', vr);
@@ -1637,6 +1645,53 @@ const result = await page.evaluate(async () => {
     const r0 = U.trueRand, cb = w.onWeather, ra = w.rainUntil, rn = w.nextRainAt; w.onWeather = null; U.trueRand = () => 0; w.rainUntil = 0; w.nextRainAt = w.time; w.step(p.x, p.y); const rainLen = w.rainUntil - w.time;
     U.trueRand = r0; w.onWeather = cb; w.rainUntil = ra; w.nextRainAt = rn;
     ok('v0.6.10: things counted in days follow the longer day (the shortest rain is a quarter of 360 = 90 s)', Math.abs(rainLen - 90) <= 0.5, rainLen); }
+  // ============ v0.8.3：魂環隔開、玄武四顆珠；水性減半；船一艘一欄（兩格／五格）、落水放船下水；魔物誌十二張 ============
+  { const E = g.ents, p0 = { x: p.x, y: p.y }, az = g.azure, az0 = p.azure, ring = document.getElementById('soulring'), bag0 = p.bag.slice();
+    const rs = getComputedStyle(ring), mw = document.getElementById('mapwrap').getBoundingClientRect(), rr = ring.getBoundingClientRect();
+    ok('v0.8.3: the soul ring sits about twelve points outside the courage ring (6-point band, 12-point gap)', rs.paddingTop === '18px' && Math.abs((mw.left - rr.left) - 18) < 1.5 && /radial-gradient/.test(getComputedStyle(ring, '::before').maskImage || getComputedStyle(ring, '::before').webkitMaskImage), [rs.paddingTop, mw.left - rr.left]);
+    const beads = document.querySelectorAll('#jingbeads i');
+    ok('v0.8.3: four beads for 玄武 at the top of the ring, all hollow until there is something to take', beads.length === 4 && [...beads].every(b => !b.className) && /玄武的四次取經/.test(document.getElementById('jingbeads').title));
+    p.jing = ['got', 'miss']; g.courSig = ''; await sleep(80);
+    ok('v0.8.3: a taken scroll is a vermilion dot, a missed one a black cross', beads[0].className === 'got' && beads[1].className === 'miss' && !beads[2].className && /第一次取過、第二次錯過/.test(document.getElementById('jingbeads').title));
+    p.jing = undefined; g.courSig = ''; p.azure = true; await sleep(80);
+    ok('v0.8.3: the soul-ring thirds are called 龍魂, 鳳翎, 虎魄', /龍魂（青龍，已求教）/.test(ring.title) && /鳳翎/.test(ring.title) && /虎魄/.test(ring.title), ring.title);
+    // 水性：落水的減益減半
+    p.x = p.rx = az.x - 30; p.y = p.ry = az.y; E.px = p.x; E.py = p.y; p.sailing = false; p.ship = null; p.swimming = true; p.swimT = 30;
+    p.azure = false; const d0 = g.ironDrain() / (1 + 0.08 * g.ironCount() / 3), m0 = g.dmgMult(); let st0 = p.sta = 80; g.updateStats(1); const f0 = st0 - p.sta;
+    p.azure = true; const d1 = g.ironDrain() / (1 + 0.08 * g.ironCount() / 3), m1 = g.dmgMult(); st0 = p.sta = 80; g.updateStats(1); const f1 = st0 - p.sta;
+    ok('v0.8.3: with 水性 the swimming penalties are halved — drains ×1.5 not ×2, weapons ×0.875 not ×0.75, strength falls half as fast', Math.abs(d0 - 2) < 1e-6 && Math.abs(d1 - 1.5) < 1e-6 && Math.abs(m1 / m0 - 0.875 / 0.75) < 1e-6 && f1 < f0 && Math.abs(f0 - f1 - 0.25) < 0.05, [d0, d1, m1 / m0, f0, f1]);
+    // 船：一艘一欄，孤帆兩格、方舟五格，不疊
+    p.bag = []; g.addItem('孤帆', 2); g.addItem('方舟', 1);
+    ok('v0.8.3: ships never stack — two 孤帆 are two entries; the bag counts two slots each and five for a 方舟', p.bag.filter(s => s.n === '孤帆').length === 2 && p.bag.every(s => s.c === 1) && g.bagUsed() === 9, [p.bag.map(s => s.n + s.c), g.bagUsed()]);
+    g.barSig = ''; g.buildBag(); const wide = [...document.querySelectorAll('#bagbar .slot.wide')], one = document.querySelector('#bagbar .slot:not(.wide)');
+    ok('v0.8.3: in the bag a 孤帆 is one slot two cells wide, a 方舟 five cells wide, and the empty cells shrink to match', wide.length === 3 && Math.abs(wide.find(e => /方舟/.test(e.textContent)).getBoundingClientRect().width - (5 * 43 + 4 * 5)) < 2 && Math.abs(wide.find(e => /孤帆/.test(e.textContent)).getBoundingClientRect().width - (2 * 43 + 5)) < 2 && document.querySelectorAll('#bagbar .slot.empty').length === g.slots() - 9, [wide.map(e => Math.round(e.getBoundingClientRect().width)), document.querySelectorAll('#bagbar .slot.empty').length]);
+    while (g.bagUsed() < g.slots() - 1) g.addItem(['石', '木', '草', '土', '沙', '棉', '麻', '竹', '花', '煤', '鐵', '磚', '石子', '果', '魚', '肉', '木板', '麻布', '鐵礦', '精煤', '鎢鋼', '玻璃瓶', '燈', '門', '窗', '床', '偶'][p.bag.length % 27], 1);
+    ok('v0.8.3: with one cell left a 孤帆 does not fit', g.bagUsed() === g.slots() - 1 && !g.canAdd('孤帆', 1) && g.addItem('孤帆', 1) === 1 && g.canAdd('石', 1));
+    // 落水放船下水：一般撐四息，一動就重來，一回最多三艘
+    p.bag = []; g.addItem('孤帆', 1); g.addItem('方舟', 1); hold('孤帆'); p.swimShips = 0; p.deploy = null; g.pressPlace();
+    ok('v0.8.3: swimming with a 孤帆 in hand, F starts setting it down — four breaths on normal', !!p.deploy && p.deploy.n === '孤帆' && Math.abs(p.deploy.t - 4) < 1e-6 && /撐住孤帆/.test(g.msgText), p.deploy);
+    p.x += 1; g.tickDeploy(0.1); ok('v0.8.3: moving lets the hull drift off — start over', !p.deploy && /重新撐/.test(g.msgText)); p.x -= 1; p.rx = p.x;
+    hold('孤帆'); g.pressPlace(); g.tickDeploy(4.01);
+    ok('v0.8.3: after four breaths you are aboard a fresh 孤帆; the item is gone; one of three used', p.sailing && !p.swimming && p.ship && p.ship.kind === '孤帆' && p.ship.hp === 120 && g.count('孤帆') === 0 && p.swimShips === 1 && /上了船/.test(toasts()));
+    p.sailing = false; p.ship = null; p.swimming = true; p.swimT = 30; p.swimShips = 3; hold('方舟'); g.pressPlace();
+    ok('v0.8.3: three ships per fall — the fourth is refused', !p.deploy && /放過 3 艘/.test(g.msgText) && g.count('方舟') === 1, g.msgText);
+    const dk = g.diff; g.diff = XIEYI.DIFF.easy; p.swimShips = 0; g.pressPlace(); const te = p.deploy && p.deploy.t; p.deploy = null; g.diff = XIEYI.DIFF.hard; g.pressPlace(); const th = p.deploy && p.deploy.t; p.deploy = null; g.diff = dk;
+    ok('v0.8.3: easy three breaths, hard five', te === 3 && th === 5, [te, th]);
+    // 舊存檔：疊著的船拆成一艘一欄，散的油脂裝進麻布包
+    g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot)));
+    const old = JSON.parse(JSON.stringify(sv)); old.player.bag = [{ n: '孤帆', c: 3 }, { n: '油脂', c: 10 }, { n: '木', c: 5 }]; old.player.swimming = false; old.player.sailing = false;
+    g.load(old);
+    ok('v0.8.3: an old save — a stack of three 孤帆 becomes three entries, ten loose fat go into two 麻布包 (8 + 2)', p.bag.filter(s => s.n === '孤帆').length === 3 && p.bag.filter(s => s.n === '麻布包').map(s => s.oil).sort((a, b) => b - a).join(',') === '8,2' && g.count('油脂') === 10 && !p.bag.some(s => s.n === '油脂'), p.bag.map(s => s.n + s.c + (s.oil !== undefined ? 'o' + s.oil : '')));
+    // 魔物誌：十二張，分四組，沒遇過的蓋著
+    p.codex = { '蜃': 1 }; if (p.creatures.indexOf('青龍') < 0) p.creatures.push('青龍'); g.journalTab = 'codex'; g.toggleJournal();
+    const cards = document.querySelectorAll('#journal-body .codex-card'), locked = document.querySelectorAll('#journal-body .codex-card.locked'), heads = [...document.querySelectorAll('#journal-body h3')].map(h => h.textContent).join('');
+    ok('v0.8.3: the 魔物誌 has all twelve large monsters in four groups; the ones not met yet are covered with a hint', cards.length === 12 && locked.length === 10 && heads === '小魔王神獸大魔王終極' && /魔物誌（2／12）/.test(document.getElementById('journal-tabs').textContent) && /東極那片大水裡/.test(document.getElementById('journal-body').textContent));
+    const cr = [...cards].map(c => c.getBoundingClientRect()), panel = document.querySelector('#journal .panel').getBoundingClientRect();
+    ok('v0.8.3: the cards sit in neat columns inside the panel (no card spills over)', cr.every(r => r.left >= panel.left && r.right <= panel.right + 1) && new Set(cr.map(r => Math.round(r.width))).size === 1, cr.slice(0, 3).map(r => Math.round(r.width)));
+    document.querySelector('#journal-tabs button[data-tab="see"]').click();
+    ok('v0.8.3: the 見聞 tab still lists places, creatures and days', /地方/.test(document.getElementById('journal-body').textContent) && /日子/.test(document.getElementById('journal-body').textContent));
+    g.toggleJournal(); g.journalTab = 'see';
+    g.load(sv); p.bag = bag0; p.azure = az0; p.swimming = false; p.swimT = 0; p.sailing = false; p.ship = null; p.x = p.rx = p0.x; p.y = p.ry = p0.y; E.px = p.x; E.py = p.y; g.barSig = ''; }
   // ============ v0.8.2：落水的倒數框、木板多撐八息、青龍的水性；魔物誌 ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, az = g.azure, az0 = p.azure, db = document.getElementById('debuffs');
     E.list = E.list.filter(e => e.type !== '蜃' && e.type !== '青龍');
@@ -1651,10 +1706,10 @@ const result = await page.evaluate(async () => {
     p.swimming = false; p.swimT = 0; p.azure = az0; p.x = p.rx = p0.x; p.y = p.ry = p0.y; E.px = p.x; E.py = p.y; g.removeItem('木板', 99); await sleep(120);
     ok('v0.8.2: back on land the 溺 box goes away', db.classList.contains('hidden'));
     // 魔物誌：斃了第一頭蜃才翻開
-    p.codex = undefined; const jt0 = () => { g.toggleJournal(); const t = document.getElementById('journal-body').textContent; g.toggleJournal(); return t; };
+    p.codex = undefined; const jt0 = () => { g.journalTab = 'codex'; g.toggleJournal(); const t = document.getElementById('journal-tabs').textContent + document.getElementById('journal-body').textContent; g.toggleJournal(); g.journalTab = 'see'; return t; };
     const before = jt0(); g.kill(E.add('蜃', p.x + 3, p.y + 3, { moveT: 99, fogT: 999 })); g.removeItem('蜃碎片', 99); const after = jt0();
     ok('v0.8.2: the 魔物誌 opens in the journal only after the first 蜃 is slain, with a card for it', before.indexOf('魔物誌') < 0 && after.indexOf('魔物誌') >= 0 && /海旁蜃氣象樓臺/.test(after) && p.codex['蜃'] === 1, after.slice(after.indexOf('魔物誌'), after.indexOf('魔物誌') + 60));
-    ok('v0.8.2: …and the 東海青龍 you met has a card too; ones you never met stay hidden', /東海青龍/.test(after) && /左青龍而右白虎/.test(after) && /沒遇過/.test(after)); }
+    ok('v0.8.2: …and the 東海青龍 you met has a card too; ones you never met stay hidden', /東海青龍/.test(after) && /左青龍而右白虎/.test(after) && /未遇/.test(after)); }
   // ============ v0.8：八格存檔、暫停面板「存到」別格；東海青龍、蜃珠、船自己回命、舊存檔的龍換青鱗 ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, slot0 = g.slot, GK = XIEYI.Game, sb = (n) => document.querySelector('#saveas .saveas-slot[data-slot="' + n + '"]');
     ok('v0.8: eight save slots — slot 1 keeps the old key, slot 8 is xieyi.save.v5.8', GK.slotKey(1) === 'xieyi.save.v5' && GK.slotKey(8) === 'xieyi.save.v5.8');
