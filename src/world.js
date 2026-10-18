@@ -21,6 +21,8 @@
   const FOG_ROLLS = 2, FOG_P = 0.25, FOG_NEAR = [8, 28];
   let FOG_LIFE = DAY;
   const SEA_FOG_LIFE = 90;   // 蜃吐的海霧：九十息就散
+  // v0.8.8：挖空的礦脈寫回白紙時，不寫回礦本身（先前鐵煤挖成石、再挖成白紙，幾分鐘就寫回原礦，繞過了七到十日才長回來的規則）
+  const SPENT = { '鐵': '石', '煤': '石', '曜': '岩', '燧': '礫' };
   const ORE_DAYS = [7, 10], ORE_BACK = '石草白';   // 鑿掉的鐵礦七到十日（真隨機）後在原地長回來，那時那格是石、草或白紙才長得回，不然就沒了（v0.6.10 使用者定）
   const SCARE_DAYS = 45, SCARE_CAP = 60;   // 稻草人守幾天、續上最多幾天（v0.6.10 使用者定四十五天；續的上限照舊多三分之一：三十／四十 → 四十五／六十）
   // 霧的形（v0.6.4 使用者定）：一片霧是一塊連續的形，面積十八格上下（FOG_AREA），可圓可方（超橢圓的次方 2–6）、扁圓不一、斜著放，
@@ -608,12 +610,12 @@
         const ch = this.diff.get(k);
         if (ch === '土') {
           if (rng() < 0.35 && this.countAround(x, y, '草木林森田竹花果棉') >= 1) this.set(x, y, '草');
+        } else if (ch === '草' && (this.base(x, y) === '棉' || this.base(x, y) === '麻')) {
+          if (rng() < 0.05) this.set(x, y, this.base(x, y));          // 採過的棉麻又長出來（v0.8.8：先前被下面那條搶先，一半以上長成了樹）
         } else if (ch === '草') {
           if (rng() < 0.12 && this.countAround(x, y, '木林森果') >= 2) this.set(x, y, '木');
         } else if (ch === '木' && this.base(x, y) === '果') {
           if (rng() < 0.05) this.set(x, y, '果');                       // 摘過的果樹又結果
-        } else if (ch === '草' && this.base(x, y) === '棉') {
-          if (rng() < 0.05) this.set(x, y, '棉');                       // 採過的棉又開花
         } else if (ch === '木') {
           if (rng() < 0.08 && this.countAround(x, y, '林森') >= 3) this.set(x, y, '林');
         } else if (ch === '白') {
@@ -624,7 +626,7 @@
       }
     }
 
-    rewriteBlank(x, y) { const b = this.base(x, y); return DB[b] && DB[b].kind === 'object' ? '土' : b; }   // 白紙寫回原字；原本是人造的（村裡的墟、門）不會自己長回來，成了土（v0.6.8）
+    rewriteBlank(x, y) { const b = this.base(x, y); return SPENT[b] || (DB[b] && DB[b].kind === 'object' ? '土' : b); }   // 白紙寫回原字；原本是人造的（村裡的墟、門）不會自己長回來，成了土（v0.6.8）；挖過的礦寫回礦渣那一層（v0.8.8）
     // 統計周圍 8 格中屬於 set 的字數；set 為 null 時統計"非白紙、非水"的格子
     countAround(x, y, set) {
       let n = 0;

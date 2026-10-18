@@ -82,6 +82,10 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 #bossbar .bb-bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #8f2c20, #b4392a); transition: width .2s; }
 #bossbar.guard { border-color: #24766b; } #bossbar.lock { border-color: var(--red); animation: low-flash 1s infinite; }
 #bossask-text ul { margin: 8px 0 0; padding-left: 20px; text-align: left; } #bossask-text li { margin: 3px 0; }
+#bossask-text li.warn { color: var(--red); }
+#bossbar.shade { border-style: dashed; background: rgba(224,220,212,.94); } #bossbar.shade .bb-head b { color: #3b3a40; } #bossbar.shade .bb-bar i { background: linear-gradient(90deg, #2b2a30, #55535c); }
+#talk-text { text-align: left; max-height: 52vh; overflow-y: auto; } #talk-text p { margin: 6px 0; line-height: 1.6; }
+#talk-row { flex-wrap: wrap; justify-content: center; } #talk-row button { margin: 4px; } #talk-row button:disabled { opacity: .45; cursor: default; }
 #debuffs span { font-size: 16px; } #debuffs small { font-size: 12px; color: var(--ink-2); }
 #minimap { display: block; width: 150px; height: 150px; border-radius: 50%; border: 2px solid var(--ink); background: var(--paper); image-rendering: pixelated; }
 #courlabel { font: 15px var(--font); color: var(--ink-2); background: rgba(239,229,207,.75); padding: 2px 10px; border-radius: 3px; }

@@ -8,7 +8,7 @@
     '淼': '#4a6f8f', '水': '#6f93b0', '沙': '#d9c89a', '石': '#9c9a93', '山': '#6e6c75', '雪': '#e8ecf2',
     '草': '#b9c98f', '花': '#d29b8e', '木': '#8aa86f', '林': '#5e8a55', '森': '#3b5f3a', '竹': '#7fa36b', '田': '#d1c572',
     '土': '#a98a62', '灰': '#8d8781', '白': '#f3ebd8', '火': '#d9593c', '炎': '#d9593c', '焱': '#d9593c',
-    '明': '#f0c54a', '休': '#9a6b45', '橋': '#9a6b45', '困': '#7a5a3e', '碑': '#2a2724', '日': '#e07a4a', '月': '#e3c35a',
+    '明': '#f0c54a', '休': '#9a6b45', '橋': '#9a6b45', '困': '#7a5a3e', '碑': '#2a2724', '亭': '#8a3a2a', '日': '#e07a4a', '月': '#e3c35a',
     '果': '#c9654a', '灶': '#d9593c', '鼎': '#b4452c', '包': '#2a2724', '囊': '#5a3e2b', '煤': '#2a2724', '鐵': '#8a5a3a', '網': '#5a86a8', '罟': '#4f7a9c', '罾': '#446e90', '路': '#c9b27a', '門': '#9a7a55', '井': '#4a6f8f',
     '棉': '#e8e2d0', '礫': '#b9b4a8', '磚': '#9a5a40', '墟': '#8a8378', '窗': '#c09a6a', '沼': '#6b6a3c', '棧': '#9a6b45', '床': '#a06a4a', '橋': '#9a6b45', '漁': '#5a86a8', '麻': '#a9b07a', '偶': '#b08a5a', '櫃': '#7a4e2d', '舟': '#7a4e2d',
     '塔': '#2a2724', '寺': '#5a3e2b', '船': '#5a3e2b', '泉': '#4a6f8f', '墓': '#6e6c75', '洞': '#2a2724', '燈': '#e0a020',
@@ -321,13 +321,15 @@
           continue;
         }
         if (e.type === '豨') {       // 封豨（v0.8.7）：二乘二的「豨」，頭上一圈「鬃」（三、五、六個，剩三成全紅）；蓄力時地上畫出要衝的路；拱地時一圈震往外傳
-          const cx = ox + (e.rx + 1) * T, cy = oy + (e.ry + 1) * T, frac = e.hp / d.hp, mane = frac > 0.5 ? 3 : frac > 0.3 ? 5 : 6, red = frac <= 0.3;
+          const cx = ox + (e.rx + 1) * T, cy = oy + (e.ry + 1) * T, frac = e.hp / (e.max || d.hp), mane = frac > 0.5 ? 3 : frac > 0.3 ? 5 : 6, red = frac <= 0.3, shade = !!e.shade;   // 玄武吐的豨影（v0.8.8）：墨灰、半透，鬃不變紅
+          if (shade) { ctx.save(); ctx.globalAlpha = 0.72; }
           if (e.state === 'wind') { ctx.save(); ctx.fillStyle = 'rgba(180,57,42,0.15)'; for (let k = 1; k <= 10; k++) for (const [ax, ay] of g.ents.hogRect(e, e.x + e.cdx * k, e.y + e.cdy * k)) ctx.fillRect(ox + ax * T, oy + ay * T, T, T); ctx.restore(); }
           if (e.ring) { ctx.save(); ctx.strokeStyle = 'rgba(90,62,43,0.55)'; ctx.lineWidth = T * 0.25; ctx.beginPath(); ctx.arc(ox + e.ring.cx * T, oy + e.ring.cy * T, Math.max(0.1, e.ring.r * T), 0, 7); ctx.stroke(); ctx.restore(); }
           const sh = (e.state === 'wind' || e.state === 'root') ? Math.sin(now * 40) * 2 : 0;
-          for (let k = 0; k < mane; k++) { const a = Math.PI * (1.05 + 0.9 * k / Math.max(1, mane - 1)); this.drawGlyph('鬃', red ? G.INK.red : '#3d2a1c', cx + Math.cos(a) * T * 1.3, cy + Math.sin(a) * T * 1.2, T * 0.62, a + Math.PI / 2, 0.95); }
-          this.drawGlyph('豨', red ? '#8f2c20' : d.ink, cx + sh, cy, T * 2.1, 0, 1);
+          for (let k = 0; k < mane; k++) { const a = Math.PI * (1.05 + 0.9 * k / Math.max(1, mane - 1)); this.drawGlyph('鬃', shade ? '#55535c' : red ? G.INK.red : '#3d2a1c', cx + Math.cos(a) * T * 1.3, cy + Math.sin(a) * T * 1.2, T * 0.62, a + Math.PI / 2, 0.95); }
+          this.drawGlyph('豨', shade ? '#2b2a30' : red ? '#8f2c20' : d.ink, cx + sh, cy, T * 2.1, 0, 1);
           if (e.state === 'eat') this.drawGlyph('食', G.INK.plant, cx + T * 1.1, cy - T * 1.1, T * 0.55, 0, 0.9);
+          if (shade) { this.drawGlyph('影', '#55535c', cx + T * 1.15, cy + T * 0.95, T * 0.5, 0, 0.9); ctx.restore(); }
           continue;
         }
         if (e.type === '雕') {       // 蠱雕（v0.8.6）：灰黑的「雕」字頭上一點角；在高處盤旋時畫得高、地上一團影子，撲下來時落到地面
@@ -344,6 +346,15 @@
           this.drawGlyph('翎', '#d9822b', px - T * 0.95, py + bob - T * 0.1, T * 0.7, -0.35 - flap, 0.95);
           this.drawGlyph('翎', '#d9822b', px + T * 0.95, py + bob - T * 0.1, T * 0.7, 0.35 + flap, 0.95);
           this.drawGlyph('雀', d.ink, px, py + bob, T * 1.7, 0, 1);
+          continue;
+        }
+        if (e.type === '玄武') {     // 北方玄武（v0.8.8）：墨黑的大字「龜」，像一塊石頭；一個墨綠的「蛇」字繞著牠慢慢轉
+          const S = T * 1.8, a = now * 0.7 + e.bob;
+          ctx.save(); ctx.fillStyle = 'rgba(28,26,23,0.16)'; ctx.beginPath(); ctx.ellipse(px, py + T * 0.55, T * 0.95, T * 0.28, 0, 0, 7); ctx.fill(); ctx.restore();
+          const back = Math.sin(a) < 0, snake = () => this.drawGlyph('蛇', '#2c3b2a', px + Math.cos(a) * T * 1.05, py + Math.sin(a) * T * 0.5 - T * 0.15, T * 0.6, Math.cos(a) * 0.4, 0.95);
+          if (back) snake();
+          this.drawGlyph('龜', d.ink, px, py, S, 0, 1);
+          if (!back) snake();
           continue;
         }
         if (e.type === '白虎') {     // 西方白虎（v0.8.5）：比青龍還大的白字，墨線描邊，背上幾個「斑」字
@@ -570,6 +581,7 @@
         else if (e.type === '豨') { m.fillStyle = '#5a3e2b'; m.fillRect(i * px - 2, j * px - 2, px * 2 + 4, px * 2 + 4); }
         else if (e.type === '雕') { m.fillStyle = '#4a4f5c'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
         else if (e.type === '朱雀') { m.fillStyle = '#c23b22'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
+        else if (e.type === '玄武') { m.fillStyle = '#1c1a17'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '豹' || e.type === '狼' || e.type === '蛇') { m.fillStyle = '#8a2a1a'; m.fillRect(i * px, j * px, px + 1, px + 1); }
       }
       m.fillStyle = '#1c1a17'; m.beginPath(); m.arc(half * px + px / 2, half * px + px / 2, 3, 0, 7); m.fill();
