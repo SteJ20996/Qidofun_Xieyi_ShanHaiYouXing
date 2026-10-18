@@ -4,7 +4,7 @@
   --font: "LXGW WenKai TC", "BiauKai", "DFKai-SB", "標楷體", "Kaiti TC", "Noto Serif TC", "WenQuanYi Zen Hei", serif;
   --ui: "Noto Serif TC", "Noto Serif CJK TC", "PingFang TC", "Microsoft JhengHei", "WenQuanYi Zen Hei", serif;
 }
-/* 簡體（v0.24）：畫字的楷體照用霞鶩文楷 TC（簡體字也有，缺的落到 SC 字型），內文改用思源宋體 SC */
+/* 簡體（v0.5.4）：畫字的楷體照用霞鶩文楷 TC（簡體字也有，缺的落到 SC 字型），內文改用思源宋體 SC */
 html.hans { --font: "LXGW WenKai TC", "Kaiti SC", "STKaiti", "KaiTi", "楷体", "Noto Serif SC", serif; --ui: "Noto Serif SC", "Noto Serif CJK SC", "PingFang SC", "Microsoft YaHei", "Noto Serif TC", serif; }
 .langrow button { min-width: 64px; }
 
@@ -54,6 +54,14 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 #status { font: 16px var(--font); color: var(--ink-2); background: rgba(239,229,207,.75); padding: 6px 12px; border: 1px solid rgba(28,26,23,.35); border-radius: 4px; }
 #status b { font-size: 20px; color: var(--ink); }
 #mapwrap { --cour: 0%; width: 166px; height: 166px; border-radius: 50%; padding: 8px; background: conic-gradient(#d4af37 var(--cour), rgba(28,26,23,.18) 0); box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+/* 魂環（v0.8.2）：膽氣環外面一圈，三等分——上右青龍、下朱雀、左上白虎；求教過的那一分才上色 */
+#soulring { --q: rgba(28,26,23,.16); --z: rgba(28,26,23,.16); --b: rgba(28,26,23,.16); padding: 6px; border-radius: 50%; background: conic-gradient(var(--q) 0 118deg, transparent 118deg 122deg, var(--z) 122deg 238deg, transparent 238deg 242deg, var(--b) 242deg 358deg, transparent 358deg); }
+#soulring.q { --q: #24766b; } #soulring.z { --z: #c0392b; } #soulring.b { --b: #e6e0d2; }
+#soulring.b { box-shadow: inset 0 0 0 1px rgba(28,26,23,.25); }
+/* 右下的減益框（v0.8.2 先放溺水）：紅框一閃一閃 */
+#debuffs { position: absolute; right: calc(18px + env(safe-area-inset-right, 0px)); bottom: calc(150px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 14px; background: rgba(239,229,207,.92); border: 2px solid var(--red); border-radius: 6px; color: var(--red); font-family: var(--font); animation: low-flash 1s infinite; z-index: 3; }
+#debuffs b { font: 30px/1 var(--font); }
+#debuffs span { font-size: 16px; } #debuffs small { font-size: 12px; color: var(--ink-2); }
 #minimap { display: block; width: 150px; height: 150px; border-radius: 50%; border: 2px solid var(--ink); background: var(--paper); image-rendering: pixelated; }
 #courlabel { font: 15px var(--font); color: var(--ink-2); background: rgba(239,229,207,.75); padding: 2px 10px; border-radius: 3px; }
 #wornwrap { position: absolute; left: calc(24px + env(safe-area-inset-left, 0px)); top: calc(356px + env(safe-area-inset-top, 0px)); display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
@@ -103,7 +111,7 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 .slot .ch.word.long { font-size: 11px; letter-spacing: -1px; }
 .rowlabel.sub { width: auto; font-size: 13px; color: var(--ink-2); padding: 0 2px; align-self: center; }
 .diffrow button.on { outline: 2px solid var(--red); }
-/* 起始頁的八格存檔（v0.42：一排四格，窄的螢幕一排兩格） */
+/* 起始頁的八格存檔（v0.8：一排四格，窄的螢幕一排兩格） */
 .saves { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 14px 0 6px; }
 @media (max-width: 720px) { .saves { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .save-card { min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 1px solid rgba(28,26,23,.35); background: rgba(255,248,234,.6); cursor: pointer; transition: transform .1s; }
@@ -122,6 +130,12 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 .saveas-slot.on { outline: 2px solid var(--red); }
 .saveas-slot.empty span { color: var(--dim); }
 .panel .saveas button.saveas-slot.arm b { color: var(--paper); }
+/* 魔物誌的卡片（v0.8.2） */
+.codex { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 6px 0; }
+.codex-card { border: 1px solid rgba(28,26,23,.35); background: rgba(255,248,234,.6); padding: 8px 10px; }
+.codex-card .cx-head { display: flex; align-items: baseline; gap: 8px; } .codex-card .cx-ch { font: 30px/1 var(--font); }
+.codex-card .cx-from { font-size: 12px; color: var(--dim); margin: 4px 0; } .codex-card p { margin: 2px 0; font-size: 14px; }
+#pause-diff button.on { outline: 2px solid var(--red); }
 .panel button.arm { background: var(--red); border-color: var(--red); color: var(--paper); }
 #diff-desc { margin-left: 6px; }
 .slot.bag .cost { font-size: 10px; }
@@ -142,20 +156,20 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 @media (max-width: 720px) { .craftbody { flex-direction: column; } #craft-cats { flex-direction: row; flex-wrap: wrap; } }
 .recipe { display: grid; grid-template-columns: 230px 1fr 56px 1fr 80px; align-items: center; gap: 10px; padding: 6px 10px; position: relative; border: 1px solid rgba(28,26,23,.25); border-radius: 4px; background: rgba(255,248,234,.6); font-size: 14px; }
 .recipe.cant { opacity: .55; }
-/* 製作欄一條一條列（v0.37 拿掉衍生樹）：序號與品名同在第一欄，各列的其他欄對得齊 */
+/* 製作欄一條一條列（v0.6.10 拿掉衍生樹）：序號與品名同在第一欄，各列的其他欄對得齊 */
 .recipe .head { display: flex; align-items: center; gap: 8px; align-self: stretch; min-width: 0; }
 .recipe b { font: 22px/1 var(--font); }
-.recipe b .better { display: block; font: 12px var(--ui); font-style: normal; color: var(--red-2); margin-top: 3px; }   /* 已有更好的衣甲（v0.39） */
-.recipe .note .fresh { color: var(--red-2); font-style: normal; }   /* 還新，用過一半才能翻新（v0.39） */
-.recipe .num { color: var(--dim); font-size: 12px; flex: none; width: 18px; text-align: right; }   /* 編號固定寬：1 與 10 之後的品名對得齊（v0.36） */
+.recipe b .better { display: block; font: 12px var(--ui); font-style: normal; color: var(--red-2); margin-top: 3px; }   /* 已有更好的衣甲（v0.7.1） */
+.recipe .note .fresh { color: var(--red-2); font-style: normal; }   /* 還新，用過一半才能翻新（v0.7.1） */
+.recipe .num { color: var(--dim); font-size: 12px; flex: none; width: 18px; text-align: right; }   /* 編號固定寬：1 與 10 之後的品名對得齊（v0.6.9） */
 .recipe .needs span { margin-right: 8px; white-space: nowrap; }
 .recipe .needs .lack { color: var(--red-2); }
 .recipe .needs .ok { color: #2f5a40; }
 .recipe .sta { color: var(--ink-2); white-space: nowrap; }
 .recipe .note { color: var(--dim); font-size: 13px; }
 .recipe .btns { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
-.recipe.choose .btns { grid-column: 2 / -1; justify-content: flex-start; }   /* 要選方向的（磨礪、鍛）：一排鈕放到下一行，別把別的欄擠歪（v0.36） */
-.panel .recipe button { font: 18px var(--font); padding: 6px 10px; min-width: 56px; white-space: nowrap; }   /* 比 .panel button 小一號：「翻新」「已用完」一行放得下，按鈕欄每列對齊（v0.39） */
+.recipe.choose .btns { grid-column: 2 / -1; justify-content: flex-start; }   /* 要選方向的（磨礪、鍛）：一排鈕放到下一行，別把別的欄擠歪（v0.6.9） */
+.panel .recipe button { font: 18px var(--font); padding: 6px 10px; min-width: 56px; white-space: nowrap; }   /* 比 .panel button 小一號：「翻新」「已用完」一行放得下，按鈕欄每列對齊（v0.7.1） */
 @media (max-width: 720px) { .recipe { grid-template-columns: minmax(150px, auto) 1fr; } .recipe .note { display: none; } }
 .slot.bag.empty { border-style: dashed; border-color: rgba(74,66,56,.35); background: rgba(239,229,207,.4); cursor: default; }
 .slot.bag.empty:hover { transform: none; }
@@ -224,7 +238,7 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 .panel .grid .slot { cursor: pointer; }
 .panel.fogpanel { max-width: 560px; }
 .panel button.small { font-size: 15px; padding: 4px 10px; }
-/* 起始頁與暫停面板墊在最底：從它們打開的幫助在上面（v0.25.1 前同層，DOM 在後的起始頁會蓋住它們） */
+/* 起始頁與暫停面板墊在最底：從它們打開的幫助在上面（v0.5.6 前同層，DOM 在後的起始頁會蓋住它們） */
 #start, #pause { z-index: 9; }
 .panel.stovepanel { max-width: 640px; }
 .panel.stovepanel #stove-fire { font-size: 16px; }

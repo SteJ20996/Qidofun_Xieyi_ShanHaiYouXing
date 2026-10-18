@@ -1,5 +1,5 @@
 // 《山海有形》桌面版：Electron 的殼。遊戲本身就是 app/index.html（由 dist/xieyi.html 複製過來），殼只管開視窗。
-// 手柄支援在 v0.27 封存了（archive/gamepad/），現在只有鍵盤與滑鼠。
+// 手柄支援在 v0.5.8 封存了（archive/gamepad/），現在只有鍵盤與滑鼠。
 const { app, BrowserWindow, Menu, shell } = require('electron');
 const path = require('path');
 

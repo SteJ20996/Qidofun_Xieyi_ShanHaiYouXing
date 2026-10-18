@@ -8,19 +8,19 @@
   const SCARED = '虎豹狼蛇蛛蟾豬';         // 稻草人擋得住的（野豬也怕；野牛不怕）
   const HOSTILE = '虎豹狼蛇蛛蟾豬牛';       // 敵對獸：攻擊間隔放慢四分之一
   const FOREST = '林森竹';
-  // 彈弓挑釁（v0.22）：被石子打過的獸 provoked 秒內，到玩家 PROVOKE_R 格內就直撲過來（不管光、稻草人嚇不嚇、晝夜），一步 CHARGE_STEP 秒
-  const TIGER_GAP = 12;   // 一山不容二虎（v0.22）：兩隻虎相距至少十二格——生的時候避開，走的時候不往十二格內靠，已經太近的走開
+  // 彈弓挑釁（v0.5.2）：被石子打過的獸 provoked 秒內，到玩家 PROVOKE_R 格內就直撲過來（不管光、稻草人嚇不嚇、晝夜），一步 CHARGE_STEP 秒
+  const TIGER_GAP = 12;   // 一山不容二虎（v0.5.2）：兩隻虎相距至少十二格——生的時候避開，走的時候不往十二格內靠，已經太近的走開
   const PROVOKE_R = 7, CHARGE_STEP = 0.22, CHARGERS = '虎豹狼蛇蛛鷹豬牛', BITERS = '蛇蛛蟾';
-  // v0.28：蜘蛛十隻一隻有毒（見人就撲、毒是蛇的一半），其餘無毒（惹了才咬、不中毒）；野豬五格內見人就衝，速度同豹；
+  // v0.6：蜘蛛十隻一隻有毒（見人就撲、毒是蛇的一半），其餘無毒（惹了才咬、不中毒）；野豬五格內見人就衝，速度同豹；
   // 野牛不惹不動，惹了追著頂，腳程是狼的三分之二（狼追人一步 0.32 息），十格外或二十息後消氣；龜挨打就往最近的海逃，比平常快四成
-  const VENOM_SPIDER = 0.1, BOAR_RANGE = 5, BOAR_STEP = 0.22, BISON_STEP = 0.32 * 1.5, BISON_CALM = 30, BISON_GIVEUP = 18, TURTLE_STEP = 1.5, TURTLE_FLEE = 1.4,   /* 龜一步一息半（v0.28 使用者裁定：腳程減到三分之二），逃命快四成 */ TURTLE_SEA_R = 40;
-  // 磚擋眼（v0.28）：獸跟人之間隔著磚、門、墟就看不見，只能循氣味找，找得到的距離是看得見時的七成；窗不擋。
+  const VENOM_SPIDER = 0.1, BOAR_RANGE = 5, BOAR_STEP = 0.22, BISON_STEP = 0.32 * 1.5, BISON_CALM = 30, BISON_GIVEUP = 18, TURTLE_STEP = 1.5, TURTLE_FLEE = 1.4,   /* 龜一步一息半（v0.6 使用者裁定：腳程減到三分之二），逃命快四成 */ TURTLE_SEA_R = 40;
+  // 磚擋眼（v0.6）：獸跟人之間隔著磚、門、墟就看不見，只能循氣味找，找得到的距離是看得見時的七成；窗不擋。
   // 惹惱的野牛記仇比別的獸遠（十八格、三十息），擋在路上的人造磚、門、窗與墟（村裡的殘垣也算）都撞，一下隔 RAM_GAP 息；耐久在 world.js 的 WALL_HP
-  const FISH_RATE = 1.8, EAGLE_RATE = 1.25;   // 魚出現得多八成、鷹多兩成五（v0.37 使用者定）：附近的上限與刷新的機會一起放大
-  const RILE_CALM = 20, RILE_GIVEUP = 12;   // 被惹的蛛、蟾：二十息後或人走出十二格就消氣（v0.41；鷹十二息、野牛三十息另算）
-  const STAIRS = '台階', STAIR_SLOW = 1.5, FLIERS = '鳥龍鷹魄魚蜃';   // 獸也上得了階與台（v0.35 使用者定），一步多花一半時間
+  const FISH_RATE = 1.8, EAGLE_RATE = 1.25;   // 魚出現得多八成、鷹多兩成五（v0.6.10 使用者定）：附近的上限與刷新的機會一起放大
+  const RILE_CALM = 20, RILE_GIVEUP = 12;   // 被惹的蛛、蟾：二十息後或人走出十二格就消氣（v0.7.3；鷹十二息、野牛三十息另算）
+  const STAIRS = '台階', STAIR_SLOW = 1.5, FLIERS = '鳥龍鷹魄魚蜃';   // 獸也上得了階與台（v0.6.8 使用者定），一步多花一半時間
   const SMELL = 0.7, RAM_GAP = 1.6, RAMMABLE = '磚門窗墟';
-  // 魄（v0.20 加強）：玩家身上的光（手裡的火把蠟燭、頭上的燈帽）只把魄逼到 GHOST_KEEP 格外，在 GHOST_HOVER 格內徘徊；
+  // 魄（v0.5 加強）：玩家身上的光（手裡的火把蠟燭、頭上的燈帽）只把魄逼到 GHOST_KEEP 格外，在 GHOST_HOVER 格內徘徊；
   // 地上的光（燈、火、旺灶）GHOST_BURN 格內、龍四格內才煙滅。玩家有光時每 GHOST_DASH_GAP 息，最近那隻撲上來 GHOST_DASH 息；
   // 魄在兩格內（GHOST_SNUFF_R），手裡的光每息有 snuffP 的機會被吹熄（game.ghostTouch）
   const GHOST_KEEP = 6, GHOST_HOVER = 9, GHOST_BURN = 3, GHOST_DASH = 2.5, GHOST_DASH_GAP = [8, 14], GHOST_DASH_STEP = 0.22, GHOST_SNUFF_R = 2;
@@ -35,7 +35,7 @@
       this.snuffP = 0.1;         // 魄兩格內，手裡的光每息被吹熄的機會
       this.dashT = GHOST_DASH_GAP[0];   // 下一次撲燈還有幾息（玩家身上有光的夜裡才倒數）
     }
-    // 野牛一乘二（v0.40 使用者定）：頭在 (x, y)，身子沿著走的方向拖一格，尾在 (x − bx, y − by)；橫著走身子橫、縱著走身子直
+    // 野牛一乘二（v0.7.2 使用者定）：頭在 (x, y)，身子沿著走的方向拖一格，尾在 (x − bx, y − by)；橫著走身子橫、縱著走身子直
     tail(e) { return e.type === '牛' ? [e.x - (e.bx === undefined ? 1 : e.bx), e.y - (e.by || 0)] : null; }
     cellsOf(e) { const t = this.tail(e); return t ? [[e.x, e.y], t] : [[e.x, e.y]]; }
     covers(e, x, y) { if (e.x === x && e.y === y) return true; const t = this.tail(e); return !!t && t[0] === x && t[1] === y; }
@@ -52,7 +52,7 @@
       if (r === 'broken') { if (g.wallBroken) g.wallBroken(e, x, y); } else if (g.wallRammed) g.wallRammed(e, x, y, r);
     }
     rammable(x, y) { const ch = this.world.get(x, y); return RAMMABLE.indexOf(ch) >= 0 && (ch === '墟' || this.world.base(x, y) !== ch); }   // 人造的磚門窗，與所有的墟
-    riled(e) { return !!e.angry && (e.type === '蛛' || e.type === '蟾' || e.type === '牛' || (e.type === '鷹' && !e.tame)); }   // 半友好的被惹了（v0.41：畫面上發紅變大）
+    riled(e) { return !!e.angry && (e.type === '蛛' || e.type === '蟾' || e.type === '牛' || (e.type === '鷹' && !e.tame)); }   // 半友好的被惹了（v0.7.3：畫面上發紅變大）
     isHostile(o) {           // 會主動找人的：虎豹狼蛇、野豬、毒蛛；惹了才找人的：無毒蛛、蟾、野牛、沒馴的鷹
       return '虎豹狼蛇豬'.indexOf(o.type) >= 0 || (o.type === '蛛' && o.venom) || (o.angry && (o.type === '蛛' || o.type === '蟾' || o.type === '牛' || (o.type === '鷹' && !o.tame)));
     }
@@ -89,9 +89,9 @@
       if (type === '鹿') return '林木草竹棉麻果'.indexOf(ch) >= 0;
       if (type === '虎') return ch === '森' || (night && ch === '林');
       if (type === '豹') return ch === '森' || ch === '林';
-      if (type === '狼') return night && '草田沙棉麻漠'.indexOf(ch) >= 0;        // 漠島的夜裡也有狼（v0.38）
-      if (type === '蛇') return (ch === '草' && this.nearWood(x, y)) || ch === '丘';   // 草木之交；漠島的沙丘裡也藏著（v0.38）
-      if (type === '蛛') return ch === '窟';                                   // 洞窟裡的蜘蛛（v0.38；草裡的照舊是除草驚出來的）
+      if (type === '狼') return night && '草田沙棉麻漠'.indexOf(ch) >= 0;        // 漠島的夜裡也有狼（v0.7）
+      if (type === '蛇') return (ch === '草' && this.nearWood(x, y)) || ch === '丘';   // 草木之交；漠島的沙丘裡也藏著（v0.7）
+      if (type === '蛛') return ch === '窟';                                   // 洞窟裡的蜘蛛（v0.7；草裡的照舊是除草驚出來的）
       if (type === '豬') return '林竹'.indexOf(ch) >= 0 || (ch === '草' && this.nearWood(x, y));   // 林邊
       if (type === '牛') return ch === '草' && !this.nearWood(x, y) && !!this.bisonRoom(x, y, night);   // 開闊的草原，身子（一乘二）放得下
       if (type === '蟾' || type === '龜') return d.walk > 0 && d.kind !== 'object' && this.nearWater(x, y);
@@ -106,7 +106,7 @@
       if (type === '魄') return d.kind !== 'fire';
       if (type === '鳥' || type === '龍' || type === '鷹') return d.kind !== 'fire';
       if (type === '魚' || type === '蜃') return d.kind === 'water';
-      if (type === '青龍') return ch === '淼';   // 東海青龍只在深海上盤著（v0.42）
+      if (type === '青龍') return ch === '淼';   // 東海青龍只在深海上盤著（v0.8）
       if (d.walk <= 0 || d.shelter || d.gate) return false;
       if (d.bog && type !== '蟾') return false;                             // 沼澤：除了蟾，獸都不進
       if (SCARED.indexOf(type) >= 0 && this.world.scared(x, y)) return false;
@@ -124,10 +124,10 @@
     spawnCaps(night, bm) {
       const frac = (v) => Math.floor(v) + (Math.random() < v - Math.floor(v) ? 1 : 0);
       const caps = { '鳥': night ? 4 : 10, '鹿': 6, '魚': frac(8 * FISH_RATE), '虎': night ? Math.ceil(3 * bm) : 2, '豹': night ? Math.ceil(2 * bm) : 1, '狼': night ? Math.ceil(3 * bm) : 0, '蛇': Math.ceil(2 * bm), '蟾': 3 };
-      caps['鷹'] = frac(2 * EAGLE_RATE); caps['龜'] = 1; caps['豬'] = 2; caps['牛'] = 2; caps['蛛'] = 2;   // 蛛：只在洞窟裡生（v0.38）
+      caps['鷹'] = frac(2 * EAGLE_RATE); caps['龜'] = 1; caps['豬'] = 2; caps['牛'] = 2; caps['蛛'] = 2;   // 蛛：只在洞窟裡生（v0.7）
       return caps;
     }
-    climbOk(e, nx, ny) { return this.world.get(nx, ny) !== '台' || STAIRS.indexOf(this.world.get(e.x, e.y)) >= 0; }   // 上台要從階或台上來（v0.35，跟人一樣）
+    climbOk(e, nx, ny) { return this.world.get(nx, ny) !== '台' || STAIRS.indexOf(this.world.get(e.x, e.y)) >= 0; }   // 上台要從階或台上來（v0.6.8，跟人一樣）
     stepTo(e, tx, ty, away, night) {
       let best = null, bestD = away ? -1 : Infinity;
       for (const [dx, dy] of N8) {
@@ -204,7 +204,7 @@
       const R = G.ISLAND_R * 0.8; let best = null, bd = Infinity;
       for (let dy = -TURTLE_SEA_R; dy <= TURTLE_SEA_R; dy++) for (let dx = -TURTLE_SEA_R; dx <= TURTLE_SEA_R; dx++) {
         const x = e.x + dx, y = e.y + dy, dd = dx * dx + dy * dy; if (dd >= bd) continue;
-        const dw = DB[this.world.get(x, y)]; if (dw.kind === 'water' && !dw.fresh && Math.hypot(x, y) > R) { bd = dd; best = { x, y }; }   // 河湖池是淡水，不算海（v0.38）
+        const dw = DB[this.world.get(x, y)]; if (dw.kind === 'water' && !dw.fresh && Math.hypot(x, y) > R) { bd = dd; best = { x, y }; }   // 河湖池是淡水，不算海（v0.7）
       }
       return best;
     }
@@ -233,14 +233,14 @@
           if (have >= caps[type]) continue;
           if (type === '蛇' && Math.random() > 0.25) continue;        // 蛇出沒機率偏低
           if (type === '狼' && Math.random() > 0.5) continue;
-          if (type === '鷹' && Math.random() > 0.4 * EAGLE_RATE) continue;   // v0.37：四成 → 五成
+          if (type === '鷹' && Math.random() > 0.4 * EAGLE_RATE) continue;   // v0.6.10：四成 → 五成
           if (type === '龜' && Math.random() > 0.1) continue;         // 龜少見
           if (type === '豬' && Math.random() > 0.3) continue;
           if (type === '牛' && Math.random() > 0.25) continue;
           this.spawnNear(type, p, 14, 30, night);
-          if (type === '魚' && Math.random() < FISH_RATE - 1 && this.count('魚') < caps['魚']) this.spawnNear('魚', p, 14, 30, night);   // 魚每回多八成的機會再刷一條（v0.37）
+          if (type === '魚' && Math.random() < FISH_RATE - 1 && this.count('魚') < caps['魚']) this.spawnNear('魚', p, 14, 30, night);   // 魚每回多八成的機會再刷一條（v0.6.10）
         }
-        // 東海青龍（v0.42）：人到四十格內就在牠那片海上現身；走遠了跟別的生靈一樣散去（不存檔，回來再現）
+        // 東海青龍（v0.8）：人到四十格內就在牠那片海上現身；走遠了跟別的生靈一樣散去（不存檔，回來再現）
         const az = g.azure; if (az && U.cheb(p.x, p.y, az.x, az.y) <= 40 && !this.list.some(e => e.type === '青龍')) this.add('青龍', az.x, az.y, { moveT: 2 });
         // 蜃：只在玩家行船或落水時，從十到十六格外的深海浮上來；機率低，一次只一隻
         if ((p.sailing || p.swimming) && this.count('蜃') === 0 && Math.random() < this.seaP) {
@@ -274,7 +274,7 @@
         if (e.fade !== undefined && e.fade < 1) { e.fade -= dt * 1.2; if (e.fade <= 0) this.list.splice(i, 1); continue; }   // 正在煙滅
         if (e.type === '魄') {
           // 地上的光（燈、火、旺灶）三格內、龍四格內即煙滅；玩家身上的光只逼得退（見下面的行動）
-          if (w.lightNear(e.x, e.y, GHOST_BURN) || this.dragonNear(e.x, e.y, 4)) { e.fade = 0.99; if (g.ghostBurned) g.ghostBurned(e); continue; }   // 遊戲端：屋外的夜裡長膽氣、燈帽少兩息（v0.32）
+          if (w.lightNear(e.x, e.y, GHOST_BURN) || this.dragonNear(e.x, e.y, 4)) { e.fade = 0.99; if (g.ghostBurned) g.ghostBurned(e); continue; }   // 遊戲端：屋外的夜裡長膽氣、燈帽少兩息（v0.6.5）
           if (g.daylight() > 0.3) {
             if (FOREST.indexOf(w.get(e.x, e.y)) >= 0) { e.frozen = true; continue; }     // 白日藏於林中，不動
             e.fade = 0.99; continue;                                                          // 不在林裡，天亮煙滅
@@ -292,7 +292,7 @@
         if (e.provoked > 0) e.provoked -= dt;
         if (e.atk > 0) e.atk -= dt * rate;
         if (e.calm > 0) e.calm -= dt;
-        e.moveT -= dt * rate * (STAIRS.indexOf(w.get(e.x, e.y)) >= 0 && FLIERS.indexOf(e.type) < 0 ? 1 / STAIR_SLOW : 1);   // 走在階、台上腳步慢半倍（v0.35）
+        e.moveT -= dt * rate * (STAIRS.indexOf(w.get(e.x, e.y)) >= 0 && FLIERS.indexOf(e.type) < 0 ? 1 / STAIR_SLOW : 1);   // 走在階、台上腳步慢半倍（v0.6.8）
         if (e.moveT > 0) continue;
 
         const sheltered = !!DB[w.get(p.x, p.y)].shelter;
@@ -352,7 +352,7 @@
           else if (spring) { e.moveT = 2 + Math.random() * 3; }
           else { e.moveT = 0.7 + Math.random() * 1.6; if (Math.random() < 0.6) this.wander(e, night, '林木草竹棉麻'); }
         } else if (e.type === '魚') {
-          e.moveT = 0.5 + Math.random() * 1.2; if (Math.random() < 0.7) this.wander(e, night, '水');   // 魚愛在淺水游（v0.21，撒網撒得到）
+          e.moveT = 0.5 + Math.random() * 1.2; if (Math.random() < 0.7) this.wander(e, night, '水');   // 魚愛在淺水游（v0.5.1，撒網撒得到）
         } else if (e.type === '虎' || e.type === '豹') {
           const sees = w.clear(e.x, e.y, p.x, p.y);   // 隔著磚看不見人，也看不見人身上的光
           const scared = w.lightNear(e.x, e.y, 2) || (sees && (w.lightNear(p.x, p.y, 2) || (g.hasLight() && night))) || this.dragonNear(e.x, e.y, 4);
@@ -422,8 +422,8 @@
             }
           } else { e.moveT = 1.5 + Math.random() * 2; if (Math.random() < 0.5) this.wander(e, night, '草'); }
         } else if (e.type === '蛛' || e.type === '蟾') {
-          if (e.angry && !(e.type === '蛛' && e.venom) && (this.world.time - (e.angryAt || 0) > RILE_CALM || d > RILE_GIVEUP)) e.angry = false;   // 惹了的消氣（v0.41）
-          const hostile = (e.type === '蛛' && e.venom) || e.angry;     // 毒蛛見人就撲；其餘蛛、蟾被惹了才衝過來咬（v0.41 起無毒蟾也是）
+          if (e.angry && !(e.type === '蛛' && e.venom) && (this.world.time - (e.angryAt || 0) > RILE_CALM || d > RILE_GIVEUP)) e.angry = false;   // 惹了的消氣（v0.7.3）
+          const hostile = (e.type === '蛛' && e.venom) || e.angry;     // 毒蛛見人就撲；其餘蛛、蟾被惹了才衝過來咬（v0.7.3 起無毒蟾也是）
           if (hostile && d <= 1) { this.bite(e, g); e.moveT = 0.5; }
           else if (hostile && d <= this.sense(e, p, 6)) { e.moveT = 0.35; this.stepTo(e, p.x, p.y, false, night); }
           else { e.moveT = 1 + Math.random() * 2; if (Math.random() < 0.4) this.wander(e, night, e.type === '蟾' ? '草沙土水' : null); }

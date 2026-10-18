@@ -5,12 +5,12 @@
   const U = root.U, G = root.G, DB = G.DB;
   const CH = 16;                 // 區塊邊長（格）
   const STEP = 0.5;              // 模擬步長（秒）
-  let DAY = 300;                 // 一晝夜（秒），潮汐隨之起落；一日從午夜算起（天亮 0.25、天黑 0.75）。v0.37 起看難度（簡單 420、一般 360、困難 300），game.js 開島或讀檔時用 World.setDay() 定
+  let DAY = 300;                 // 一晝夜（秒），潮汐隨之起落；一日從午夜算起（天亮 0.25、天黑 0.75）。v0.6.10 起看難度（簡單 420、一般 360、困難 300），game.js 開島或讀檔時用 World.setDay() 定
   const MORNING = 0.26;
-  // 牆的耐久（v0.29，不顯示，只計算）：野牛撞一下扣 1。磚 4，撞到剩一半就成了「墟」；墟（村裡的殘垣也是）2；窗、門 2，剩一半時字變色
+  // 牆的耐久（v0.6.2，不顯示，只計算）：野牛撞一下扣 1。磚 4，撞到剩一半就成了「墟」；墟（村裡的殘垣也是）2；窗、門 2，剩一半時字變色
   const WALL_HP = { '磚': 4, '墟': 2, '窗': 2, '門': 2 };          // 開局、讀舊存檔時的時刻：大清早（天亮之後一點點）
-  const STOVE_CAP = 999, SHELF_SLOTS = 4;   // 灶與鼎的火最多存 999 息（v0.21，原 900）；灶的柴架四格
-  const NET_DUR = { 1: 30, 2: 90, 3: 240 };   // 漁網的耐久：小中大各能取幾條魚（v0.17.1），取完就破、不再進魚，棉麻加固回滿
+  const STOVE_CAP = 999, SHELF_SLOTS = 4;   // 灶與鼎的火最多存 999 息（v0.5.1，原 900）；灶的柴架四格
+  const NET_DUR = { 1: 30, 2: 90, 3: 240 };   // 漁網的耐久：小中大各能取幾條魚（v0.4.12），取完就破、不再進魚，棉麻加固回滿
   const TIDE_WET = 0.7;          // 灘一天裡有七成時間在水下（退潮 0.12–0.42）；放在灘上的網魚來得慢，間隔除以這個數
   const N8 = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
   const N4 = [[0, -1], [-1, 0], [1, 0], [0, 1]];
@@ -21,11 +21,11 @@
   const FOG_ROLLS = 2, FOG_P = 0.25, FOG_NEAR = [8, 28];
   let FOG_LIFE = DAY;
   const SEA_FOG_LIFE = 90;   // 蜃吐的海霧：九十息就散
-  const ORE_DAYS = [7, 10], ORE_BACK = '石草白';   // 鑿掉的鐵礦七到十日（真隨機）後在原地長回來，那時那格是石、草或白紙才長得回，不然就沒了（v0.37 使用者定）
-  const SCARE_DAYS = 45, SCARE_CAP = 60;   // 稻草人守幾天、續上最多幾天（v0.37 使用者定四十五天；續的上限照舊多三分之一：三十／四十 → 四十五／六十）
-  // 霧的形（v0.31 使用者定）：一片霧是一塊連續的形，面積十八格上下（FOG_AREA），可圓可方（超橢圓的次方 2–6）、扁圓不一、斜著放，
+  const ORE_DAYS = [7, 10], ORE_BACK = '石草白';   // 鑿掉的鐵礦七到十日（真隨機）後在原地長回來，那時那格是石、草或白紙才長得回，不然就沒了（v0.6.10 使用者定）
+  const SCARE_DAYS = 45, SCARE_CAP = 60;   // 稻草人守幾天、續上最多幾天（v0.6.10 使用者定四十五天；續的上限照舊多三分之一：三十／四十 → 四十五／六十）
+  // 霧的形（v0.6.4 使用者定）：一片霧是一塊連續的形，面積十八格上下（FOG_AREA），可圓可方（超橢圓的次方 2–6）、扁圓不一、斜著放，
   // 邊上再疊兩三道慢慢轉的起伏，次方、扁圓、角度也慢慢變，所以形狀一直在變。蓋到一格超過 FOG_COVER（5%）就算霧，最多算 FOG_CAP（30）格（蓋得最多的那些）。
-  // 霧不進圍起來、裡面能走的格子不超過 FOG_ROOM（45）格的屋子；其餘山、海、林都飄得過去，不回頭（v0.32 使用者定）。
+  // 霧不進圍起來、裡面能走的格子不超過 FOG_ROOM（45）格的屋子；其餘山、海、林都飄得過去，不回頭（v0.6.5 使用者定）。
   // 碰到這種屋子，被擋掉的那一塊撐到屋外別處（形變了、面積不變，最多撐到 FOG_GROW_MAX 倍），方向也拐開繞過去。海霧的面積是 SEA_FOG_AREA。
   const FOG_AREA = [16, 20], SEA_FOG_AREA = [6, 10], FOG_COVER = 0.05, FOG_CAP = 30, FOG_ROOM = 45, FOG_SAMPLE = 5, FOG_GROW_MAX = 6, FOG_EDGE = 8;
   const SUPER_K = (() => {   // 超橢圓 |x|^n + |y|^n = 1 的面積，n = 2.0、2.1 … 6.0（n=2 是 π，越方越近 4）
@@ -35,12 +35,12 @@
   const SHIPS = G.SHIPS;                                        // 船的兩種（孤帆、方舟）：大小、命、船頭首骨格數
   let RAIN_MIN = DAY * 0.25, RAIN_MAX = DAY * 1.0, RAIN_GAP_MIN = DAY * 1.0, RAIN_GAP_MAX = DAY * 4.0;
   const RAIN_LAMP_P = 1 / 2500, ROOM_LIMIT = 121;
-  // 一日多長（v0.37 看難度）：以日計的長度（霧障一日、雨四分之一到一日、雨停一到四日）跟著換
+  // 一日多長（v0.6.10 看難度）：以日計的長度（霧障一日、雨四分之一到一日、雨停一到四日）跟著換
   const setDay = (sec) => { DAY = sec; FOG_LIFE = DAY; RAIN_MIN = DAY * 0.25; RAIN_MAX = DAY * 1.0; RAIN_GAP_MIN = DAY * 1.0; RAIN_GAP_MAX = DAY * 4.0; };
   // 小屋：磚與門圍起的小空間，裡面不生生靈、生靈也進不去。多小才算看難度，由 game 透過 roomLimitFor(type) 告訴世界：獸一個門檻、魄一個門檻
   // （簡單 28／18、一般 18／8、困難 10／0，0 ＝ 磚擋不住魄）；MAX_ROOM 是各門檻的最大值，漫延數到這裡就停
   const MAX_ROOM = 28;
-  // 霧障會動（v0.31 起是連續地飄：每息 1/FOG_STEP 格，方向每 FOG_STEP 息上下重新定一次）。以下是 v0.19 的舊說明：每 FOG_STEP 息上下挪一格（v0.19 起間隔六到十四成之間抖動），速度慢；FOG_LIGHT_R 格內有光（燈、火、旺灶、玩家手裡的光）就往反方向躲，沒光就順著自己的風向慢慢飄，風向有慣性、偶爾轉；挪完偶爾換形（尾巴掉一格、前頭長一格）
+  // 霧障會動（v0.6.4 起是連續地飄：每息 1/FOG_STEP 格，方向每 FOG_STEP 息上下重新定一次）。以下是 v0.4.13 的舊說明：每 FOG_STEP 息上下挪一格（v0.4.13 起間隔六到十四成之間抖動），速度慢；FOG_LIGHT_R 格內有光（燈、火、旺灶、玩家手裡的光）就往反方向躲，沒光就順著自己的風向慢慢飄，風向有慣性、偶爾轉；挪完偶爾換形（尾巴掉一格、前頭長一格）
   const FOG_STEP = 6, FOG_LIGHT_R = 10;
 
   class World {
@@ -123,7 +123,7 @@
       return this.chunk(cx, cy)[(y - cy * CH) * CH + (x - cx * CH)];
     }
     // 潮汐：灘在退潮時是沙，漲潮時是水
-    tideLow() { const t = (this.time % DAY) / DAY; return t > 0.37 && t < 0.67; }   // 白天裡的一段退潮（v0.29 一日改從午夜算，跟著挪了 0.25）
+    tideLow() { const t = (this.time % DAY) / DAY; return t > 0.37 && t < 0.67; }   // 白天裡的一段退潮（v0.6.2 一日改從午夜算，跟著挪了 0.25）
     tideName() { return this.tideLow() ? '退潮' : '漲潮'; }
     get(x, y) {
       const d = this.diff.get(U.key(x, y));
@@ -136,14 +136,14 @@
       const k = U.key(x, y), old = this.get(x, y);
       if (this.roomCache.size) this.roomCache.clear();
       if (this.fogRoomCache.size) this.fogRoomCache.clear();
-      this.ver = (this.ver || 0) + 1;   // 地上的字變了：畫面那邊的視線快取看這個數失效（v0.31）
+      this.ver = (this.ver || 0) + 1;   // 地上的字變了：畫面那邊的視線快取看這個數失效（v0.6.4）
       if (old !== ch) this.wallHp.delete(k);   // 換了字，舊的耐久就不算了
       if (ch === this.base(x, y)) this.diff.delete(k); else this.diff.set(k, ch);
       if (DB[ch].flam <= 0) this.burn.delete(k);
       if ((old === '灶' || old === '鼎') && ch !== '灶' && ch !== '鼎') this.stoves.delete(k);
       if (old === '灶' && ch !== '灶') this.shelves.delete(k);   // 柴架跟著灶走（拆灶時遊戲端先把它記到囊裡那個灶上）
       if ((ch === '灶' || ch === '鼎') && !this.stoves.has(k)) this.stoves.set(k, 0);
-      if ((old === '包' || old === '囊') && ch !== old) this.bags.delete(k);   // 荷包、小囊（v0.42）拿走了，裡面的記錄也清掉
+      if ((old === '包' || old === '囊') && ch !== old) this.bags.delete(k);   // 荷包、小囊（v0.8）拿走了，裡面的記錄也清掉
       if (old === '偶' && ch !== '偶') this.scarecrows.delete(k);
       if ('網罟罾'.indexOf(old) >= 0 && '網罟罾'.indexOf(ch) < 0 && this.netCells.has(k)) { const rec = this.nets.get(this.netCells.get(k)); if (rec) this.removeNet(rec); }
       if (old === '櫃' && ch !== '櫃') this.chests.delete(k);
@@ -163,12 +163,12 @@
     }
     // 幾秒後若格子還是 from，就變成 to（灰化土、草木長回來）
     schedule(x, y, from, to, sec) { this.timers.set(U.key(x, y), { from, to, at: this.time + sec }); }
-    // 稻草人：守 SCARE_DAYS 天（v0.37 從三十天改四十五天），前半十格、後半七格；再放一個續 SCARE_DAYS 天，從現在起最多 SCARE_CAP 天
+    // 稻草人：守 SCARE_DAYS 天（v0.6.10 從三十天改四十五天），前半十格、後半七格；再放一個續 SCARE_DAYS 天，從現在起最多 SCARE_CAP 天
     addScarecrow(x, y) {
       const k = U.key(x, y), now = this.time, cur = Math.max(now, this.scarecrows.get(k) || 0);
       this.scarecrows.set(k, Math.min(now + SCARE_CAP * DAY, cur + SCARE_DAYS * DAY));
     }
-    // 鐵礦長回來（v0.37）：鑿掉時記下，七到十日後那格若是石、草或白紙就變回鐵礦；是別的（蓋了東西、成了土或田……）就長不回來，記錄也丟掉
+    // 鐵礦長回來（v0.6.10）：鑿掉時記下，七到十日後那格若是石、草或白紙就變回鐵礦；是別的（蓋了東西、成了土或田……）就長不回來，記錄也丟掉
     addOre(x, y) { this.ores.set(U.key(x, y), U.r4(this.time + (ORE_DAYS[0] + U.trueRand() * (ORE_DAYS[1] - ORE_DAYS[0])) * DAY)); }
     regrowOres() {
       for (const [k, at] of this.ores) {
@@ -242,7 +242,7 @@
         if (Math.hypot(cxp - px, cyp - py) <= r + Math.max(pl.w, pl.h) / 2) { pl.seen = true; if (this.onDiscover) this.onDiscover(pl); }
       }
     }
-    revealAll(px, py) { this.markSeen(px, py, G.HOME_R); }   // 塔上看得見整座本島（v0.38 島擴了，照 HOME_R）
+    revealAll(px, py) { this.markSeen(px, py, G.HOME_R); }   // 塔上看得見整座本島（v0.7 島擴了，照 HOME_R）
     seenCount() { let n = 0; for (const b of this.explored.values()) for (const v of b) { let x = v; while (x) { n += x & 1; x >>= 1; } } return n; }
     // 走的人多了，也便成了路
     trample(x, y) {
@@ -262,7 +262,7 @@
     }
     extinguish(x, y) { this.burn.delete(U.key(x, y)); }
 
-    // 兩格之間看不看得見（v0.28）：中間的格子（不算兩端）有擋光的字——磚、門、墟——就看不見；窗不擋
+    // 兩格之間看不看得見（v0.6）：中間的格子（不算兩端）有擋光的字——磚、門、墟——就看不見；窗不擋
     clear(x0, y0, x1, y1) {
       let x = x0, y = y0; const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
       let err = dx + dy;
@@ -275,7 +275,7 @@
         const d = this.info(x, y); if (d && d.opaque) return false;
       }
     }
-    // 某格附近是否有光（虎怕光）/ 有熱（人怕冷）；磚擋光：屋裡的燈照不出去（v0.28）
+    // 某格附近是否有光（虎怕光）/ 有熱（人怕冷）；磚擋光：屋裡的燈照不出去（v0.6）
     lightNear(x, y, r) {
       for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
         const d = this.info(x + i, y + j);
@@ -287,7 +287,7 @@
     fogAt(x, y) { const id = this.fogCells.get(U.key(x, y)); return id ? this.fogs.get(id) : null; }
     fogLand(x, y) { const d = this.info(x, y); return d.walk > 0 && d.kind !== 'water' && DB[this.raw(x, y)].kind !== 'water'; }
     fogSea(x, y) { return DB[this.get(x, y)].kind === 'water' && DB[this.raw(x, y)].kind === 'water'; }
-    // 這格在不在「圍起來、裡面能走的格子不超過 FOG_ROOM 格」的屋子裡（門算磚；四面要有人造的磚門窗墟，v0.34）；同一次漫延碰到的格子一起記下
+    // 這格在不在「圍起來、裡面能走的格子不超過 FOG_ROOM 格」的屋子裡（門算磚；四面要有人造的磚門窗墟，v0.6.7）；同一次漫延碰到的格子一起記下
     fogRoom(x, y) {
       const k0 = U.key(x, y), hit = this.fogRoomCache.get(k0); if (hit !== undefined) return hit;
       if (!this.passable(x, y)) { this.fogRoomCache.set(k0, false); return false; }
@@ -300,7 +300,7 @@
           if (this.passable(nx, ny)) { seen.add(k); q.push([nx, ny]); } else if (DB[this.get(nx, ny)].kind === 'object') built = true;   // 四面有人造的磚、門、窗、墟才算屋子
         }
       }
-      const room = !open && built;   // 山、水自己圍起來的小角落不算屋子，霧照樣飄進去（v0.34）
+      const room = !open && built;   // 山、水自己圍起來的小角落不算屋子，霧照樣飄進去（v0.6.7）
       for (const k of seen) this.fogRoomCache.set(k, room);
       return room;
     }
@@ -442,7 +442,7 @@
       return best;
     }
     // 霧障挪一格：FOG_LIGHT_R 格內有光就往反方向躲（燈火、旺灶、手裡有光的玩家，取最近的）；沒光就順著自己的風向飄。
-    // 定方向（v0.19 起的規則照舊）：FOG_LIGHT_R 格內有光就背著光走（略帶偏）；沒光就順著自己的風向，風向慢慢轉、偶爾大轉
+    // 定方向（v0.4.13 起的規則照舊）：FOG_LIGHT_R 格內有光就背著光走（略帶偏）；沒光就順著自己的風向，風向慢慢轉、偶爾大轉
     steerFog(f, px, py) {
       const R = U.trueRand, c = { x: f.x - 0.5, y: f.y - 0.5 };
       let src = this.nearestLight(Math.round(c.x), Math.round(c.y), FOG_LIGHT_R);
@@ -452,8 +452,8 @@
       else f.ang += (R() - 0.5) * (R() < 0.15 ? 2.4 : 0.7);
       return !!src;
     }
-    // 把霧挪到 (x, y)、霧齡 t，重算算作霧的格子。山、海都飄得過去，不回頭（v0.32）；碰到四十五格以內的屋子，形撐開繞過去、方向拐開；
-    // 飄到紙邊（方框 G.WORLD_R − FOG_EDGE 外；v0.38 前是離島心 113 格）就轉回島心那邊，免得飄出紙外
+    // 把霧挪到 (x, y)、霧齡 t，重算算作霧的格子。山、海都飄得過去，不回頭（v0.6.5）；碰到四十五格以內的屋子，形撐開繞過去、方向拐開；
+    // 飄到紙邊（方框 G.WORLD_R − FOG_EDGE 外；v0.7 前是離島心 113 格）就轉回島心那邊，免得飄出紙外
     placeFog(f, x, y, t) {
       const cov = this.fogCover(f, x, y, t), cells = this.fogCount(cov);
       const dx = x - f.gx, dy = y - f.gy; if (Math.abs(dx) + Math.abs(dy) > 1e-6) f.dir = [Math.sign(Math.round(dx * 10)), Math.sign(Math.round(dy * 10))];
@@ -462,7 +462,7 @@
         const oa = Math.atan2(cov.ly - y, cov.lx - x), d = Math.atan2(Math.sin(f.ang - oa), Math.cos(f.ang - oa));
         if (Math.abs(d) < Math.PI / 2) { f.ang = oa + (d >= 0 ? 1 : -1) * (Math.PI / 2 + 0.35); f.turnAt = this.time + 4; f.turned = (f.turned || 0) + 1; }
       }
-      if (Math.max(Math.abs(x), Math.abs(y)) > G.WORLD_R - FOG_EDGE) { const home = Math.atan2(-y, -x), d = Math.atan2(Math.sin(f.ang - home), Math.cos(f.ang - home)); if (Math.abs(d) > Math.PI / 2) f.ang = home + (U.trueRand() - 0.5) * 0.8; }   // v0.38：紙的方框邊
+      if (Math.max(Math.abs(x), Math.abs(y)) > G.WORLD_R - FOG_EDGE) { const home = Math.atan2(-y, -x), d = Math.atan2(Math.sin(f.ang - home), Math.cos(f.ang - home)); if (Math.abs(d) > Math.PI / 2) f.ang = home + (U.trueRand() - 0.5) * 0.8; }   // v0.7：紙的方框邊
       return true;
     }
     // 測試與舊介面：定方向後一口氣挪一格的距離
@@ -494,7 +494,7 @@
       this.wallHp.set(k, hp); return hp <= full / 2 && (ch === '窗' || ch === '門') ? 'cracked' : 'hit';
     }
     wallHurt(x, y) { const k = U.key(x, y), full = WALL_HP[this.get(x, y)]; return !!full && this.wallHp.has(k) && this.wallHp.get(k) <= full / 2; }   // 窗門剩一半：畫成另一個顏色
-    // 圍住這格的屋子的四面（v0.28，算窗佔幾成）：從這格順著能走的格子漫延，碰到的不能走的格子就是四面，"x,y" -> 字；ROOM_LIMIT 格內圍不住回 null
+    // 圍住這格的屋子的四面（v0.6，算窗佔幾成）：從這格順著能走的格子漫延，碰到的不能走的格子就是四面，"x,y" -> 字；ROOM_LIMIT 格內圍不住回 null
     roomShell(x, y) {
       const seen = new Set([U.key(x, y)]), q = [[x, y]], shell = new Map();
       while (q.length) {
@@ -536,7 +536,7 @@
     heatNear(x, y, r) {
       for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
         const d = this.info(x + i, y + j);
-        if (d.kind === 'fire' || d.heat || this.isBurning(x + i, y + j) || this.stoveLit(x + i, y + j)) return true;   // d.heat：熔岩、溫泉（v0.38）
+        if (d.kind === 'fire' || d.heat || this.isBurning(x + i, y + j) || this.stoveLit(x + i, y + j)) return true;   // d.heat：熔岩、溫泉（v0.7）
       }
       return false;
     }
@@ -624,7 +624,7 @@
       }
     }
 
-    rewriteBlank(x, y) { const b = this.base(x, y); return DB[b] && DB[b].kind === 'object' ? '土' : b; }   // 白紙寫回原字；原本是人造的（村裡的墟、門）不會自己長回來，成了土（v0.35）
+    rewriteBlank(x, y) { const b = this.base(x, y); return DB[b] && DB[b].kind === 'object' ? '土' : b; }   // 白紙寫回原字；原本是人造的（村裡的墟、門）不會自己長回來，成了土（v0.6.8）
     // 統計周圍 8 格中屬於 set 的字數；set 為 null 時統計"非白紙、非水"的格子
     countAround(x, y, set) {
       let n = 0;
@@ -667,23 +667,26 @@
     }
     restore(s, briefDay) {
       const t0 = s.time || DAY * MORNING; this.time = t0; this.timeShift = 0;
-      if (s.dayLen !== DAY) {   // 舊存檔（一日長度不同）：日數不換算，時間設成那天的大清早（v0.29 使用者定）；存著的時刻跟著挪，倒數不變
+      if (s.dayLen !== DAY && s.keepClock && s.dayLen > 0) {   // 遊戲裡改難度（v0.8.2）：第幾日、幾時都不變，只換一日的長度；存著的時刻跟著挪，倒數的息數不變
+        const d = Math.floor(t0 / s.dayLen), frac = (t0 - d * s.dayLen) / s.dayLen;
+        this.time = U.r4(d * DAY + frac * DAY); this.timeShift = U.r4(this.time - t0);
+      } else if (s.dayLen !== DAY) {   // 舊存檔（一日長度不同）：日數不換算，時間設成那天的大清早（v0.6.2 使用者定）；存著的時刻跟著挪，倒數不變
         const d = briefDay > 0 ? briefDay - 1 : Math.floor(t0 / DAY);
         this.time = d * DAY + DAY * MORNING; this.timeShift = U.r4(this.time - t0);
       }
       const sh = (v) => typeof v === 'number' && v > 0 ? U.r4(v + this.timeShift) : v;
       this.diff = new Map(Object.entries(s.diff || {})); this.ver = (this.ver || 0) + 1;
-      for (const [k, v] of this.diff) if (v === '牆') this.diff.set(k, '墟');   // v0.29 前的殘牆字
+      for (const [k, v] of this.diff) if (v === '牆') this.diff.set(k, '墟');   // v0.6.2 前的殘牆字
       this.wallHp = new Map(Object.entries(s.wallHp || {}));
       this.lamps = new Set(); for (const [k, v] of this.diff) if (v === '燈') this.lamps.add(k);
       this.rainUntil = sh(s.rainUntil || 0) > this.time ? sh(s.rainUntil) : 0;
       this.nextRainAt = sh(s.nextRainAt) || (this.time + DAY + U.trueRand() * DAY * 2);
       this.rainAcc = 0;
       this.fogs = new Map(); this.fogCells = new Map(); this.fogSeq = 0;
-      for (const [u, cells, sea, shape, at] of s.fogs || []) { const until = sh(u); if (until > this.time && cells) this.addFog(cells.split(';'), until, sea, shape && shape.h ? shape : null, at); }   // v0.31 前的霧只有格子：照格子配一個形
+      for (const [u, cells, sea, shape, at] of s.fogs || []) { const until = sh(u); if (until > this.time && cells) this.addFog(cells.split(';'), until, sea, shape && shape.h ? shape : null, at); }   // v0.6.4 前的霧只有格子：照格子配一個形
       this.ships = new Map(); this.shipCells = new Map();
       for (const [k, v] of Object.entries(s.ships || {})) {
-        if (Array.isArray(v)) {        // v0.11 的單格大船：當孤帆，船身找得到第二格水就留，找不到就沒了
+        if (Array.isArray(v)) {        // v0.4 的單格大船：當孤帆，船身找得到第二格水就留，找不到就沒了
           const [ax, ay] = U.unkey(k), old = { kind: '孤帆', hp: Math.min(v[0], SHIPS['孤帆'].hp), skulls: v[2] && v[1] > this.time ? [[v[2], v[1]]] : [], repairs: 0 };
           const water = (x, y) => { const t = this.get(x, y); return DB[t].kind === 'water' || t === '舟'; };
           const anchor = [[ax, ay], [ax, ay - 1]].find(([x, y]) => this.shipFits('孤帆', x, y, water));
@@ -695,7 +698,7 @@
       }
       for (const [k, v] of this.diff) if (v === '舟' && !this.shipCells.has(k)) { const [x, y] = U.unkey(k), b = this.base(x, y); this.set(x, y, DB[b].kind === 'water' ? b : '水'); }   // 沒有記錄的舟字：還原成水
       this.movedShips = 0;
-      for (const [ak, rec] of [...this.ships]) {   // v0.38 擴島：舊存檔的船若停在長出來的新陸地上，挪到最近的海
+      for (const [ak, rec] of [...this.ships]) {   // v0.7 擴島：舊存檔的船若停在長出來的新陸地上，挪到最近的海
         if (rec.cells.every(([x, y]) => DB[this.base(x, y)].kind === 'water')) continue;
         const [ax, ay] = U.unkey(ak); this.removeShip(ak);
         for (const [x, y] of rec.cells) { const b = this.base(x, y); if (DB[b].kind !== 'water') this.set(x, y, b); }

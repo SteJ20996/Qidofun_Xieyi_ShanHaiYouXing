@@ -16,7 +16,7 @@ Linux 版（`ShanHaiYouXing-linux-x64`）同一頁下載。
 
 ## 手柄
 
-手柄支援在 v0.27 封存了，桌面版目前只有鍵盤與滑鼠。原本「用 Steam 測手柄」的步驟收在 [`archive/gamepad/README.md`](../archive/gamepad/README.md)，恢復手柄時照著做。
+手柄支援在 v0.5.8 封存了，桌面版目前只有鍵盤與滑鼠。原本「用 Steam 測手柄」的步驟收在 [`archive/gamepad/README.md`](../archive/gamepad/README.md)，恢復手柄時照著做。
 
 ## 自己打包（開發用）
 
