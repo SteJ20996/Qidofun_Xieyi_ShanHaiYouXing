@@ -130,7 +130,7 @@
       if (type === '豨') return d.walk > 0 && !d.shelter && !d.gate && !d.bog && d.kind !== 'water' && d.kind !== 'object' && d.kind !== 'place';   // 封豨：上不了台階，不進屋
       if (type === '魚' || type === '蜃') return d.kind === 'water';
       if (type === '青龍') return ch === '淼';   // 東海青龍只在深海上盤著（v0.8）
-      if (type === '白虎' && d.kind === 'water') return false;
+      if ((type === '白虎' || type === '玄武') && d.kind === 'water') return false;
       if (d.walk <= 0 || d.shelter || d.gate) return false;
       if (d.bog && type !== '蟾') return false;                             // 沼澤：除了蟾，獸都不進
       if (SCARED.indexOf(type) >= 0 && this.world.scared(x, y)) return false;
@@ -259,10 +259,10 @@
       }
       if (e.state === 'eat') {
         e.eatLeft -= dt;
-        if (e.hpAtEat - e.hp >= DB['豨'].hp * HOG.eatBreak) { e.state = 'chase'; e.eatCD = HOG.eatGap; if (g.hogEat) g.hogEat(e, false); }
+        if (e.hpAtEat - e.hp >= (e.max || DB['豨'].hp) * HOG.eatBreak) { e.state = 'chase'; e.eatCD = HOG.eatGap; if (g.hogEat) g.hogEat(e, false); }
         else if (e.eatLeft <= 0) {
           e.state = 'chase'; e.eatCD = HOG.eatGap; const [tx, ty] = e.food;
-          if (HOG_FOOD.indexOf(this.world.get(tx, ty)) >= 0) { this.world.set(tx, ty, '土'); e.hp = Math.min(DB['豨'].hp, e.hp + DB['豨'].hp * HOG.eatHeal); if (g.hogEat) g.hogEat(e, true); }
+          if (HOG_FOOD.indexOf(this.world.get(tx, ty)) >= 0) { this.world.set(tx, ty, '土'); e.hp = Math.min(e.max || DB['豨'].hp, e.hp + (e.max || DB['豨'].hp) * HOG.eatHeal); if (g.hogEat) g.hogEat(e, true); }
         }
       }
       if (e.state === 'wind' && e.windT <= 0) { e.state = 'charge'; e.chargeLeft = HOG.len; e.chargeHit = false; e.moveT = 0; }
@@ -276,7 +276,7 @@
       return best;
     }
     hogAct(e, g, p, night, sheltered) {
-      const d = this.rectDist(e, p.x, p.y), den = g.hogDen, frac = e.hp / DB['豨'].hp, cx = e.x + 1, cy = e.y + 1;
+      const d = this.rectDist(e, p.x, p.y), den = e.den || g.hogDen, frac = e.hp / (e.max || DB['豨'].hp), cx = e.x + 1, cy = e.y + 1;   // 墨影（v0.8.8）帶著自己的命上限與窩
       if (e.stunT > 0) { e.moveT = 0.2; return; }
       if (e.state === 'eat' || e.state === 'wind' || e.state === 'root') { e.moveT = 0.15; return; }
       if (e.state === 'charge') {   // 直衝：前面那排有人就撞上；撞到台上的人、磚、山就停下來（撞在台邊還暈一下）
@@ -298,13 +298,14 @@
       // 群豕：命剩一半起，隔一陣叫兩頭野豬
       if (frac <= HOG.callAt && !(e.callCD > 0) && this.count('豬') < HOG.callCap) {
         e.callCD = HOG.callGap; let n = 0;
-        for (let k = 0; k < 12 && n < HOG.callN; k++) { const x = cx + Math.round((Math.random() - 0.5) * 6), y = cy + Math.round((Math.random() - 0.5) * 6); if (this.canStand('豬', x, y, night) && !this.at(x, y) && !(x === p.x && y === p.y)) { this.add('豬', x, y, { moveT: 0.5 }); n++; } }
+        for (let k = 0; k < 12 && n < HOG.callN; k++) { const x = cx + Math.round((Math.random() - 0.5) * 6), y = cy + Math.round((Math.random() - 0.5) * 6); if (this.canStand('豬', x, y, night) && !this.at(x, y) && !(x === p.x && y === p.y)) { this.add('豬', x, y, e.shade ? { moveT: 0.5, shade: '豕影' } : { moveT: 0.5 }); n++; } }
         if (n && g.hogCall) g.hogCall(e, n);
       }
       if (frac < HOG.eatAt && !(e.eatCD > 0)) { const f = this.hogFood(e); if (f) { e.state = 'goeat'; e.food = f; e.goLeft = 30; e.moveT = 0.2; return; } e.eatCD = 6; }
       if (den && U.dist(cx, cy, den.x, den.y) > HOG.leash) { e.moveT = HOG.step; this.hogToward(e, den.x, den.y, false); return; }   // 不離桑林
       if (!(e.chargeCD > 0) && d >= 3 && d <= HOG.len && !sheltered) {   // 豕突：蓄力，衝的方向這時定下
-        e.state = 'wind'; e.windT = HOG.wind; e.cdx = p.x < e.x ? -1 : p.x > e.x + 1 ? 1 : 0; e.cdy = p.y < e.y ? -1 : p.y > e.y + 1 ? 1 : 0;   // 人跟身子同一排就直著衝，不斜 e.chargeCD = HOG.chargeGap[0] + Math.random() * (HOG.chargeGap[1] - HOG.chargeGap[0]); e.moveT = 0.15; if (g.hogWind) g.hogWind(e); return;
+        e.state = 'wind'; e.windT = HOG.wind; e.cdx = p.x < e.x ? -1 : p.x > e.x + 1 ? 1 : 0; e.cdy = p.y < e.y ? -1 : p.y > e.y + 1 ? 1 : 0;   // 人跟身子同一排就直著衝，不斜
+        e.chargeCD = HOG.chargeGap[0] + Math.random() * (HOG.chargeGap[1] - HOG.chargeGap[0]); e.moveT = 0.15; if (g.hogWind) g.hogWind(e); return;
       }
       if (!(e.quakeCD > 0) && d <= 6) { e.state = 'root'; e.rootT = HOG.rootT; e.quakeCD = HOG.quakeGap[0] + Math.random() * (HOG.quakeGap[1] - HOG.quakeGap[0]); e.moveT = 0.15; return; }
       if (d <= 1) { if (!(e.atk > 0) && g.bossHit) { g.bossHit(e, HOG.melee, '力', '撞'); e.atk = HOG.meleeGap; } e.moveT = 0.4; return; }
@@ -314,6 +315,7 @@
 
     update(dt, g) {
       const p = g.player, w = this.world, night = g.darkness() > 0.5;
+      const roofed = !!DB[w.get(p.x, p.y)].shelter || !!(g.indoors && g.indoors());   // 人在屋裡（地標屋舍或磚圍得住）：天上的蠱雕、惱了的鷹抓不進來（v0.8.8）
       // 魄撲燈：玩家身上有光的夜裡，每八到十四息，最近一隻徘徊的魄撲上來
       if (night && g.hasLight()) {
         this.dashT -= dt;
@@ -349,6 +351,8 @@
         const tz = g.tigerAt; if (tz && U.cheb(p.x, p.y, tz.x, tz.y) <= TIGER_SEE && !this.list.some(e => e.type === '白虎')) { const sp = this.canStand('白虎', tz.x, tz.y, night) ? [tz.x, tz.y] : null; if (sp) this.add('白虎', sp[0], sp[1], { moveT: 2, roarT: 2 }); }
         // 朱雀（v0.8.6）：人到丹穴四十格內，就在島心現身
         const bz = g.birdAt; if (bz && U.cheb(p.x, p.y, bz.x, bz.y) <= TIGER_SEE && !this.list.some(e => e.type === '朱雀') && this.canStand('朱雀', bz.x, bz.y, night)) this.add('朱雀', bz.x, bz.y, { moveT: 2 });
+        // 玄武（v0.8.8）：人到玄洲四十格內，就在島心現身，像一塊很久沒動的石頭
+        const xz = g.turtleAt; if (xz && U.cheb(p.x, p.y, xz.x, xz.y) <= TIGER_SEE && !this.list.some(e => e.type === '玄武') && this.canStand('玄武', xz.x, xz.y, night)) this.add('玄武', xz.x, xz.y, { moveT: 2 });
         // 蠱雕（v0.8.6）：人在南邊的海上或外島上，從十到十四格外的天上飛來；一次只一隻
         if (this.count('雕') === 0 && Math.random() < this.harpyP && g.harpySky && g.harpySky()) {
           const m = this.spawnNear('雕', p, 10, 14, night, { moveT: 1, mode: 'circle', diveT: HARPY_DIVE[0] + Math.random() * (HARPY_DIVE[1] - HARPY_DIVE[0]), cryT: 3 });
@@ -378,7 +382,7 @@
         const k = Math.min(1, dt * 11);
         e.rx += (e.x - e.rx) * k; e.ry += (e.y - e.ry) * k;
         const d = U.cheb(e.x, e.y, p.x, p.y);
-        if (d <= 9) g.saw(e.type);
+        if (d <= 9 && !e.shade) g.saw(e.type);   // 玄武吐的墨影（v0.8.8）不算見過真身
         if (!e.heard && d <= 8 && this.isHostile(e) && w.clear(e.x, e.y, p.x, p.y)) { e.heard = true; if (g.beastCall) g.beastCall(e); }   // 走近了先聽見牠（各有各的聲音）
         else if (e.heard && d > 14) e.heard = false;
         if (e.type !== '龍' && e.type !== '豨' && !e.tame && d > 48) { this.list.splice(i, 1); continue; }   // 封豨由遊戲端收（逃跑、死了、斃了）
@@ -459,14 +463,15 @@
         if (e.type === '豨') { this.hogAct(e, g, p, night, sheltered); continue; }
         if (e.type === '雕') {     // 蠱雕：盤旋 → 撲下來抓一下、貼著停一會兒 → 飛回高處
           if (e.mode === 'dive') {
-            if (d <= 1) { if (e.atk <= 0) { g.hit(e, DB['雕'].atk); e.atk = 1.2; } e.mode = 'rise'; e.moveT = HARPY_LINGER; }
-            else if (sheltered || d > HARPY_SENSE) { e.mode = 'circle'; e.moveT = 0.4; }
+            if (roofed) { e.mode = 'rise'; e.moveT = 0.4; }
+            else if (d <= 1) { if (e.atk <= 0) { g.hit(e, DB['雕'].atk); e.atk = 1.2; } e.mode = 'rise'; e.moveT = HARPY_LINGER; }
+            else if (d > HARPY_SENSE) { e.mode = 'circle'; e.moveT = 0.4; }
             else { e.moveT = HARPY_DIVE_STEP; this.stepTo(e, p.x, p.y, false, night); }
           } else if (e.mode === 'rise') {
             e.moveT = HARPY_RISE_STEP; this.stepTo(e, p.x, p.y, true, night);
             if (U.cheb(e.x, e.y, p.x, p.y) >= HARPY_RING[0] + 1) { e.mode = 'circle'; e.diveT = HARPY_DIVE[0] + Math.random() * (HARPY_DIVE[1] - HARPY_DIVE[0]); }
           } else {
-            if (e.diveT <= 0 && d <= HARPY_SENSE && !sheltered) { e.mode = 'dive'; e.moveT = 0.1; }
+            if (e.diveT <= 0 && d <= HARPY_SENSE && !roofed) { e.mode = 'dive'; e.moveT = 0.1; }
             else if (d > HARPY_RING[1]) { e.moveT = 0.3; this.stepTo(e, p.x, p.y, false, night); }
             else if (d < HARPY_RING[0]) { e.moveT = 0.3; this.stepTo(e, p.x, p.y, true, night); }
             else { e.moveT = 0.35 + Math.random() * 0.25; this.hover(e, p, HARPY_RING[0], HARPY_RING[1]); }
@@ -481,6 +486,7 @@
           if (bz && U.cheb(e.x, e.y, bz.x, bz.y) > 3) this.stepTo(e, bz.x, bz.y, false, night); else if (Math.random() < 0.4) this.wander(e, night, null);
           continue;
         }
+        if (e.type === '玄武') { e.moveT = 1.5 + Math.random(); if (d <= 6) this.faceTo(e, p.x, p.y); continue; }   // 玄武一動也不動（v0.8.8），人來了才轉過頭
         if (e.type === '白虎') {   // 伏在虎嶺島心三格內，不近人也不避人；人來了四格內就停下來
           e.moveT = 1.4 + Math.random() * 1.6; const tz = g.tigerAt;
           if (d <= 4) { this.faceTo(e, p.x, p.y); continue; }
@@ -551,8 +557,8 @@
             } else if (d > 3) { e.moveT = 0.2; this.stepTo(e, p.x, p.y, false, night); }
             else { e.moveT = 0.6 + Math.random(); if (Math.random() < 0.5) this.wander(e, night, null); }
           } else if (e.angry) {
-            if (d <= 1) { this.maul(e, g); e.moveT = 0.6; }
-            else if (d <= 8) { e.moveT = 0.25; this.stepTo(e, p.x, p.y, false, night); }
+            if (d <= 1 && !roofed) { this.maul(e, g); e.moveT = 0.6; }
+            else if (d <= 8) { e.moveT = 0.25; if (!roofed || d > 2) this.stepTo(e, p.x, p.y, false, night); }
             else { e.angry = false; e.moveT = 1; }
           } else { e.moveT = 0.8 + Math.random() * 1.5; if (Math.random() < 0.5) this.wander(e, night, null); }
         } else if (e.type === '龜') {

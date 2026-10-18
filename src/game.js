@@ -47,7 +47,7 @@
     '大風': '高原草野，島邊一片澤，風颳得人站不穩。《淮南子·本經訓》：「繳大風於青丘之澤。」',
     '白虎': '白石嶙峋的嶺，嶺上有鐵。夜裡聽得見虎嘯，卻不見虎。',
     '朱雀': '滿地紅花，外圍有溫泉。〈南山經〉說丹穴之山有鳥，「五采而文，名曰鳳皇」。',
-    '玄武': '北海上的一座洲，林深，水邊有淡水的潭，還有一塊石頭很久沒動。',
+    '玄武': '北海上的一座洲，林深，水邊有淡水的潭；島心一塊石頭很久沒動。',
     '共工': '一圈大山圍著一塊盆地，東南缺了一口，像被什麼撞斷的。《淮南子·天文訓》：「怒而觸不周之山，天柱折，地維絕。」',
   };
   const SNOW_R = 5, SNOW_GRACE = 5, SNOW_RATE = 1, SNOW_RAMP = 0.1, SNOW_MAX = 4, HEAT_PER_MEAL = 90, HEAT_CAP = 150;
@@ -104,7 +104,7 @@
     { id: '青龍', ch: '龍', ink: '#24766b', name: '東海青龍', group: '神獸', seen: seenIt('青龍'), from: '《禮記·曲禮上》：「行，前朱鳥而後玄武，左青龍而右白虎。」', note: ['四象之東，盤在東海。', '要一顆蜃珠才肯教。', '教的是水性：船自己回命，落了水撐得久、苦頭減半。'], where: '龍淵，本島往東約六百格的深海', hint: '洞裡留下的那片青鱗，指著東方。' },
     { id: '白虎', ch: '虎', ink: '#7f8ea3', name: '西方白虎', group: '神獸', seen: seenIt('白虎'), from: '《禮記·曲禮上》：「左青龍而右白虎。」', note: ['四象之西，伏在虎嶺島心。', '認的是虎符；沒帶虎符走到六格內，牠一聲嘯，地跟著抖（震）。', '教的是抗震：從地上傳來的震少四分之一；魂環亮起虎魄。'], where: '西方的虎嶺', hint: '西邊有一聲嘯，地跟著抖。' },
     { id: '朱雀', ch: '雀', ink: '#c0392b', name: '南方朱雀', group: '神獸', seen: seenIt('朱雀'), from: '《禮記·曲禮上》：「前朱鳥而後玄武。」朱鳥就是朱雀。', note: ['四象之南，棲在丹穴。', '認的是朱羽；沒帶朱羽，牠就飛開，總離人五格以上。', '教的是氣順：窒與心的傷害少四分之一；魂環亮起鳳翎。'], where: '南方的丹穴', hint: '南邊的火裡，有一團不燙人的紅。' },
-    { id: '玄武', ch: '龜', ink: '#1c1a17', name: '北方玄武', group: '神獸', seen: seenIt('玄武'), from: '《禮記·曲禮上》：「前朱鳥而後玄武。」', note: ['四象之北，龜與蛇。', '不收信物，要你去取經，四次。', '知道這張紙為什麼歪。'], where: '北海的玄洲', hint: '北海上的洲，水邊有一塊石頭很久沒動。' },
+    { id: '玄武', ch: '龜', ink: '#1c1a17', name: '北方玄武', group: '神獸', seen: seenIt('玄武'), from: '《禮記·曲禮上》：「前朱鳥而後玄武。」', note: ['四象之北，龜與蛇。', '不收信物，要你去取經，四次。', '知道這張紙為什麼歪。'], where: '北海的玄洲', hint: '北海上的洲，島心有一塊石頭很久沒動。' },
     { id: '修蛇', ch: '蛇', ink: '#2c3b2a', name: '修蛇', group: '大魔王', seen: seenIt('修蛇'), from: '《淮南子·本經訓》：「斷修蛇於洞庭。」', note: ['一個蛇頭，後面拖著一串尾。', '潛下去打不到；冒泡的地方，牠要上來了。', '會纏船，會吞落水的人。'], where: '東極的洞庭', hint: '東極那片大水裡，有東西在纏船。' },
     { id: '封豨', ch: '豨', ink: '#5a3e2b', name: '封豨', group: '大魔王', seen: (p) => p.creatures.indexOf('豨') >= 0 || !!(p.codex && p.codex['封豨']), from: '《淮南子·本經訓》：「禽封豨於桑林。」', note: ['二乘二的大豬，命三千，頭上一圈鬃，越惱鬃越多（三、五、六個，剩三成全紅）。', '豕突：蓄一息多、直衝十格（力四十），撞到台邊會暈；拱地：震一圈圈傳開（震二十二，台橋棧上不受）；貼著撞（力二十）。', '命剩六成去吃桑回命，吃的時候打牠就吃不成；剩一半起叫野豬（群豕）。'], where: '西極的桑林（地界方圓一百格）', hint: '西極的桑林裡，地在抖。' },
     { id: '大風', ch: '風', ink: '#5b6b7a', name: '大風', group: '大魔王', seen: seenIt('大風'), from: '《淮南子·本經訓》：「繳大風於青丘之澤。」', note: ['在天上是風，撲下來是鳥。', '爪子入木三分：鎖喉、心慌、深懼，一層疊一層。', '吹得垮屋子。'], where: '南方的青丘之澤', hint: '南邊的沼澤上，屋頂一片片掀起來。' },
@@ -132,6 +132,18 @@
   const BOSSES = { '封豨': { zone: '封豨', glyph: '豨', r: 100, cour: 200, place: '桑林', feat: '禽封豨於桑林', line: '「禽封豨於桑林。」（《淮南子·本經訓》）' } };
   const BOSS_EXIT = 6, FLEE_LEVELS = 3, GUARD = { easy: { lock: 3, guard: 10 }, normal: { lock: 1.5, guard: 6 } }, GUARD_REGEN = 4, SOLO_BUFF = [0, 6, 15, 30];
   const GUARDS = [['azure', '青龍', '龍'], ['bai', '白虎', '虎'], ['zhu', '朱雀', '雀']];
+  // v0.8.8 玄武取經（設計稿〈五〉）：玄武伏在玄洲島心，兩格內按 E 取經。四顆珠照順序用：斃了幾隻大魔王就輪到第幾顆；斃之前取過這一卷是朱紅，
+  // 沒取就打叉，將來的玄武偶多一重（p.puppet）。取經是一場試煉：照你要去打的那隻，玄武吐一個墨寫的影子（命是真身的 JING[].hp、傷人 JING[].k，招式照真身），
+  // 斃了影子這一卷才算取到；死在影子手上膽氣減半；走出玄洲 JING_EXIT 格外就算沒取成，不罰。第一次見玄武，牠說紙在歪，叫你回出生的地方許願：
+  // 出生點 PAVILION_R 格內立起一座惜字亭（照原本的底稿找平地、四周八格都走得過，不擋路），面向它按 E 許願
+  const JING = { '封豨': { scroll: '封豨卷', shade: '豨影', glyph: '豨', hp: 0.3, k: 0.5, lines: [
+    '豕突：腳下揚塵一息多，地上畫出要衝的那條路，就往旁邊讓。站在台上，牠撞在台邊，暈一息半。',
+    '拱地：蓄一息，震一圈圈傳到七格。站上台、橋、棧就不受；白虎教的抗震再少四分之一。',
+    '荐食：命剩六成以下去啃樹回命。牠吃的時候，打掉牠命上限的百分之三就吃不成；先把附近的林子砍稀了，牠就沒得吃。',
+    '群豕：命剩一半起叫野豬來，最多四頭。',
+    '牠上不了台階、進不了屋；擋路的磚，牠會撞。'] } };
+  const JING_LATER = { '修蛇': '修蛇卷', '大風': '大風卷' }, JING_EXIT = 6, JING_COUR = 60, WISH_COUR = 20, PAVILION_R = [3, 12], WISH_TEXT = '「這張紙上的字，一個也不讓它化掉。」';
+  const NTH = '一二三四';
   const HARPY_SOUTH = 300, HARPY_CRY = { easy: 4, normal: 6, hard: 8 }, HARPY_FEAR = 1.5, FLINT_P = 1 / 50;
   const TOKENS = {
     '鑿齒殘體': { out: '虎符', need: { '鐵': TALLY_IRON, '鎢鋼': TALLY_TUNG }, verb: '鑄', unit: '枚', mark: '符', god: '白虎', place: '虎嶺', learned: 'bai', look: '一隻伏著的虎。', fail: '鼎裡的鐵水翻了，符沒鑄成', lost: '鐵與鎢鋼都熔掉了', hard: '熔壞' },
@@ -179,8 +191,9 @@
       this.azure = G.azureAt(seed);   // v0.8 東海青龍盤著的地方
       { const tz = G.zones(seed).find(z => z.id === '白虎'); this.tigerAt = { x: tz.x, y: tz.y }; }   // v0.8.5 白虎伏在虎嶺島心
       { const bz = G.zones(seed).find(z => z.id === '朱雀'); this.birdAt = { x: bz.x, y: bz.y }; }    // v0.8.6 朱雀棲在丹穴島心
+      { const xz = G.zones(seed).find(z => z.id === '玄武'); this.turtleZone = xz; this.turtleAt = { x: xz.x, y: xz.y }; }   // v0.8.8 玄武伏在玄洲島心
       { const hz = G.zones(seed).find(z => z.id === '封豨'); this.hogDen = { x: hz.x, y: hz.y }; }   // v0.8.7 封豨的窩在桑林島心
-      this.bossAsk = null; this.fleeArm = 0;
+      this.bossAsk = null; this.fleeArm = 0; this.talking = null;
       if (save) this.load(save);
       else {
         this.player.x = this.player.rx = this.spawn.x; this.player.y = this.player.ry = this.spawn.y;
@@ -220,7 +233,11 @@
     gatherCompanions() { const p = this.player; for (const e of this.ents.tamed()) { const at = this.freeNear(p.x, p.y, true); e.x = e.rx = at.x; e.y = e.ry = at.y; } }
     ghostCap() { return Math.min(this.diff.ghostMax, 2 + Math.floor((this.nightNo() - this.diff.ghost) / 2)); }   // 一般簡單最多八隻、困難十隻（v0.5 前六隻）
     ghostSpeed() { const n = this.nightNo(); return n < GHOST_FAST_NIGHT ? 1 : Math.min(GHOST_FAST_MAX, 1 + 0.1 * (Math.floor((n - GHOST_FAST_NIGHT) / 4) + 1)); }   // 第廿夜 1.1、廿四夜 1.2……最多兩倍
-    indoors() { const p = this.player, d = DB[this.world.get(p.x, p.y)]; return !!(d && d.shelter) || this.world.covered(p.x, p.y); }   // 屋裡：地標屋舍，或磚圍得住（跟雨淋不淋燈同一個判定）
+    indoors() {          // 屋裡：地標屋舍，或磚圍得住（跟雨淋不淋燈同一個判定）；v0.8.8：站在水上不算，四周得有人造的磚門窗墟（先前海上四面深水也算圍住了）
+      const p = this.player, w = this.world, d = DB[w.get(p.x, p.y)]; if (d && d.shelter) return true;
+      if (!d || d.kind === 'water' || !(d.walk > 0) || !w.covered(p.x, p.y)) return false;
+      const sh = w.roomShell(p.x, p.y); return !!sh && [...sh.values()].some(c => '磚門窗墟'.indexOf(c) >= 0);
+    }
     ghostTouch(e, dt) {   // 魄兩格內：手裡的光每息有 ents.snuffP 的機會被吹熄，SNUFF_TIME 息後才點得著（燈帽吹不熄，蠟燭燒得快，見 updateStats）
       const p = this.player, s = this.held(), it = s && ITEMS[s.n];
       if (!it || !it.light || it.slot || p.snuffT > 0 || this.darkness() <= 0.5) return;
@@ -553,7 +570,7 @@
       if (p.poisonT > 0) { p.poisonT -= dt; p.hp = Math.max(0, p.hp - p.poisonPer * dt); if (p.poisonT <= 0) { p.poisonPer = 0; this.message('毒勁過了。'); } }
       p.hurtT = Math.max(0, p.hurtT - dt); p.atkT = Math.max(0, p.atkT - dt);
       // 命：飽、暖、力、愜意都在七成五以上才回（v0.4.13 前是飽愜力八成）；餓、凍、力盡都耗。先看是不是已經沒命了，免得回血把零命救回來
-      if (p.hp <= 0) { this.die(p.food <= 0 ? '餓' : p.warm <= 0 ? '凍' : p.sta <= 0 ? '累' : p.poisonT > 0 ? '毒' : '傷'); return; }
+      if (p.hp <= 0) { this.die(this.deathCause()); return; }
       let dh = 0;
       if (p.food <= 0) dh -= 2;
       if (p.warm <= 0 && p.heatT <= 0) dh -= 3;   // 有熱氣時凍不傷命
@@ -596,7 +613,12 @@
         if (z && !(p.zones || {})[z.id] && (wet ? Math.hypot(p.x - z.x, p.y - z.y) <= z.r : onLand)) this.enterZone(z);
         if (onLand && !(z && !wet)) { const isl = G.isleOf(p.x, p.y, this.seed); if (isl && !(p.isles || {})[isl.id]) this.landIsle(isl); } }
       this.bossTick(dt);   // v0.8.7 魔王的地界與戰事
-      if (p.hp <= 0) this.die(p.food <= 0 ? '餓' : p.warm <= 0 ? '凍' : p.sta <= 0 ? '累' : p.poisonT > 0 ? '毒' : '傷');
+      this.trialTick();    // v0.8.8 玄武的試煉
+      if (p.hp <= 0) this.die(this.deathCause());
+    }
+    deathCause() {      // 死因：剛挨的那一下（半息內）打死的就是傷——中著毒、餓著時死在魔王手上，膽氣照樣只減一半（v0.8.8）
+      const p = this.player, lh = p.lastHit; if (lh && this.world.time - lh.t <= 0.5) return '傷';
+      return p.food <= 0 ? '餓' : p.warm <= 0 ? '凍' : p.sta <= 0 ? '累' : p.poisonT > 0 ? '毒' : '傷';
     }
     die(cause) {
       const p = this.player, w = this.world;
@@ -604,22 +626,28 @@
       const lh = p.lastHit, big = !!(lh && lh.big && w.time - lh.t <= LAST_HIT_T && cause === '傷');   // 死在神獸、魔王、共工手上：膽氣只掉一半（v0.8.5）
       p.deathKeep = big ? BIG_DEATH : DEATH_KEEP;
       const fought = p.fight ? BOSSES[p.fight.id] : null; if (fought) this.endFight();   // 魔王戰中死了：戰事散了，魔王回窩養好傷（v0.8.7）
-      const drop = p.bag.concat(p.tools, this.wornList());
+      if (p.trial) this.endTrial();   // 試煉中死了：影子散了（v0.8.8）
+      const drop = p.bag.concat(p.tools, this.wornList()); let dropFar = false, bossSack = null;
       for (const s of drop) if (s.dur !== undefined) s.dur = Math.max(1, U.r4(s.dur / 2));   // 留下的東西，有耐久的全打對折（可修）
       const landOk = (x, y) => { const d = w.info(x, y); return d.walk > 0 && d.kind !== 'object' && d.kind !== 'place' && !w.stele(x, y) && DB[w.raw(x, y)].kind !== 'water' && w.raw(x, y) !== '灘'; };
       if (p.sailing) {           // 船停在最近的淺水上
         this.parkShip(p.x, p.y, true, 60); p.sailing = false;
       }
-      if (drop.length) {
-        const spot = this.nearestTile(p.x, p.y, landOk, 80) || [this.spawn.x, this.spawn.y];
-        w.set(spot[0], spot[1], '包'); w.bags.set(U.key(spot[0], spot[1]), drop);
+      if (drop.length && fought) {   // v0.8.8：死在魔王戰裡，東西用小囊包著送回床邊（先前落在戰場上，不再打一場拿不回來）
+        const at = this.dropSack(drop); bossSack = at.where;
+        p.bag = []; p.tools = []; p.tool = -1; for (const k of SLOT_ORDER) p.worn[k] = null;
+      } else if (drop.length) {
+        const spot = this.nearestTile(p.x, p.y, landOk, 80) || this.nearestTile(this.spawn.x, this.spawn.y, landOk, 60) || [this.spawn.x, this.spawn.y];   // v0.8.8：遠海上死了，落在出生點附近的空地，不蓋掉那裡的荷包、櫃
+        const sk = U.key(spot[0], spot[1]), had = w.get(spot[0], spot[1]) === '包' ? (w.bags.get(sk) || []) : [];
+        w.set(spot[0], spot[1], '包'); w.bags.set(sk, had.concat(drop)); dropFar = U.cheb(spot[0], spot[1], p.x, p.y) > 12;
         p.bag = []; p.tools = []; p.tool = -1; for (const k of SLOT_ORDER) p.worn[k] = null;
       }
       this.paused = true;
-      $('dead-text').innerHTML = '第 ' + this.day() + ' 日，你' + ({ '餓': '餓死了', '凍': '凍死了', '傷': '傷重而亡', '毒': '毒發身亡', '累': '力竭而亡', '溺': '沒能游上岸，溺死了' })[cause] + (big ? '（' + lh.by + '）' : '') + '。<br>荷包落在原地，可以回去取，有耐久的東西都折了一半。' + (big ? '死在' + lh.by + '手上，膽氣只減一半。' : '膽氣減六成。') + (fought ? fought.zone + '回' + fought.place + '去了，養回滿命。' : '');
-      $('dead').classList.remove('hidden');
+      p.deadText = '第 ' + this.day() + ' 日，你' + ({ '餓': '餓死了', '凍': '凍死了', '傷': '傷重而亡', '毒': '毒發身亡', '累': '力竭而亡', '溺': '沒能游上岸，溺死了' })[cause] + (big ? '（' + lh.by + '）' : '') + '。<br>' + (!drop.length ? '' : bossSack ? '身上的東西用小囊包著，送回了' + bossSack + '（不用再打一場去撿），有耐久的東西都折了一半。' : dropFar ? '荷包落在出生的地方附近（死的地方附近沒有地），可以回去取，有耐久的東西都折了一半。' : '荷包落在原地，可以回去取，有耐久的東西都折了一半。') + (big ? '死在' + lh.by + '手上，膽氣只減一半。' : '膽氣減六成。') + (fought ? fought.zone + '回' + fought.place + '去了，養回滿命。' : '');
+      this.showDead();
       this.save();
     }
+    showDead() { this.paused = true; $('dead-text').innerHTML = this.player.deadText || '你死了。'; $('dead').classList.remove('hidden'); }   // v0.8.8：死了的那一刻存了檔，讀進來照樣停在這一幕，不再死第二回
     respawn() {
       const p = this.player, w = this.world;
       const h = p.home, homeOk = h && w.get(h.x, h.y) === '床';
@@ -629,7 +657,7 @@
       p.x = p.rx = at.x; p.y = p.ry = at.y; p.moveT = 0;
       p.hp = Math.min(p.hpMax, 60); p.food = 60; p.warm = 60; p.sta = p.staMax; p.san = Math.max(p.san, 50); p.cour = U.r4(p.cour * (p.deathKeep || DEATH_KEEP)); p.deathKeep = 0; p.decayAt = 0; p.hitWin = { start: -99, n: 0 };
       p.swimming = false; p.swimT = 0; p.ship = null; p.deploy = null; p.swimShips = 0;
-      p.hurtT = 0; p.dead = false; p.warned = {}; p.poisonT = 0; p.poisonPer = 0; p.biteN = 0; p.insane = false; p.ctrl = true; p.zeroSan = 0; p.sailing = false; p.crossed = false;
+      p.hurtT = 0; p.dead = false; p.deadText = ''; p.warned = {}; p.poisonT = 0; p.poisonPer = 0; p.biteN = 0; p.insane = false; p.ctrl = true; p.zeroSan = 0; p.sailing = false; p.crossed = false;
       this.action = null;
       w.time = Math.floor(w.time / DAY) * DAY + DAY * (1 + DAWN + 0.01);   // 復活在次日清晨
       this.ents.list = this.ents.list.filter(e => '虎豹狼蛇蛛魄豬'.indexOf(e.type) < 0);
@@ -696,7 +724,7 @@
     hintOnce(text) { if (this.msgText.indexOf(text) < 0) this.message(text); }
     // ---------- 大魔王與戰鬥的規矩（v0.8.7） ----------
     bossZone(id) { return G.zones(this.seed).find(z => z.id === BOSSES[id].zone); }
-    bossEnt() { const f = this.player.fight; return f ? this.ents.list.find(o => o.type === BOSSES[f.id].glyph) || null : null; }
+    bossEnt() { const f = this.player.fight; return f ? this.ents.list.find(o => o.type === BOSSES[f.id].glyph && !o.shade) || null : null; }
     guardOf() { const p = this.player; return GUARDS.find(([k]) => p[k]) || null; }   // 先來的是青龍，再來白虎、朱雀（求教過的才來）
     bossTick(dt) {
       const p = this.player; if (p.dead) return;
@@ -713,8 +741,8 @@
       for (const id in BOSSES) {
         if ((p.bosses || {})[id]) continue;
         const z = this.bossZone(id), inside = Math.hypot(p.x - z.x, p.y - z.y) <= BOSSES[id].r;
-        if (!inside) { p.inBoss[id] = false; this.bossOut = { x: p.x, y: p.y }; }
-        else if (!p.inBoss[id] && !this.bossAsk) this.askBoss(id);
+        if (!inside) { p.inBoss[id] = false; p.bossOut = { x: p.x, y: p.y }; }   // 地界外最後一格，存進檔（v0.8.8：先前沒存，地界裡讀檔就退不出去）
+        else if (!p.inBoss[id] && !this.bossAsk && !this.talking) this.askBoss(id);
       }
     }
     askBoss(id) {        // 走進地界先問一聲（以後還沒請教玄武也在這裡提醒）
@@ -725,15 +753,15 @@
         + '<li>戰中不能換難度。</li><li>要走只能逃跑（暫停面板的「逃跑」，或走出地界）：膽氣減 ' + FLEE_LEVELS + ' 重，牠回滿命。</li>'
         + '<li>死在牠手上，膽氣只減一半；牠回' + b.place + '養好傷。</li>'
         + '<li>' + (g2 ? '命只剩一點時鎖住 ' + g2.lock + ' 息（一場一次）；' + (gd.length ? '鎖完' + gd[0] + '來護駕 ' + g2.guard + ' 息，可靠了神獸就不算獨力。' : '你還沒求教過神獸，鎖完沒有誰來護駕。') : '困難：不鎖血，也沒有神獸護駕。') + '</li>'
-        + '<li>獨力斃牠，記一筆成就。</li></ul>';
+        + '<li>獨力斃牠，記一筆成就。</li>' + this.jingNote(id) + '</ul>';
       $('bossask').classList.remove('hidden');
     }
     closeBossAsk() { $('bossask').classList.add('hidden'); this.bossAsk = null; this.paused = false; }
     bossYes() { const id = this.bossAsk; if (!id) return; this.closeBossAsk(); this.player.inBoss[id] = true; this.startFight(id); }
     bossNo() {
-      const id = this.bossAsk; if (!id) return; this.closeBossAsk(); const p = this.player, o = this.bossOut;
-      if (o) { p.x = p.rx = o.x; p.y = p.ry = o.y; this.ents.px = p.x; this.ents.py = p.y; p.moveT = 0; }
-      this.message('還是先不了。退回地界外。');
+      const id = this.bossAsk; if (!id) return; this.closeBossAsk(); const p = this.player, o = p.bossOut;
+      if (o) { p.x = p.rx = o.x; p.y = p.ry = o.y; this.ents.px = p.x; this.ents.py = p.y; p.moveT = 0; this.message('還是先不了。退回地界外。'); }
+      else { p.inBoss[id] = true; this.message('還是先不了。走出地界前不再問；要打，走出去再進來。'); }   // 舊存檔讀進來就在地界裡、不知道從哪進來的
     }
     startFight(id) {
       const p = this.player, b = BOSSES[id]; p.fight = { id, solo: true, locked: false, guarded: false, at: U.r4(this.world.time) }; p.lockT = 0; p.guardT = 0;
@@ -746,7 +774,8 @@
       return E.add(glyph, at[0], at[1], { hp: f.hp || DB[glyph].hp, state: 'chase', chargeCD: 3, quakeCD: 6, eatCD: 10, callCD: 0, moveT: 1 });
     }
     bossHit(e, dmg, kind, move) {   // 魔王打到人：護駕中打不到、鎖血中打不到；會打死人的那一下，簡單一般改成鎖血
-      const p = this.player, f = p.fight, name = BOSSES[f ? f.id : '封豨'].zone; if (p.dead) return 0;
+      const p = this.player, shade = e && e.shade, f = shade ? null : p.fight, name = shade || BOSSES[f ? f.id : '封豨'].zone; if (p.dead) return 0;
+      if (shade) dmg = U.r4(dmg * (e.k || 1));   // 玄武的墨影（v0.8.8）：傷人照真身打折，不鎖血、沒有神獸護駕
       if (f && p.guardT > 0) { this.fx.push({ type: 'float', x: p.x, y: p.y, text: '擋', color: G.INK.azure, t: 0, dur: 0.6 }); this.message(f.guardBy + '擋下了' + name + '的' + move + '。'); return 0; }
       if (f && p.lockT > 0) return 0;
       const d = U.r4(dmg * this.kindMult(kind));
@@ -783,24 +812,134 @@
     bossDown(e) {        // 斃了大魔王：記下、膽氣、獨力的記成就
       const p = this.player, f = p.fight || { id: '封豨', solo: true }, b = BOSSES[f.id];
       this.ents.remove(e); this.stats.kills++;
+      const slot = this.jingSlot(); p.jing = p.jing || []; let jingText = '';   // 玄武的珠（v0.8.8）：這一隻用掉第幾顆；斃之前沒取經就打叉
+      if (slot < 3) { if (p.jing[slot] === 'got') jingText = '第' + NTH[slot] + '卷經取過了，那顆朱紅的珠用上了。'; else { p.jing[slot] = 'miss'; p.puppet = (p.puppet || 0) + 1; jingText = '這一卷沒向玄武取經就打了：第' + NTH[slot] + '顆珠打叉，將來的玄武偶多一重。'; } }
       p.bosses = p.bosses || {}; p.bosses[f.id] = { diff: this.diff.key, solo: !!f.solo, day: this.day() };
       p.codex = p.codex || {}; p.codex[f.id] = (p.codex[f.id] || 0) + 1;
-      const got = this.addCourage(b.cour * (this.isNight() ? KILL_NIGHT : KILL_DAY), 'kill'); this.addItem('肉', 8);
+      const got = this.addCourage(b.cour * (this.isNight() ? KILL_NIGHT : KILL_DAY), 'kill'), meatAt = this.giveNear('肉', 8);
       if (f.solo) { p.feats = p.feats || []; p.feats.push({ id: f.id, text: b.feat + ' · ' + this.diff.name + ' · 獨力', day: this.day() }); }
       const solos = Object.values(p.bosses).filter(x => x.solo).length;
       p.fight = null; p.lockT = 0; p.guardT = 0; this.bossSig = '';
-      this.toast(b.feat, b.line + '膽氣 +' + fmt(this.shown('cour', got)) + '，得肉八。' + (f.solo ? '獨力斃之，記一筆成就（' + this.diff.name + '）。自傲是有代價的：獨力斃的大魔王越多，將來的共工越強（現在 +' + SOLO_BUFF[Math.min(3, solos)] + '%）。' : f.guardBy + '護駕過，這一場不算獨力。'), 14000);
+      this.toast(b.feat, b.line + '膽氣 +' + fmt(this.shown('cour', got)) + '，得肉八' + (meatAt ? '（囊滿了，用小囊包著擱在' + meatAt.where + '）' : '') + '。' + (f.solo ? '獨力斃之，記一筆成就（' + this.diff.name + '）。自傲是有代價的：獨力斃的大魔王越多，將來的共工越強（現在 +' + SOLO_BUFF[Math.min(3, solos)] + '%）。' : f.guardBy + '護駕過，這一場不算獨力。') + (jingText ? '<br>' + jingText : ''), 16000);
       SFX.learn(); this.renderer.shake = 0.6; this.save();
     }
     hogWind(e) { this.fx.push({ type: 'write', x: e.x + 0.5, y: e.y + 1.2, ch: '塵', color: G.INK.brown, t: 0, dur: 0.9 }); }
     hogQuake(e) { SFX.ram(); this.renderer.shake = 0.4; this.fx.push({ type: 'write', x: e.x + 0.5, y: e.y + 0.5, ch: '塵', color: G.INK.brown, t: 0, dur: 1 }); }
     hogEat(e, ok) {
-      if (ok === null) { this.fx.push({ type: 'float', x: e.x + 0.5, y: e.y, text: '荐食', color: G.INK.plant, t: 0, dur: 1.4 }); this.message('封豨去啃桑樹回命（荐食）——趁牠吃的時候打，就吃不成。'); }
-      else if (ok) this.message('封豨啃光了一棵桑，命回了一截。');
-      else this.message('打斷了！封豨沒吃成。');
+      if (ok === null) { this.fx.push({ type: 'float', x: e.x + 0.5, y: e.y, text: '荐食', color: G.INK.plant, t: 0, dur: 1.4 }); this.message(this.beastName(e) + '去啃樹回命（荐食）——趁牠吃的時候打，就吃不成。'); }
+      else if (ok) this.message(this.beastName(e) + '啃光了一棵樹，命回了一截。');
+      else this.message('打斷了！' + this.beastName(e) + '沒吃成。');
     }
-    hogCall(e, n) { SFX.beast('豬'); this.message('封豨一聲吼，林子裡衝出 ' + n + ' 頭野豬（群豕）。'); }
-    hogStun(e) { this.renderer.shake = 0.5; SFX.ram(); this.fx.push({ type: 'float', x: e.x + 0.5, y: e.y, text: '暈', color: G.INK.red, t: 0, dur: 1.2 }); this.message('封豨一頭撞在台邊，暈了一下。'); }
+    hogCall(e, n) { SFX.beast('豬'); this.message(this.beastName(e) + '一聲吼，' + (e.shade ? '墨裡又聚出 ' + n + ' 頭豕影' : '林子裡衝出 ' + n + ' 頭野豬') + '（群豕）。'); }
+    hogStun(e) { this.renderer.shake = 0.5; SFX.ram(); this.fx.push({ type: 'float', x: e.x + 0.5, y: e.y, text: '暈', color: G.INK.red, t: 0, dur: 1.2 }); this.message(this.beastName(e) + '一頭撞在台邊，暈了一下。'); }
+    // ---------- 玄武取經、惜字亭與許願（v0.8.8） ----------
+    jingSlot() { return Math.min(3, Object.keys(this.player.bosses || {}).length); }   // 輪到第幾顆珠：斃了幾隻大魔王，就是第幾顆（從零算）
+    jingNote(id) {       // 進魔王地界的視窗裡提醒：這一卷取過沒有
+      const p = this.player, s = this.jingSlot(); if (s >= 3 || (p.jing || [])[s] === 'got') return '';
+      return '<li class="warn">' + (p.xuan ? '你還沒向玄武取這一卷經' : '北海的玄洲有一塊石頭很久沒動——你還沒去向玄武取經') + '。照樣進去、執意打敗' + BOSSES[id].zone + '，這一卷就錯過了：第' + NTH[s] + '顆珠打叉，將來的玄武偶多一重。</li>';
+    }
+    talk(title, paras, choices) {   // 說話的視窗：幾段話、幾個選項（數字鍵選，Enter 是第一個能選的，Esc 是最後一個）
+      this.talking = { choices }; this.paused = true; this.keys.clear(); this.action = null; if (this.stopWalk) this.stopWalk();
+      $('talk-title').textContent = title; $('talk-text').innerHTML = paras.map(x => '<p>' + x + '</p>').join('');
+      const row = $('talk-row'); row.innerHTML = '';
+      choices.forEach((c, i) => {
+        const b = document.createElement('button'); b.textContent = (choices.length > 1 ? (i + 1) + '　' : '') + c.label; b.disabled = !!c.off;
+        if (choices.length > 1 && i === choices.length - 1) b.className = 'ghost';
+        b.addEventListener('click', () => this.talkPick(i)); row.appendChild(b);
+      });
+      $('talk').classList.remove('hidden');
+    }
+    talkPick(i) {
+      const t = this.talking; if (!t) return; if (i === 'first') i = t.choices.findIndex(c => !c.off); if (i === 'last') i = t.choices.length - 1;
+      const c = t.choices[i]; if (!c || c.off) return;
+      $('talk').classList.add('hidden'); this.talking = null; this.paused = false; if (c.fn) c.fn();
+    }
+    askTortoise() {      // 玄武兩格內按 E
+      const p = this.player;
+      if (p.trial) { this.message('玄武不說話，看著那個' + JING[p.trial.id].shade + '。'); return; }
+      if (!p.xuan) this.firstTalk(); else this.jingTalk();
+    }
+    firstTalk() {        // 第一次見玄武：紙在歪；回出生的地方許願（惜字亭從這時才立起來）
+      const p = this.player; p.xuan = { day: this.day() }; p.codex = p.codex || {}; p.codex['玄武'] = (p.codex['玄武'] || 0) + 1;
+      const at = this.placePavilion();
+      this.talk('北方玄武', [
+        '石頭動了。是一隻龜，一條蛇繞著牠慢慢轉。',
+        '「你是紙上的一個『人』字。你剛被寫出來的時候，墨還沒乾，我就認得你。」',
+        '「這張紙在歪。西北翹起來，東南沉下去；水往低處流，墨也跟著流。字一泡開，就化成一灘泥。一直流下去，整張紙會洗回白紙——島上每個字都會化掉，你也是，那孩子留下的話也是。」',
+        '「書上沒寫是誰撞歪了天。我活得久，我記得是他：共工。〈天文訓〉說他『怒而觸不周之山，天柱折，地維絕』。」',
+        '「紙一歪，四角翹起來，跑出了東西：洞庭的修蛇、桑林的封豨、青丘的大風。青龍、白虎、朱雀和我，是壓住四角的鎮紙。光壓著，不夠。」',
+        '「回你被寫出來的地方去' + (at ? '，那裡立起了一座惜字亭' : '') + '。在那裡許個願。」',
+        '「每要去打一隻之前，先來我這裡取一卷經：我吐一個牠的影子，你先打一回。」'
+      ], [{ label: '取經', fn: () => this.jingTalk() }, { label: '先不', fn: () => this.message('惜字亭立在你出生的地方附近，回去許個願。') }]);
+      SFX.learn(); this.save();
+    }
+    jingTalk() {         // 取經：輪到哪一卷、選要去打哪一隻
+      const p = this.player, s = this.jingSlot(), bs = p.bosses || {};
+      if (s >= 3) { this.talk('北方玄武', ['「三隻都斃了。第四卷是究極練習課，還沒寫成。」'], [{ label: '好', fn: null }]); return; }
+      if ((p.jing || [])[s] === 'got') { const sc = (p.scrolls || []).find(x => x.slot === s); this.talk('北方玄武', ['「第' + NTH[s] + '卷你取過了' + (sc ? '（' + JING[sc.id].scroll + '）' : '') + '。去吧，斃了一隻再來取下一卷。」'], [{ label: '好', fn: null }]); return; }
+      const ids = Object.keys(JING).filter(id => !bs[id]);
+      const later = Object.keys(JING_LATER).map(id => ({ label: JING_LATER[id] + '（還沒寫成）', off: true }));
+      if (!ids.length) { this.talk('北方玄武', ['「第' + NTH[s] + '卷還沒寫成——修蛇、大風還沒醒。」'], [{ label: '好', fn: null }]); return; }
+      this.talk('北方玄武', ['「第' + NTH[s] + '卷。你先要去打誰？」',
+        '玄武吐一口氣，墨聚成那隻的影子：命是真身的 ' + Math.round(JING[ids[0]].hp * 100) + '%、傷人只有' + (JING[ids[0]].k === 0.5 ? '一半' : Math.round(JING[ids[0]].k * 100) + '%') + '，招式跟真身一樣。斃了影子，這一卷才算取到；走出玄洲就算沒取成，不罰，回來再試。打得死人：死在影子手上，膽氣減半。'],
+        ids.map(id => ({ label: JING[id].scroll + '（' + BOSSES[id].place + '的' + BOSSES[id].zone + '）', fn: () => this.startTrial(id) })).concat(later, [{ label: '先不', fn: null }]));
+    }
+    startTrial(id) {     // 試煉：玄武吐出影子
+      const p = this.player, J = JING[id], z = this.turtleZone, E = this.ents, glyph = J.glyph;
+      let spot = null;
+      for (let r = 6; r <= 14 && !spot; r++) for (let k = 0; k < 24 && !spot; k++) {
+        const a = k / 24 * Math.PI * 2 + r, x = Math.round(p.x + Math.cos(a) * r), y = Math.round(p.y + Math.sin(a) * r);
+        if (Math.hypot(x + 1 - z.x, y + 1 - z.y) <= z.r - 4 && E.hogFits({ type: glyph }, x, y)) spot = [x, y];
+      }
+      if (!spot) { this.message('這裡施展不開。站到玄洲島心空曠一點的地方再來。'); return; }
+      const max = U.r4(DB[glyph].hp * J.hp);
+      p.trial = { id, slot: this.jingSlot(), at: U.r4(this.world.time) };
+      E.add(glyph, spot[0], spot[1], { hp: max, max, shade: J.shade, k: J.k, den: { x: z.x, y: z.y }, state: 'chase', chargeCD: 3, quakeCD: 6, eatCD: 10, callCD: 0, moveT: 1.2 });
+      this.bossSig = '';
+      this.toast('第' + NTH[p.trial.slot] + '卷 · ' + J.scroll, '玄武吐一口氣，墨在地上聚成一頭' + J.shade + '。斃了牠，這一卷才算取到；走出玄洲就散了。', 8000); SFX.beast(glyph);
+    }
+    shadeEnt() { const t = this.player.trial; return t ? this.ents.list.find(o => o.shade === JING[t.id].shade) || null : null; }
+    endTrial() { this.ents.list = this.ents.list.filter(o => !o.shade); this.player.trial = null; this.bossSig = ''; }
+    trialTick() {        // 試煉中走出玄洲：影子散了，不罰
+      const p = this.player, t = p.trial; if (!t || p.dead) return;
+      const z = this.turtleZone;
+      if (Math.hypot(p.x - z.x, p.y - z.y) > z.r + JING_EXIT) { this.endTrial(); this.toast('沒取成', '你走出了玄洲，' + JING[t.id].shade + '散成一灘墨。回來再試，不罰。', 7000); return; }
+      if (!this.shadeEnt()) { this.endTrial(); this.message('影子散了。回玄武那裡再取一回。'); }
+    }
+    shadeDown(e) {       // 斃了影子：這一卷取到了
+      const p = this.player, t = p.trial;
+      if (!t || e.shade !== JING[t.id].shade) { this.ents.remove(e); this.message(this.beastName(e) + '散成一灘墨。'); return; }   // 叫來的豕影
+      this.ents.remove(e); this.endTrial();
+      p.jing = p.jing || []; p.jing[t.slot] = 'got'; p.scrolls = p.scrolls || []; p.scrolls.push({ id: t.id, slot: t.slot, day: this.day() });
+      const got = this.addCourage(JING_COUR, 'kill'), J = JING[t.id];
+      this.toast('取得' + J.scroll, '影子散成一灘墨，墨裡浮出一卷經；第' + NTH[t.slot] + '顆珠點上了朱紅。' + (got > 0 ? '膽氣 +' + fmt(this.shown('cour', got)) + '。' : '') + '<br>' + J.lines.join('<br>') + '<br><span class="dim">這一卷記在見聞錄（J）裡。</span>', 18000);
+      SFX.learn(); this.renderer.shake = 0.4; this.save();
+    }
+    placePavilion() {    // 惜字亭：出生點附近、照原本的底稿找一格平地（現在也還是平地），四周八格都走得過，不擋路；由近到遠照固定的順序找
+      const p = this.player, w = this.world; if (p.pavilion && w.get(p.pavilion.x, p.pavilion.y) === '亭') return p.pavilion;
+      const sp = this.spawn, plain = '草土花';
+      const ok = (x, y) => {
+        if (plain.indexOf(G.oldTile(x, y, this.seed)) < 0 || plain.indexOf(w.get(x, y)) < 0 || w.stele(x, y) || this.ents.at(x, y) || (x === p.x && y === p.y)) return false;
+        for (const [dx, dy] of N8) { const ch = w.get(x + dx, y + dy), d = DB[ch]; if (!(d.walk > 0) || d.kind === 'water' || d.kind === 'object' || d.kind === 'place' || d.bog) return false; }
+        return true;
+      };
+      for (let r = PAVILION_R[0]; r <= PAVILION_R[1]; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+        const x = sp.x + dx, y = sp.y + dy; if (ok(x, y)) { w.set(x, y, '亭'); p.pavilion = { x, y }; return p.pavilion; }
+      }
+      return null;
+    }
+    wishAt() {           // 惜字亭前按 E：許願（一次）；許過了就說一聲，還願等斃了共工
+      const p = this.player;
+      if (!p.xuan) { this.talk('惜字亭', ['一座小小的磚亭，亭裡有一爐灰。'], [{ label: '好', fn: null }]); return; }
+      if (p.wish) { this.talk('惜字亭', ['亭裡那爐灰還溫著。你在第 ' + p.wish.day + ' 日許過願：' + WISH_TEXT, '還願要等紙平了：斃了共工，再回來。'], [{ label: '好', fn: null }]); return; }
+      this.talk('惜字亭', ['一座小小的磚亭，亭裡有一爐灰。寫過字的紙不隨便丟，送到這裡焚化，叫敬惜字紙。', '玄武要你在這裡許個願。保自己：你也是墨寫的。保那孩子的話：你一路讀過來的。守信：願是你自己許的。'],
+        [{ label: '許願：' + WISH_TEXT, fn: () => this.makeWish() }, { label: '先不', fn: null }]);
+    }
+    makeWish() {
+      const p = this.player; p.wish = { day: this.day(), diff: this.diff.key }; const got = this.addCourage(WISH_COUR, 'other');
+      this.toast('許願', WISH_TEXT + '願許下了。' + (got > 0 ? '膽氣 +' + fmt(this.shown('cour', got)) + '。' : '') + '打贏共工，再回到這裡還願。', 10000); SFX.learn(); this.save();
+    }
     toothLand() {        // 人在不在西邊的外島上（v0.8.5）：鑿齒只在這裡走出來；四方地界與本島不算
       const p = this.player, w = this.world; if (p.sailing || p.swimming || DB[w.get(p.x, p.y)].kind === 'water' || G.zoneAt(p.x, p.y, this.seed)) return false;
       const isl = G.isleOf(p.x, p.y, this.seed); return !!isl && isl.cx < -TOOTH_WEST;
@@ -884,7 +1023,7 @@
     openStove(t) { this.stoveAt = U.key(t.x, t.y); $('stove').classList.remove('hidden'); this.keys.clear(); this.action = null; this.stoveSig = ''; this.buildStove(); }
     closeStove() { $('stove').classList.add('hidden'); this.stoveAt = null; }
     stovePos() { const [x, y] = U.unkey(this.stoveAt); return { x, y }; }
-    fuelOf(name) { const it = ITEMS[name]; if (it && it.kind === 'wear' && !it.iron && !it.light) return CLOTH_FUEL; return FUEL[name] || 0; }   // 一件燒幾息：煤精煤照表，木類筆畫乘十五，布衣一百二十
+    fuelOf(name) { const it = ITEMS[name]; if (it && it.kind === 'wear' && !it.iron && !it.light) return CLOTH_FUEL; return FUEL[name] || 0; }   // 一件燒幾息：照 FUEL 表；舊布衣一件 CLOTH_FUEL 息
     // 舊鐵製品熔回鐵：鐵甲盔靴回配方裡鐵的一半（至少一塊）、鋼具一塊；鎢鋼件同理熔回鎢鋼。石具與神兵不熔
     meltYield(name) {
       const it = ITEMS[name]; if (!it) return null;
@@ -1057,6 +1196,7 @@
       for (const s of bag) if (s.n === n && s.dur === undefined && s.c < STACK) c -= Math.min(c, STACK - s.c);
       return c <= 0 || used + Math.ceil(c / STACK) <= this.slots();
     }
+    swapOk(from, to) { if (this.canAdd(to, 1)) return true; const ss = this.player.bag.filter(x => x.n === from); return ss.length === 1 && ss[0].c === 1; }   // 用掉一個 from 換一個 to 放不放得下（v0.8.8）
     // 麻布包（v0.8.3 使用者定）：油脂只能裝在麻布包裡，一個包裝八份；包不是耗材，用的是包裡的份數
     oilRoom() { let k = 0; for (const s of this.player.bag) if (s.n === '麻布包') k += OIL_PER_BAG - (s.oil || 0); return k; }
     addOil(c) { for (const s of this.player.bag) { if (s.n !== '麻布包' || c <= 0) continue; const k = Math.min(c, OIL_PER_BAG - (s.oil || 0)); s.oil = (s.oil || 0) + k; c -= k; } this.barSig = ''; return c; }
@@ -1352,6 +1492,8 @@
       if (bh && (!e || e === bh)) { this.askTiger(); return; }   // v0.8.5：白虎兩格內，E 是求教
       const zq = this.ents.list.find(o => o.type === '朱雀' && U.cheb(o.x, o.y, p.x, p.y) <= 2);
       if (zq && (!e || e === zq)) { this.askPhoenix(); return; }   // v0.8.6：朱雀兩格內，E 是求教
+      const xw = this.ents.list.find(o => o.type === '玄武' && U.cheb(o.x, o.y, p.x, p.y) <= 2);
+      if (xw && (!e || e === xw)) { this.askTortoise(); return; }   // v0.8.8：玄武兩格內，E 是取經
       if (this.heldTool() === '鎚') {
         const targets = this.ents.list.filter(o => '鹿虎豹狼蛇蛛蟾蜃豬牛齒雕豨'.indexOf(o.type) >= 0 && this.ents.rectDist(o, p.x, p.y) <= HAMMER_RANGE);
         if (targets.length || (e && e.type !== '龍')) { this.hammerStrike(targets); return; }
@@ -1373,6 +1515,7 @@
       const ch = w.get(t.x, t.y), d = DB[ch], hs = this.held();
       // 空瓶取水
       if (hs && hs.n === '玻璃瓶') {
+        if ((d.fresh || ch === '湯' || d.kind === 'water' || ch === '泉' || ch === '井') && !this.swapOk('玻璃瓶', d.fresh || ch === '湯' || ch === '泉' || ch === '井' ? '淡水瓶' : '海水瓶')) { this.message('囊已滿，裝了水的瓶子放不下。'); SFX.fail(); return; }   // v0.8.8：囊滿時不再扣了空瓶又丟了水瓶
         if (d.fresh || ch === '湯') { this.removeItem('玻璃瓶', 1); this.addItem('淡水瓶', 1); this.message('取了一瓶淡水（' + G.biomeName(ch) + '的水是淡的）。'); SFX.absorb(); return; }
         if (d.kind === 'water') { this.removeItem('玻璃瓶', 1); this.addItem('海水瓶', 1); this.message('取了一瓶海水。'); SFX.absorb(); return; }
         if (ch === '泉' || ch === '井') { this.removeItem('玻璃瓶', 1); this.addItem('淡水瓶', 1); this.message('取了一瓶淡水。'); SFX.absorb(); return; }
@@ -1380,6 +1523,7 @@
       const pl = w.placeAt(t.x, t.y);
       if (pl) { this.readPlace(pl); return; }
       if (ch === '碑') { this.readStele(t); return; }
+      if (ch === '亭') { this.wishAt(); return; }   // 惜字亭：許願（v0.8.8）
       if (ch === '包' || ch === '囊') { this.pickBag(t); return; }
       if (ch === '漁') { this.harvestWeir(t); return; }
       if (d.net) { this.useNet(t); return; }
@@ -1422,8 +1566,8 @@
       if (a.ch === '鐵') w.addOre(a.x, a.y);                          // 鐵礦七到十日後在原地長回來（v0.6.10）
       let got = [];
       for (const n in d.yield) { if (shelf && shelf.length && n === '灶') this.addItem('灶', 1, { store: shelf }); else this.addItem(n, d.yield[n]); got.push(n + (d.yield[n] > 1 ? '×' + d.yield[n] : '')); }
-      if (d.bonus) for (const n in d.bonus) if ((d.trueBonus ? U.trueRand() : Math.random()) < d.bonus[n]) { this.addItem(n, 1); got.push(n); }   // 鐵礦脈出鎢礦是真隨機（v0.6.3）
-      if (a.useTool && '石山磊岩'.indexOf(a.ch) >= 0 && U.trueRand() < FLINT_P) { this.addItem('燧石', 1); got.push('燧石'); }   // 鑿石頭偶爾鑿出燧石（v0.8.6，真隨機）
+      if (d.bonus) for (const n in d.bonus) if ((d.trueBonus ? U.trueRand() : Math.random()) < d.bonus[n]) { const at = this.giveNear(n, 1); got.push(n); if (at) this.message('囊滿了，' + n + '用小囊包著擱在' + at.where + '。'); }   // 鐵礦脈出鎢礦是真隨機（v0.6.3）
+      if (a.useTool && '石山磊岩'.indexOf(a.ch) >= 0 && U.trueRand() < FLINT_P) { const at = this.giveNear('燧石', 1); got.push('燧石'); if (at) this.message('囊滿了，燧石用小囊包著擱在' + at.where + '。'); }   // 鑿石頭偶爾鑿出燧石（v0.8.6，真隨機）
       if (a.useTool) this.wearTool();
       p.sta = Math.max(0, p.sta - this.ironDrain()); this.stats.gathered++;
       if (d.kind !== 'object') this.addCourage(1);                          // 採天然的才長膽氣，拆回自己放的不算
@@ -1492,7 +1636,7 @@
       this.message('石子打中「' + this.beastName(e) + '」' + (shield ? '的盾' : '') + '（還有 ' + this.shownHp(e) + '）。' + (!charges ? '' : d <= 7 ? '牠惱了，撲過來！' : '牠惱了，你一進七格內就撲過來。'));
     }
     platformRecoil(e) {   // 站在台上：撲上來的獸撞在台邊，掉命上限的一成、慢五息；回傳掉了多少
-      if (!e || e.type === '蜃' || this.world.get(this.player.x, this.player.y) !== '台' || !(DB[e.type] && DB[e.type].hp) || '台階'.indexOf(this.world.get(e.x, e.y)) >= 0) return 0;   // 從階、台上過來的不算撞在台邊（v0.6.8）
+      if (!e || '蜃齒雕鷹'.indexOf(e.type) >= 0 || this.world.get(this.player.x, this.player.y) !== '台' || !(DB[e.type] && DB[e.type].hp) || '台階'.indexOf(this.world.get(e.x, e.y)) >= 0) return 0;   // 從階、台上過來的不算撞在台邊（v0.6.8）
       const r = U.r4(DB[e.type].hp * PLATFORM_RECOIL), sh = this.shown('dmg', r, e); e.hp -= r; e.slowT = PLATFORM_SLOW;
       this.fx.push({ type: 'float', x: e.x, y: e.y, text: '−' + sh, color: G.INK.red, t: 0, dur: 0.8 });
       if (e.hp <= 0) this.kill(e);
@@ -1539,18 +1683,19 @@
       return slain;
     }
     kill(e) {
+      if (e.shade) { this.shadeDown(e); return; }        // 玄武吐的墨影（v0.8.8）
       if (e.type === '豨') { this.bossDown(e); return; }   // 大魔王（v0.8.7）
       const drops = { '鹿': ['肉', 2], '虎': ['肉', 3], '豹': ['肉', 2], '狼': ['肉', 2], '蛇': ['蛇肉', 1], '蟾': [e.venom ? '毒蟾肉' : '蟾蜍肉', 1], '龜': ['龜甲', 1], '豬': ['肉', 3], '牛': ['肉', 4] }[e.type];
       const cour = { '鹿': 3, '虎': 30, '豹': 15, '狼': 15, '蛇': 7.5, '蛛': 5, '蟾': 3, '鷹': 5, '龜': 3, '蜃': 40, '豬': 15, '牛': 10, '齒': 40, '雕': 40 }[e.type] || 2;   // v0.4.13：虎加倍、豹狼蛇一倍半；v0.6 野豬同豹、野牛十
       const hostile = e.type !== '鹿' && e.type !== '龜', gain = hostile ? cour * (this.isNight() ? KILL_NIGHT : KILL_DAY) : cour;   // 敵對的：白日八成、夜裡加半成；難度加成在 addCourage 裡乘，最後一次取整
       this.ents.remove(e); this.stats.kills++; const got = this.addCourage(gain, hostile ? 'kill' : 'other');
-      if (drops) this.addItem(drops[0], drops[1]);
+      const dropAt = drops ? this.giveNear(drops[0], drops[1]) : null; if (dropAt) this.message('囊滿了，' + drops[0] + '用小囊包著擱在' + dropAt.where + '。');   // v0.8.8：囊滿時不再憑空消失
       const fat = (e.type === '豬' || e.type === '牛') && U.trueRand() < FAT_P;   // 野豬野牛：35% 真隨機得一份油脂（v0.8.3），要有空的麻布包才裝得走
       const fatLost = fat && this.addItem('油脂', 1) > 0, fatText = fat ? (fatLost ? '，割下一塊油脂，可沒有空的麻布包，包不住，只好丟了' : '，還割下一份油脂裝進麻布包') : '';
       if (e.type === '龜') { const p = this.player; p.san = Math.max(0, p.san - TURTLE_SAN); this.toast('殺龜不祥', '龜是靈物，殺之心裡不安：愜意減 ' + TURTLE_SAN + '。留下龜甲。'); SFX.fuse(); return; }
       if ('虎豹狼'.indexOf(e.type) >= 0 && U.trueRand() < this.skullP) {      // 獸首骨：16% 真隨機，一個或兩個
-        const n = U.trueRand() < SKULL_TWO ? 2 : 1; this.addItem(e.type + '首骨', n);
-        this.toast('得了' + e.type + '首骨' + (n > 1 ? ' ×' + n : ''), '放在船頭鎮船：' + ITEMS[e.type + '首骨'].ward + ' 日內蜃不敢撞船。在船上選中按 V，或面向停著的船按 F。');
+        const n = U.trueRand() < SKULL_TWO ? 2 : 1, sk = this.giveNear(e.type + '首骨', n);
+        this.toast('得了' + e.type + '首骨' + (n > 1 ? ' ×' + n : ''), (sk ? '囊滿了，用小囊包著擱在' + sk.where + '。' : '') + '放在船頭鎮船：' + ITEMS[e.type + '首骨'].ward + ' 日內蜃不敢撞船。在船上選中按 V，或面向停著的船按 F。');
       }
       if (e.type === '齒') {                  // 鑿齒（v0.8.5）：留下殘體一或二塊，九塊鑄虎符
         const p = this.player; p.codex = p.codex || {}; p.codex['鑿齒'] = (p.codex['鑿齒'] || 0) + 1;
@@ -1562,7 +1707,7 @@
         const n = U.trueRand() < SHARD_TWO ? 2 : 1, at = this.stashItem('蠱雕殘體', n), have = this.count('蠱雕殘體');
         this.toast('蠱雕斃', '哭聲停了。膽氣 +' + this.shown('cour', got) + '。得蠱雕殘體 ' + n + ' 塊' + (at ? '（囊滿了，用小囊包著擱在' + at.where + '）' : '（囊裡共 ' + have + ' 塊）') + '。九塊加精煤一、火蝕一，在火旺的鼎裡煉成一根朱羽' + (p.zhu ? '。' : '，帶去丹穴求教朱雀。')); SFX.fuse(); this.buildBag(); return;
       }
-      if (e.type === '蜃') {                  // 蜃死，吐出的霧也收回去；留下一顆蜃珠（v0.8，東海青龍要的）
+      if (e.type === '蜃') {                  // 蜃死，吐出的霧也收回去；留下蜃殘體一或二塊（v0.8.1 起；九塊熬一顆蜃珠，東海青龍要的）
         for (const f of [...this.world.fogs.values()]) if (f.sea) this.world.removeFog(f.id);
         const p = this.player, first = !p.codex; p.codex = p.codex || {}; p.codex['蜃'] = (p.codex['蜃'] || 0) + 1;   // 第一頭蜃：翻開魔物誌（v0.8.2）
         if (first) setTimeout(() => this.toast('魔物誌', '斃了第一頭蜃，見聞錄（J）裡多了一冊「魔物誌」：遇過的魔物，寫著牠是什麼、會些什麼。', 9000), 1200);
@@ -1573,7 +1718,7 @@
       if (e.type !== '鹿') SFX.fuse();
     }
     // 獸的撲咬與毒咬（由實體呼叫）
-    beastName(e) { return (DB[e.type] && DB[e.type].name) || (e.type === '蛛' && e.venom ? '毒蛛' : e.type); }   // 野豬、野牛、毒蛛
+    beastName(e) { return e.shade || (DB[e.type] && DB[e.type].name) || (e.type === '蛛' && e.venom ? '毒蛛' : e.type); }   // 玄武吐的墨影（v0.8.8）叫豨影、豕影   // 野豬、野牛、毒蛛
     hit(e, dmg) {
       const p = this.player, d = this.hurt(dmg * (this.totemNear(e.x, e.y) ? 5 / 3 : 1), '力', { name: this.beastName(e) });   // v0.6.2：精確到小數點後四位，畫面上才四捨五入
       p.hurtT = 6; this.renderer.shake = 0.5; SFX.beast(e.type); this.armorHit();
@@ -1622,7 +1767,8 @@
       this.armorHit(); this.platformRecoil(e);
       if (this.ironFull()) { p.hurtT = 3; this.renderer.shake = 0.2; SFX.fail(); this.message(this.beastName(e) + '咬在鐵甲上，毒牙咬不進。'); return; }
       p.biteN = (now - p.biteLast <= 6) ? p.biteN + 1 : 1; p.biteLast = now; this.stats.bites++;
-      this.poison(per2, (DB[e.type] && DB[e.type].venomT) || 5); p.hurtT = 6;   // 中毒幾秒：蛇與毒蛛九秒（v0.6.1），蟾五秒 this.renderer.shake = 0.3; if (e.type === '蛇' || e.type === '蛛') SFX.beast(e.type); else SFX.fail();
+      this.poison(per2, (DB[e.type] && DB[e.type].venomT) || 5); p.hurtT = 6;   // 中毒幾秒：蛇與毒蛛九秒（v0.6.1），蟾五秒
+      this.renderer.shake = 0.3; if (e.type === '蛇' || e.type === '蛛') SFX.beast(e.type); else SFX.fail();
       if (p.biteN >= 15) { p.hp = 0; this.message('連咬十五口，毒發身亡。'); return; }
       const vt = (DB[e.type] && DB[e.type].venomT) || 5;
       this.message(this.beastName(e) + '咬了你一口（連咬 ' + p.biteN + '）。中毒 ' + vt + ' 息，共 −' + this.shown('poison', per2 * vt) + '。藥可解。');
@@ -1793,8 +1939,8 @@
       if (!this.spendSta(3)) return;
       const chance = this.pillChance(name); this.removeItem(name, 1);
       if (Math.random() < chance) {       // 真隨機
-        p.pillsMade++; this.addItem('丹', 1); this.addCourage(3);
-        this.toast('煉成一顆丹', '第 ' + p.pillsMade + ' 顆。選中按 V 服下，命上限 ' + (p.pillsEaten < 50 ? '+3%' : '+0.5%') + '。' + (p.pillsMade === 3 ? '從第四顆起，成功率降為無毒肉 1%、有毒肉 2%。' : '')); SFX.learn();
+        p.pillsMade++; const at = this.giveNear('丹', 1); this.addCourage(3);
+        this.toast('煉成一顆丹', '第 ' + p.pillsMade + ' 顆' + (at ? '（囊滿了，用小囊包著擱在' + at.where + '）' : '') + '。選中按 V 服下，命上限 ' + (p.pillsEaten < 50 ? '+3%' : '+0.5%') + '。' + (p.pillsMade === 3 ? '從第四顆起，成功率降為無毒肉 1%、有毒肉 2%。' : '')); SFX.learn();
       } else { this.message('丹沒成，一塊' + name + '化了煙（這次 ' + Math.round(chance * 100) + '%）。'); SFX.fail(); }
       this.fx.push({ type: 'float', x: t.x, y: t.y, text: '丹', color: G.INK.red, t: 0, dur: 1 });
     }
@@ -1807,8 +1953,8 @@
       this.removeItem('蜃殘體', PEARL_SHARDS); this.removeItem('海水瓶', PEARL_BRINE); this.removeItem('淡水瓶', PEARL_FRESH);
       const jars = PEARL_BRINE + PEARL_FRESH;
       if (U.trueRand() < PEARL_P) {
-        const at = this.stashItem('蜃珠', 1); this.addItem('玻璃瓶', jars); this.addCourage(3);
-        this.toast('熬成一顆蜃珠', jars + ' 個空瓶退回來了。' + (at ? '囊滿了，蜃珠用小囊包著擱在' + at.where + '。' : '') + (this.player.azure ? '青龍已經教過你了，這顆留著。' : '帶去東海，青龍兩格內按 E 求教。')); SFX.learn();
+        const at = this.stashItem('蜃珠', 1), jt = this.giveNear('玻璃瓶', jars); this.addCourage(3);
+        this.toast('熬成一顆蜃珠', jars + ' 個空瓶退回來了' + (jt ? '（囊滿了，用小囊包著擱在' + jt.where + '）' : '') + '。' + (at ? '囊滿了，蜃珠用小囊包著擱在' + at.where + '。' : '') + (this.player.azure ? '青龍已經教過你了，這顆留著。' : '帶去東海，青龍兩格內按 E 求教。')); SFX.learn();
       } else {
         const back = this.diff.key === 'hard' ? PEARL_SHARDS - 1 : PEARL_SHARDS; this.stashItem('蜃殘體', back);
         this.message('鼎裡一聲爆響，珠沒熬成（' + Math.round(PEARL_P * 100) + '%）：' + jars + ' 個瓶子都炸碎了，殘體退回 ' + back + ' 塊' + (back < PEARL_SHARDS ? '（困難熬壞一塊）' : '') + '。'); SFX.fail();
@@ -1952,7 +2098,7 @@
         let btns = '';
         if (r.choose) btns = r.choose.map(c => '<button data-r="' + r.id + '" data-c="' + c + '">' + c + '</button>').join('');
         else btns = '<button data-r="' + r.id + '"' + (spent || fresh ? ' disabled' : '') + (fresh ? ' title="還剩 ' + Math.round(this.leftFrac(fixing) * 100) + '%，用過一半才能' + (r.mend ? '加固' : r.regrind ? '磨' : '翻新') + '"' : '') + '>' + (spent ? (allUsed ? '已用完' : '已夠') : r.regrind ? '磨' : r.mend ? '固' : r.crush ? '碎' : owned ? '翻新' : '造') + '</button>';
-        row.innerHTML = '<span class="head"><span class="num">' + (i + 1) + '</span><b>' + title + '</b></span><span class="needs">' + needs + '</span><span class="sta">力 ' + r.sta + (r.food ? '<br>飽 ' + r.food : '') + (locked ? '<br><i>需' + r.level + '重</i>' : '') + '</span><span class="note">' + r.note + (fresh ? '<br><i class="fresh">還剩 ' + Math.round(this.leftFrac(fixing) * 100) + '%，用過一半才能' + (r.mend ? '加固' : r.regrind ? (this.metalOf(fixing.n) ? '修' : '重磨') : '翻新') + '</i>' : '') + (r.regrind && this.activeTool() ? '（這把第 ' + (((this.activeTool().rg) || 0) + 1) + ' 次：石子 ' + this.regrindCost(this.activeTool()) + '）' : '') + (r.mend && this.heldNet() ? '<br><i>這張第 ' + ((this.heldNet().rf || 0) + 1) + ' 次：棉麻各 ' + this.mendCost(this.heldNet()) + (this.heldNet().dur === undefined ? '；還沒用過，不用固' : '，耐 ' + this.heldNet().dur + '／' + this.world.netDur(DB[ITEMS[this.heldNet().n].tile].net)) + '</i>' : '') + '</span><span class="btns">' + btns + '</span>';
+        row.innerHTML = '<span class="head"><span class="num">' + (i + 1) + '</span><b>' + title + '</b></span><span class="needs">' + needs + '</span><span class="sta">力 ' + r.sta + (r.food ? '<br>飽 ' + r.food : '') + (locked ? '<br><i>需' + r.level + '重</i>' : '') + '</span><span class="note">' + r.note + (fresh ? '<br><i class="fresh">還剩 ' + Math.round(this.leftFrac(fixing) * 100) + '%，用過一半才能' + (r.mend ? '加固' : r.regrind ? (this.metalOf(fixing.n) ? '修' : '重磨') : '翻新') + '</i>' : '') + (r.regrind && this.activeTool() ? '（這把第 ' + (((this.activeTool().rg) || 0) + 1) + ' 次：' + Object.entries(this.needOf(r)).map(([k, v]) => k + ' ' + v).join('、') + '）' : '') + (r.mend && this.heldNet() ? '<br><i>這張第 ' + ((this.heldNet().rf || 0) + 1) + ' 次：棉麻各 ' + this.mendCost(this.heldNet()) + (this.heldNet().dur === undefined ? '；還沒用過，不用固' : '，耐 ' + this.heldNet().dur + '／' + this.world.netDur(DB[ITEMS[this.heldNet().n].tile].net)) + '</i>' : '') + '</span><span class="btns">' + btns + '</span>';
         list.appendChild(row);
       });
       list.querySelectorAll('button').forEach(b => b.addEventListener('click', (ev) => { ev.stopPropagation(); this.craft(b.dataset.r, b.dataset.c); }));
@@ -1970,8 +2116,8 @@
       if (r.crush) {   // 舊石器磨回石子二（v0.6.4）
         const c = this.stoneToCrush(); if (!c) { this.message('手上或囊裡要有一把石器（石刀、石鎬、石鋤、石劍、石斧）。'); SFX.fail(); return; }
         if (c.from === 'tools') { const i = p.tools.indexOf(c.s); p.tools.splice(i, 1); p.tool = -1; } else p.bag.splice(p.bag.indexOf(c.s), 1);
-        this.addItem('石子', CRUSH_PEBBLES); p.sta -= r.sta; this.barSig = ''; this.afterCraft(r);
-        this.message('「' + c.s.n + '」磨回了石子 ' + CRUSH_PEBBLES + '。' + (c.from === 'tools' ? '空手。' : '')); SFX.fuse(); this.buildCraft(); this.buildBag(); return;
+        const at = this.giveNear('石子', CRUSH_PEBBLES); p.sta -= r.sta; this.barSig = ''; this.afterCraft(r);
+        this.message('「' + c.s.n + '」磨回了石子 ' + CRUSH_PEBBLES + '。' + (at ? '囊滿了，石子用小囊包著擱在' + at.where + '。' : '') + (c.from === 'tools' ? '空手。' : '')); SFX.fuse(); this.buildCraft(); this.buildBag(); return;
       }
       if (r.mend) {   // 加固手裡那張網：耐久回滿，棉麻各 1、2、4、8
         const s = this.heldNet(); if (!s) { this.message('囊裡要選中一張漁網（放著的網面向按 F 也能固）。'); SFX.fail(); return; }
@@ -2021,6 +2167,7 @@
     sleep() {
       const p = this.player; if (!this.canAct()) return;
       if (!this.bedNear()) { this.message('要有床才能睡。六團棉、兩塊木。'); return; }
+      if (p.fight || p.trial) { this.message(p.fight ? '打著仗，睡不著。' : '試煉還沒完，睡不著。'); SFX.fail(); return; }   // v0.8.8
       if (!this.isNight()) { const t0 = this.dayT(); this.message(t0 < DAWN + 0.08 ? '天已經亮了，睡不著。' : '白日不眠。'); return; }
       if (this.ents.ghostNear(p.x, p.y, 8) && !this.world.lightNear(p.x, p.y, 3)) { this.message('附近有魄，睡不著。床邊三格內點一盞燈，魄就近不了身。'); SFX.fail(); return; }
       const w = this.world, t = this.dayT();
@@ -2161,7 +2308,7 @@
       if (!first) { this.buildBag(); return; }
       this.stats.read++; p.san = Math.min(100, p.san + this.sanUp(10)); this.addCourage(10);
       if (pl.effect === 'reveal') { w.revealAll(pl.x, pl.y); this.toast('看見整張紙', '島上的一切都畫到地圖上了。按 M 看。'); }
-      else if (pl.effect === 'bricks') { this.addItem('磚', 6); this.addItem('石子', 3); this.toast('錯字砌的磚', '磚 ×6、石子 ×3。'); }
+      else if (pl.effect === 'bricks') { const a1 = this.giveNear('磚', 6), a2 = this.giveNear('石子', 3); this.toast('錯字砌的磚', '磚 ×6、石子 ×3。' + (a1 || a2 ? '囊滿了，放不下的用小囊包著擱在' + (a1 || a2).where + '。' : '')); }
       else if (pl.effect === 'end') {
         const n = w.places.filter(x => p.places[x.id] === 2).length;
         if (n >= w.places.length) { p.finished = true; this.toast('你讀完了這張紙', '第 ' + this.day() + ' 日。島上八處，你都去過了。', 9000); }
@@ -2204,16 +2351,20 @@
       const left = this.addItem(name, n); if (!left) return null;
       return this.dropSack([{ n: name, c: left }]);
     }
-    dropSack(entries) {   // 一包東西直接擱進床邊的小囊（不先試囊）；同名的併在一起
-      const p = this.player, w = this.world, bed = [p.bed, p.home].find(b => b && w.get(b.x, b.y) === '床') || null;
+    giveNear(name, n, opts) {   // 給東西：囊放不下的，用小囊包著擱在腳邊（v0.8.8：囊滿時不再憑空消失）；都進了囊就回 null
+      const left = this.addItem(name, n, opts); if (!left) return null;
+      return this.dropSack([Object.assign({ n: name, c: left }, opts || {})], true);
+    }
+    dropSack(entries, here) {   // 一包東西直接擱進床邊的小囊（不先試囊）；同名的併在一起。here：擱在腳邊（身旁已有小囊就併進去）
+      const p = this.player, w = this.world, bed = here ? null : [p.bed, p.home].find(b => b && w.get(b.x, b.y) === '床') || null;
       const free = (x, y) => { const d = w.info(x, y); return d.walk > 0 && d.kind !== 'object' && d.kind !== 'place' && !w.stele(x, y) && DB[w.raw(x, y)].kind !== 'water' && w.raw(x, y) !== '灘' && !this.ents.at(x, y) && !(x === p.x && y === p.y); };
       const from = bed || p; let spot = null;
-      if (bed) for (const [dx, dy] of N8) if (w.get(bed.x + dx, bed.y + dy) === '囊') { spot = [bed.x + dx, bed.y + dy]; break; }
+      for (const [dx, dy] of N8) if (w.get(from.x + dx, from.y + dy) === '囊') { spot = [from.x + dx, from.y + dy]; break; }
       if (!spot) spot = this.nearestTile(from.x, from.y, free, 60) || this.nearestTile(this.spawn.x, this.spawn.y, free, 60) || [this.spawn.x, this.spawn.y];
       const k = U.key(spot[0], spot[1]), list = w.get(spot[0], spot[1]) === '囊' ? (w.bags.get(k) || []) : [];
       for (const e of entries) { const it = G.item(e.n), same = !(it && (it.single || it.dur)) && e.dur === undefined && list.find(x => x.n === e.n && x.dur === undefined); if (same) same.c += e.c; else list.push(e); }
       w.set(spot[0], spot[1], '囊'); w.bags.set(k, list);
-      return { x: spot[0], y: spot[1], where: bed ? '床邊' : '最近的空地上' };
+      return { x: spot[0], y: spot[1], where: bed ? '床邊' : here && U.cheb(spot[0], spot[1], p.x, p.y) <= 2 ? '腳邊' : '最近的空地上' };
     }
     readStele(t) {
       const p = this.player, s = this.world.stele(t.x, t.y), k = U.key(t.x, t.y);
@@ -2290,6 +2441,12 @@
       { const bs = p.bosses || {}, ids = Object.keys(BOSSES).filter(id => bs[id]), feats = p.feats || [];   // 大魔王與成就（v0.8.7）
         if (ids.length || p.fight) h += '<h3>大魔王</h3><ul>' + Object.keys(BOSSES).map(id => '<li>' + (bs[id] ? '<b>' + BOSSES[id].feat + '</b>　第 ' + bs[id].day + ' 日 · ' + DIFF[bs[id].diff].name + ' · ' + (bs[id].solo ? '獨力' : '有神獸護駕') : p.fight && p.fight.id === id ? '<b>' + BOSSES[id].zone + '</b>　正在打' : '<span class="dim">＿＿</span>') + '</li>').join('') + '</ul>';
         if (feats.length) h += '<h3>成就</h3><ul>' + feats.map(x => '<li>' + esc(x.text) + '　<span class="dim">第 ' + x.day + ' 日</span></li>').join('') + '</ul><p class="dim small">獨力斃的大魔王越多，將來的共工越強：現在 +' + SOLO_BUFF[Math.min(3, Object.values(bs).filter(b => b.solo).length)] + '%。</p>'; }
+      if (p.xuan) {   // 玄武的經卷與惜字亭的願（v0.8.8）
+        const sc = p.scrolls || [], jing = p.jing || [];
+        h += '<h3>經卷</h3><p class="dim small">四顆珠：' + [0, 1, 2, 3].map(i => '第' + NTH[i] + '顆' + (jing[i] === 'got' ? '取過' : jing[i] === 'miss' ? '錯過' : '還沒到')).join('、') + (p.puppet ? '；錯過 ' + p.puppet + ' 卷，將來的玄武偶多 ' + p.puppet + ' 重' : '') + (p.jingOld ? '；玄武出來之前斃的大魔王，那一卷不算錯過' : '') + '。</p>';
+        h += sc.length ? sc.map(x => '<p><b>第' + NTH[x.slot] + '卷 · ' + JING[x.id].scroll + '</b>　<span class="dim">第 ' + x.day + ' 日取</span></p><ul>' + JING[x.id].lines.map(l => '<li>' + l + '</li>').join('') + '</ul>').join('') : '<p class="dim">還沒取到經卷。玄武在北海的玄洲。</p>';
+        h += '<h3>願</h3><p>' + (p.wish ? '第 ' + p.wish.day + ' 日在惜字亭許願：' + WISH_TEXT + '<span class="dim">　還願要等斃了共工。</span>' : '<span class="dim">還沒許願。惜字亭在你被寫出來的地方附近。</span>') + '</p>';
+      }
       h += '<h3>日子</h3><p>第 ' + this.day() + ' 日 · 膽氣第 ' + this.level() + ' 重（' + fmt(p.cour) + '，下一重 ' + fmt(this.levelAt(this.level() + 1)) + '） · 睡過 ' + this.stats.nights + ' 夜 · 走過 ' + w.seenCount() + ' 格 · 取了 ' + this.stats.gathered + ' 次 · 造了 ' + this.stats.crafted + ' 件 · 斃 ' + this.stats.kills + ' · 被咬 ' + this.stats.bites + ' 口 · 死過 ' + p.deaths + ' 次 · 存檔第' + SLOT_NAMES[this.slot] + '格</p>';
       $('journal-body').innerHTML = h;
     }
@@ -2312,6 +2469,7 @@
         }
         if (this.warnOpen) { if (['Enter', 'Escape', 'Space', 'KeyE'].indexOf(ev.code) >= 0) this.closeWarn(); ev.preventDefault(); return; }
         if (this.bossAsk) { if (ev.code === 'KeyY' || ev.code === 'Enter') this.bossYes(); else if (ev.code === 'KeyN' || ev.code === 'Escape') this.bossNo(); ev.preventDefault(); return; }
+        if (this.talking) { const n = /^Digit[1-9]$/.test(ev.code) ? +ev.code.slice(5) : 0; if (n) this.talkPick(n - 1); else if (ev.code === 'Enter' || ev.code === 'KeyE' || ev.code === 'Space') this.talkPick('first'); else if (ev.code === 'Escape') this.talkPick('last'); ev.preventDefault(); return; }   // 玄武、惜字亭的話（v0.8.8）
         if (this.takeAsk) { if (ev.code === 'KeyY' || ev.code === 'Enter') this.takeYes(); else if (ev.code === 'KeyN' || ev.code === 'Escape') this.takeNo(); ev.preventDefault(); return; }
         if (this.fogAsk) {
           if (ev.code === 'KeyY' || ev.code === 'Enter') { if (this.count('扇')) this.fogUseFan(); else this.fogRefuse(); }
@@ -2407,11 +2565,11 @@
       $('fogask-use').addEventListener('click', () => this.fogUseFan());
       $('fogask-no').addEventListener('click', () => this.fogRefuse());
       $('voyage-back').addEventListener('click', () => { $('voyage').classList.add('hidden'); this.paused = false; this.message('回頭。再開出去就走了。'); });
-      $('voyage-new').addEventListener('click', () => { try { localStorage.setItem(CARRY_KEY, this.player.cour + '@' + this.slot); } catch (e) { /* ignore */ } Game.clearSave(this.slot); location.reload(); });   // 這一格清掉，重載後還選著它，落筆就寫回這格
+      $('voyage-new').addEventListener('click', () => { this.frozen = true; try { localStorage.setItem(CARRY_KEY, this.player.cour + '@' + this.slot); } catch (e) { /* ignore */ } Game.clearSave(this.slot); location.reload(); });   // 這一格清掉，重載後還選著它，落筆就寫回這格
     }
     cycle(d) { const p = this.player; if (p.bag.length) p.sel = (p.sel + d + p.bag.length) % p.bag.length; this.buildBag(); }
     togglePause() {
-      if (this.player.dead || this.fogAsk || this.seaAsk || this.warnOpen || this.takeAsk || this.bossAsk || !$('start').classList.contains('hidden') || !$('voyage').classList.contains('hidden')) return;
+      if (this.player.dead || this.fogAsk || this.seaAsk || this.warnOpen || this.takeAsk || this.bossAsk || this.talking || !$('start').classList.contains('hidden') || !$('voyage').classList.contains('hidden')) return;
       this.userPaused = !this.userPaused; this.paused = this.userPaused;
       $('pause').classList.toggle('hidden', !this.userPaused); this.keys.clear(); this.action = null;
       if (this.userPaused) { this.saveArm = 0; this.diffArm = null; $('saveas-note').textContent = ''; this.renderSaveAs(); this.renderDiffRow(); }
@@ -2540,14 +2698,14 @@
         + '<div><span>傷害輸出</span><b>' + Math.round(this.dmgMult() * 100) + '%</b></div>'
         + '<div><span>現今蟲獸傷害輸出</span><b>' + (on ? 167 : 100) + '%</b></div>';
     }
-    bossBar() {          // 大魔王的命條（v0.8.7）：名字、鬃幾個、命、獨力／鎖血／護駕
-      const p = this.player, f = p.fight, e = f && this.bossEnt(), bar = $('bossbar');
-      const sig = e ? [f.id, Math.round(e.hp), f.solo ? 1 : 0, Math.ceil(p.lockT || 0), Math.ceil(p.guardT || 0)].join('|') : '';
+    bossBar() {          // 大魔王的命條（v0.8.7）：名字、鬃幾個、命、獨力／鎖血／護駕；玄武的試煉（v0.8.8）也用這條，寫影子的名字
+      const p = this.player, f = p.fight, t = !f && p.trial, e = f ? this.bossEnt() : t ? this.shadeEnt() : null, bar = $('bossbar');
+      const sig = e ? [f ? f.id : 'trial', Math.round(e.hp), f && f.solo ? 1 : 0, Math.ceil(p.lockT || 0), Math.ceil(p.guardT || 0)].join('|') : '';
       if (sig === this.bossSig) return; this.bossSig = sig;
-      bar.classList.toggle('hidden', !e); if (!e) return;
-      const max = DB[e.type].hp, frac = Math.max(0, e.hp / max), mane = frac > 0.5 ? 3 : frac > 0.3 ? 5 : 6;
-      $('bossbar-name').textContent = BOSSES[f.id].zone; $('bossbar-mane').textContent = '鬃'.repeat(mane); $('bossbar-fill').style.width = (frac * 100).toFixed(1) + '%';
-      $('bossbar-note').textContent = this.shownHp(e) + '／' + max + ' · ' + (p.lockT > 0 ? '鎖血 ' + Math.ceil(p.lockT) + ' 息' : p.guardT > 0 ? f.guardBy + '護駕 ' + Math.ceil(p.guardT) + ' 息' : f.solo ? '獨力' : f.guardBy + '護駕過');
+      bar.classList.toggle('hidden', !e); bar.classList.toggle('shade', !!(e && t)); if (!e) return;
+      const max = e.max || DB[e.type].hp, frac = Math.max(0, e.hp / max), mane = frac > 0.5 ? 3 : frac > 0.3 ? 5 : 6;
+      $('bossbar-name').textContent = f ? BOSSES[f.id].zone : e.shade; $('bossbar-mane').textContent = '鬃'.repeat(mane); $('bossbar-fill').style.width = (frac * 100).toFixed(1) + '%';
+      $('bossbar-note').textContent = this.shownHp(e) + '／' + rnd(max) + ' · ' + (t ? '玄武的試煉 · 第' + NTH[t.slot] + '卷' : p.lockT > 0 ? '鎖血 ' + Math.ceil(p.lockT) + ' 息' : p.guardT > 0 ? f.guardBy + '護駕 ' + Math.ceil(p.guardT) + ' 息' : f.solo ? '獨力' : f.guardBy + '護駕過');
       bar.classList.toggle('lock', p.lockT > 0); bar.classList.toggle('guard', p.guardT > 0);
     }
     updateHUD() {
@@ -2599,9 +2757,10 @@
       let s;
       const ch = w.get(t.x, t.y), d = DB[ch], e = this.ents.at(t.x, t.y), plc = w.placeAt(t.x, t.y), hs = this.held();
       const az = this.ents.list.find(o => o.type === '青龍' && U.cheb(o.x, o.y, p.x, p.y) <= 2);
-      const bh = this.ents.list.find(o => o.type === '白虎' && U.cheb(o.x, o.y, p.x, p.y) <= 2), zq = this.ents.list.find(o => o.type === '朱雀' && U.cheb(o.x, o.y, p.x, p.y) <= 2);
+      const bh = this.ents.list.find(o => o.type === '白虎' && U.cheb(o.x, o.y, p.x, p.y) <= 2), zq = this.ents.list.find(o => o.type === '朱雀' && U.cheb(o.x, o.y, p.x, p.y) <= 2), xw = this.ents.list.find(o => o.type === '玄武' && U.cheb(o.x, o.y, p.x, p.y) <= 2);
       if (p.knock > 0) s = '昏迷中……';
       else if (p.insane && !p.ctrl) s = '<i>手腳不聽使喚……</i>';
+      else if (xw && (!e || e === xw)) { const sl = this.jingSlot(); s = '北方玄武 · <kbd>E</kbd> ' + (!p.xuan ? '說話' : p.trial ? '（試煉中）' : sl < 3 && (p.jing || [])[sl] !== 'got' ? '取第' + NTH[sl] + '卷經' : '說話'); }
       else if (zq && (!e || e === zq)) s = '南方朱雀' + (p.zhu ? '（求教過了）' : ' · <kbd>E</kbd> 求教' + (this.has('朱羽') ? '（帶著朱羽）' : '（要一根朱羽）'));
       else if (bh && (!e || e === bh)) s = '西方白虎' + (p.bai ? '（求教過了）' : ' · <kbd>E</kbd> 求教' + (this.has('虎符') ? '（帶著虎符）' : '（要一枚虎符）'));
       else if (az && (!e || e === az)) s = '東海青龍' + (p.azure ? '（求教過了）' : ' · <kbd>E</kbd> 求教' + (this.has('蜃珠') ? '（帶著蜃珠）' : '（要一顆蜃珠）'));
@@ -2617,6 +2776,7 @@
       else if (e) s = '「' + this.beastName(e) + '」' + (e.type === '蟾' || e.type === '蛛' ? (e.venom ? '（有毒）' : '（無毒）') : e.type === '齒' ? (this.ents.shielded(e, p.x, p.y) ? '（你在盾前，打只有一成）' : '（盾不在這邊）') : '') + (e.hp > 1 ? '（' + this.shownHp(e) + '）' : '') + ' · <kbd>E</kbd> ' + (e.type === '魚' ? '捉' : e.type === '鳥' ? '驚' : this.heldDmg() ? '攻擊（' + this.activeTool().n + '）' : '<i>徒手打不了，具欄裡選把刀劍</i>');
       else if (w.fogAt(t.x, t.y)) { const n = this.count('扇'); s = '霧障 · 走進去會問你要不要用扇子吹散' + (n ? '（囊中 ' + n + ' 把' + (hs && hs.n === '扇' ? '；<kbd>V</kbd> 現在就搧' : '') + '）' : '（沒有扇子：草四木一可紮一把）'); }
       else if (ch === '碑') s = '一塊古碑 · <kbd>E</kbd> 讀碑';
+      else if (ch === '亭') s = '惜字亭 · <kbd>E</kbd> ' + (p.wish ? '看看' : '許願');
       else if (ch === '包') s = '落下的荷包 · <kbd>E</kbd> 取回';
       else if (ch === '囊') s = '小囊（' + (w.bags.get(U.key(t.x, t.y)) || []).map(it => it.n + (it.c > 1 ? '×' + it.c : '')).join('、') + '） · <kbd>E</kbd> 取';
       else if (d.net) { const rec = w.netAt(t.x, t.y), f = rec ? w.netFish(rec, w.time) : 0, r = w.netRule(d.net, rec && rec.tidal), max = w.netDur(d.net), torn = rec && rec.dur <= 0; s = (d.net === 1 ? '小網' : d.net === 2 ? '中網' : '大網') + (rec && rec.tidal ? '（灘上）' : '') + ' · 魚 ' + f + '/' + r.cap + (torn ? '（<b>破了</b>，不進魚）' : '（' + r.every + ' 息一條）') + (rec ? ' · 耐 ' + rec.dur + '/' + max : '') + (f ? ' · <kbd>E</kbd> 取魚' : ' · <kbd>E</kbd> 收回') + (rec && rec.dur < max ? ' · <kbd>F</kbd> 加固（棉麻各 ' + this.mendCost(rec) + '）' : ''); }
@@ -2670,7 +2830,7 @@
       try {
         localStorage.setItem(Game.slotKey(slot || this.slot), JSON.stringify({ v: 5, seed: this.seed, diff: this.diff.key, savedAt: Date.now(), brief: this.brief(), world: this.world.serialize(), ents: this.ents.serialize(),
           player: { x: p.x, y: p.y, fx: p.fx, fy: p.fy, hp: p.hp, food: p.food, warm: p.warm, sta: p.sta, staMax: p.staMax, san: p.san, cour: p.cour, bag: p.bag, sel: p.sel, home: p.home, readSteles: p.readSteles,
-            places: p.places, isles: p.isles, isleNews: p.isleNews, zones: p.zones, zoneNews: p.zoneNews, creatures: p.creatures, raftTaken: p.raftTaken, dragon: p.dragon, azure: p.azure, bai: p.bai, zhu: p.zhu, deathKeep: p.deathKeep, fight: p.fight, bosses: p.bosses, feats: p.feats, inBoss: p.inBoss, scaleTaken: p.scaleTaken, bed: p.bed, codex: p.codex, finished: p.finished, deaths: p.deaths, burn: p.burn, lastDay: p.lastDay, poisonT: p.poisonT, heatT: p.heatT, poisonPer: p.poisonPer, sailing: p.sailing, tools: p.tools, tool: p.tool, decayAt: p.decayAt, worn: p.worn, hitWin: p.hitWin, totemOff: p.totemOff, pouches: p.pouches, noGhostUntil: p.noGhostUntil, sanBoostUntil: U.r4(p.sanBoostUntil || 0), hpMax: p.hpMax, pillsMade: p.pillsMade, pillsEaten: p.pillsEaten, inFog: p.inFog, ship: p.ship, swimming: p.swimming, swimT: p.swimT, swimShips: p.swimShips || 0 }, stats: this.stats }));
+            places: p.places, isles: p.isles, isleNews: p.isleNews, zones: p.zones, zoneNews: p.zoneNews, creatures: p.creatures, raftTaken: p.raftTaken, dragon: p.dragon, azure: p.azure, bai: p.bai, zhu: p.zhu, deathKeep: p.deathKeep, fight: p.fight, bosses: p.bosses, feats: p.feats, inBoss: p.inBoss, bossOut: p.bossOut, dead: p.dead, deadText: p.deadText, xuan: p.xuan, jing: p.jing, scrolls: p.scrolls, wish: p.wish, pavilion: p.pavilion, puppet: p.puppet, jingOld: p.jingOld, scaleTaken: p.scaleTaken, bed: p.bed, codex: p.codex, finished: p.finished, deaths: p.deaths, burn: p.burn, lastDay: p.lastDay, poisonT: p.poisonT, heatT: p.heatT, poisonPer: p.poisonPer, sailing: p.sailing, tools: p.tools, tool: p.tool, decayAt: p.decayAt, worn: p.worn, hitWin: p.hitWin, totemOff: p.totemOff, pouches: p.pouches, noGhostUntil: p.noGhostUntil, sanBoostUntil: U.r4(p.sanBoostUntil || 0), hpMax: p.hpMax, pillsMade: p.pillsMade, pillsEaten: p.pillsEaten, inFog: p.inFog, ship: p.ship, swimming: p.swimming, swimT: p.swimT, swimShips: p.swimShips || 0 }, stats: this.stats }));
       } catch (err) { /* 隱私模式等情況下存不了，就算了 */ }
     }
     load(s) {
@@ -2678,8 +2838,10 @@
       this.world.restore(s.world || {}, s.brief && s.brief.day);
       this.ents.restore(s.ents);
       const sp = s.player || {};
-      for (const k of ['x', 'y', 'fx', 'fy', 'hp', 'food', 'warm', 'sta', 'staMax', 'san', 'cour', 'bag', 'sel', 'home', 'readSteles', 'places', 'isles', 'isleNews', 'zones', 'zoneNews', 'creatures', 'raftTaken', 'dragon', 'azure', 'bai', 'zhu', 'deathKeep', 'fight', 'bosses', 'feats', 'inBoss', 'scaleTaken', 'bed', 'codex', 'finished', 'deaths', 'burn', 'lastDay', 'poisonT', 'poisonPer', 'heatT', 'sailing', 'tools', 'tool', 'decayAt', 'worn', 'hitWin', 'totemOff', 'pouches', 'noGhostUntil', 'sanBoostUntil', 'hpMax', 'pillsMade', 'pillsEaten', 'inFog', 'ship', 'swimming', 'swimT', 'swimShips']) if (sp[k] !== undefined) p[k] = sp[k];
+      for (const k of ['x', 'y', 'fx', 'fy', 'hp', 'food', 'warm', 'sta', 'staMax', 'san', 'cour', 'bag', 'sel', 'home', 'readSteles', 'places', 'isles', 'isleNews', 'zones', 'zoneNews', 'creatures', 'raftTaken', 'dragon', 'azure', 'bai', 'zhu', 'deathKeep', 'fight', 'bosses', 'feats', 'inBoss', 'bossOut', 'dead', 'deadText', 'xuan', 'jing', 'scrolls', 'wish', 'pavilion', 'puppet', 'jingOld', 'scaleTaken', 'bed', 'codex', 'finished', 'deaths', 'burn', 'lastDay', 'poisonT', 'poisonPer', 'heatT', 'sailing', 'tools', 'tool', 'decayAt', 'worn', 'hitWin', 'totemOff', 'pouches', 'noGhostUntil', 'sanBoostUntil', 'hpMax', 'pillsMade', 'pillsEaten', 'inFog', 'ship', 'swimming', 'swimT', 'swimShips']) if (sp[k] !== undefined) p[k] = sp[k];
       if (p.sailing && !p.ship) p.ship = World.newShip('孤帆');     // 舊存檔在船上：給一條滿命的孤帆
+      { const n = Math.min(3, Object.keys(p.bosses || {}).length); p.jing = p.jing || []; for (let i = 0; i < n; i++) if (!p.jing[i]) { p.jing[i] = 'got'; p.jingOld = true; } }   // v0.8.8 以前斃的大魔王：那時還沒有玄武，那一卷不算錯過
+      p.trial = null;   // 試煉不存檔：讀進來影子散了，回玄武那裡再取
       p.lockT = p.fight ? p.fight.lockT || 0 : 0; p.guardT = p.fight ? p.fight.guardT || 0 : 0; this.ents.list = this.ents.list.filter(e => e.type !== '豨');   // 魔王戰接著打：魔王照存著的命與位置回來（bossTick 裡）
       if (p.ship && !p.ship.kind) p.ship = { kind: '孤帆', hp: Math.min(p.ship.hp, G.SHIPS['孤帆'].hp), skulls: p.ship.skull && p.ship.ward > this.world.time ? [[p.ship.skull, p.ship.ward]] : [], repairs: 0 };   // v0.4 的船
       // v0.7 擴島：存檔時在海上（船上或落水）、那裡現在長成了陸地——落水的就算上了岸，船上的挪到最近的海；新陸地上的魚散了
@@ -2713,7 +2875,7 @@
       const worn = {}; for (const k of SLOT_ORDER) { const s = p.worn && p.worn[k]; worn[k] = known(s) && ITEMS[s.n].slot === k ? s : null; } p.worn = worn;
       if (!p.hitWin || typeof p.hitWin.n !== 'number') p.hitWin = { start: -99, n: 0 };
       const dt = this.world.timeShift;   // 舊存檔挪到大清早：身上記的時刻也跟著挪，倒數不變（v0.6.2）
-      if (dt) { for (const k of ['noGhostUntil', 'decayAt', 'sanBoostUntil']) if (p[k] > 0) p[k] = U.r4(p[k] + dt); p.hitWin = { start: -99, n: 0 }; }
+      if (dt) { for (const k of ['noGhostUntil', 'decayAt', 'sanBoostUntil']) if (p[k] > 0) p[k] = U.r4(p[k] + dt); p.hitWin = { start: -99, n: 0 }; if (p.ship && p.ship.skulls) p.ship.skulls = p.ship.skulls.map(([n, e]) => [n, U.r4(e + dt)]); }   // 身下這艘船頭的首骨也跟著挪（v0.8.8；停著的船在 world.restore 裡挪）
       for (const s of p.bag) if (s.n === '燈帽' && s.fuel === undefined) { s.fuel = HAT_FUEL; s.c = 1; }   // 舊存檔的燈帽補上蠟燭
       // v0.8.3：囊裡的船一艘一欄（孤帆兩格、方舟五格），舊存檔疊著的拆開；散放的油脂裝進麻布包（一包八份，舊存檔照份數送包）
       { const ships = []; p.bag = p.bag.filter(s => { if (this.spanOf(s.n) > 1) { for (let i = 0; i < (s.c || 1); i++) ships.push({ n: s.n, c: 1 }); return false; } return true; });
@@ -2723,6 +2885,13 @@
         let oil = loose; while (oil > 0) { const k = Math.min(OIL_PER_BAG, oil); if (this.bagUsed() < this.slots()) p.bag.push({ n: '麻布包', c: 1, oil: k }); else over.push({ n: '麻布包', c: 1, oil: k }); oil -= k; }
         if (over.length) { const at = this.dropSack(over); this.toast('囊裡放不下', '船在囊裡改成一艘一欄（孤帆兩格、方舟五格），放不下的' + over.map(o => o.n).join('、') + '用小囊包著擱在' + at.where + '。', 10000); }
         if (loose) this.toast('油脂裝進了麻布包', '油脂從此要裝在麻布包裡（一包八份）；你原有的 ' + loose + ' 份已經裝好，送你 ' + Math.ceil(loose / OIL_PER_BAG) + ' 個包。', 9000); }
+      { const fixBox = (list) => {   // v0.8.8：櫃裡、小囊裡、荷包裡（連櫃裡的櫃）也照 v0.8.3 的規矩：船一艘一欄、散放的油脂裝進麻布包
+          if (!list) return; const out = []; let oil = 0;
+          for (const it of list) { if (!it) continue; if (it.n === '油脂') { oil += it.c || 0; continue; } if (it.store) fixBox(it.store); if (this.spanOf(it.n) > 1 && (it.c || 1) > 1) { for (let i = 0; i < it.c; i++) out.push({ n: it.n, c: 1 }); continue; } out.push(it); }
+          while (oil > 0) { const k = Math.min(OIL_PER_BAG, oil); out.push({ n: '麻布包', c: 1, oil: k }); oil -= k; }
+          list.splice(0, list.length, ...out);
+        };
+        for (const l of this.world.chests.values()) fixBox(l); for (const l of this.world.bags.values()) fixBox(l); for (const it of p.bag) if (it.store) fixBox(it.store); }
       const fr = p.bag.filter(s => s.n === '果');   // 舊存檔按日分堆的果合成一疊，每顆的日數記進 ds
       if (fr.length) { const ds = []; for (const s of fr) ds.push(...this.fruitDays(s)); p.bag = p.bag.filter(s => s.n !== '果'); this.addItem('果', ds.length, { ds }); }
       // v0.8 使用者定：龍不在洞裡了。舊存檔裡跟著的龍（沒求教過青龍的）回東海去，換一片青鱗；囊滿了就用小囊包著擱在最近睡過的床邊
@@ -2774,7 +2943,7 @@
       try { localStorage.setItem(SLOT_KEY, String(slot)); } catch (e) { /* ignore */ }
       window.XIEYI = { game, Game, get DAY() { return DAY; }, DIFF };
       $('start').classList.add('hidden');
-      game.paused = false;
+      game.paused = false; if (game.player.dead) game.showDead();
       game.toast('山海有形', '取木、取棉、取石子；砌磚、造床、磨劍。第 ' + game.diff.ghost + ' 夜起有魄，備好火把。按 H 看法子。', 7000);
       setTimeout(() => { if (game) game.toast('聽說島上有一座塔', '從塔上能看見整張紙。黃昏時跟著鳥走。', 8000); }, 5000);
       window.addEventListener('beforeunload', () => game.save());
