@@ -20,8 +20,9 @@ const launch = async () => {
 };
 try {
   let { app, page } = await launch();
-  const info = await page.evaluate(() => ({ title: document.title, start: !document.getElementById('start').classList.contains('hidden'), help: !!document.getElementById('btn-help'), pad: !!document.getElementById('btn-pad') || typeof window.PAD !== 'undefined', file: location.protocol }));
+  const info = await page.evaluate(() => ({ title: document.title, start: !document.getElementById('start').classList.contains('hidden'), help: !!document.getElementById('btn-help'), pad: !!document.getElementById('btn-pad') || typeof window.PAD !== 'undefined', file: location.protocol, cs: document.characterSet }));
   ok('the shell opens the game from a local file with the start page showing', info.file === 'file:' && /山海有形/.test(info.title) && info.start, info);
+  ok('the page is read as UTF-8 (the single file has no charset of its own; copy-game wraps it, v0.8.5)', info.cs === 'UTF-8', info.cs);
   ok('the start page has 生存之道 and no gamepad settings (archived in v0.5.8)', info.help && !info.pad, info);
   const ud = await app.evaluate(({ app }) => app.getPath('userData'));
   ok('saves go to the userData folder the test asked for', ud === userData, ud);
