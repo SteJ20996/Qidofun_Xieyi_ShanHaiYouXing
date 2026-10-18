@@ -38,6 +38,7 @@
     '熔': { s: 14, walk: 0, kind: 'rock', lava: true, heat: true, light: 3.5, ink: INK.lava, flavor: '火山口流出的熔岩，照得一片紅。兩格內暖烘烘；貼著它（一格內）會燙傷，命每息 −1.5。魄三格內即煙滅。' },
     '岩': { s: 8, walk: 0.7, kind: 'rock', ink: INK.basalt, yield: { '石': 1 }, time: 3.0, bonus: { '石子': 0.3 }, fast: '鎬', flavor: '火山冷下來的岩地。跟石地一樣，鎬採之快一倍，偶得石子。' },
     '曜': { s: 18, walk: 0, kind: 'rock', ink: INK.obsidian, yield: { '黑曜石': 1 }, time: 3.0, need: '鎬', to: '岩', flavor: '黑曜石脈，要用鎬。黑曜石二、木一、麻一，磨成曜刃。' },
+    '燧': { s: 17, kind: 'rock', walk: 0.8, ink: INK.black, yield: { '燧石': 1 }, time: 1.5, to: '礫', flavor: '燧石露頭（v0.8.6）：火島的岩地上、海邊的沙礫裡偶爾一格。取之得燧石，不用鎬。燧石一、火把一、油脂一份做成火蝕。鑿石頭（石、山、磊、岩）也有五十分之一的機會出燧石。' },
     '川': { s: 3, walk: 0, kind: 'water', fresh: true, ink: INK.river, flavor: '河。淡水：空瓶取了就能喝；有筏可渡，可架橋。河裡也有魚。' },
     '湖': { s: 12, walk: 0, kind: 'water', fresh: true, ink: INK.river, flavor: '湖。淡水：空瓶取了就能喝；有筏可渡。' },
     '湯': { s: 12, walk: 0.6, kind: 'ground', spring: true, heat: true, ink: INK.spring, flavor: '溫泉（古稱湯泉）。走進去泡著：暖每息 +4、命 +1、愜意 +0.3；旁邊兩格也暖。空瓶可取淡水。' },
@@ -113,8 +114,10 @@
     '蜃': { s: 13, kind: 'beast', ink: INK.red, hp: 900, atk: 30, ram: 25, sea: true, flavor: '海中的大蜃，吐氣成霧（蜃樓）。命九百，只在海上：撞船一下二十五，咬落水的人一口三十，所過之處吞吐霧障。船頭有獸首骨鎮著就不敢撞。九閽鳴雷打牠減半，燭龍焚溟專克。' },
     '龍': { s: 16, kind: 'beast', light: 3, ink: INK.red, hp: 500, flavor: '龍。以前洞裡那條，後來是求教青龍後跟著的小龍；v0.8.2 起化進了魂環，不再跟著走。夜能照路、獸與魄不敢近的規則留著，給以後神獸護駕用。' },
     '青龍': { s: 24, kind: 'beast', light: 4, ink: INK.azure, hp: 9999, name: '青龍', flavor: '東海青龍，盤在本島往東約六百格的深海上，不近人也不避人。帶一顆蜃珠（蜃殘體九塊在鼎裡熬成）去求教，牠教你行船的水性：孤帆、方舟從此自己慢慢回命，落了水也撐得久些；右上角的魂環亮起青龍那三分之一。' },
-    '齒': { s: 15, kind: 'beast', ink: INK.brown, hp: 600, atk: 14, name: '鑿齒', flavor: '鑿齒（v0.8.5）：齒長如鑿，手裡一面盾，在西邊的外島上鑿石頭。命六百，一撞十四。牠面朝哪邊盾就在哪邊：從正面三格打上去只有一成傷，要繞到身側或背後；牠轉身慢，一息多才轉一回。斃之得鑿齒殘體一或二塊。' },
+    '齒': { s: 15, kind: 'beast', ink: INK.brown, hp: 650, atk: 21, name: '鑿齒', flavor: '鑿齒（v0.8.5；v0.8.6 使用者調成命六百五、一撞二十一）：齒長如鑿，手裡一面盾，在西邊的外島上鑿石頭。命六百五十，一撞二十一。牠面朝哪邊盾就在哪邊：從正面三格打上去只有一成傷，要繞到身側或背後；牠轉身慢，一息多才轉一回。斃之得鑿齒殘體一或二塊。' },
     '白虎': { s: 13, kind: 'beast', ink: '#f6f1e4', hp: 9999, name: '白虎', flavor: '白虎（v0.8.5），四象之西，伏在虎嶺上，四十格內才看得見。不近人也不避人；沒帶虎符的人走到六格內，牠一聲嘯，地跟著抖（震）。帶一枚虎符去，兩格內按 E 求教，牠教你抗震：震的傷害少四分之一；魂環亮起虎魄那三分之一。' },
+    '雕': { s: 16, kind: 'beast', ink: '#4a4f5c', hp: 520, atk: 16, name: '蠱雕', flavor: '蠱雕（v0.8.6，小魔王）：像雕，頭上一隻角，在南邊的海上與外島上空盤旋。命五百二十。隔一陣一聲啼，像嬰兒在哭，聽得心裡發慌（心：愜意掉，懼得一息多出不了手）；再一陣從天上撲下來抓人（力十六），抓完又飛回高處。牠在天上時只有彈弓打得到，撲下來貼著你時才是出手的時候。斃之得蠱雕殘體一或二塊。' },
+    '朱雀': { s: 17, kind: 'beast', light: 3, ink: '#c23b22', hp: 9999, name: '朱雀', flavor: '朱雀（v0.8.6），四象之南，棲在丹穴，四十格內才看得見。沒帶朱羽的人走近，牠就飛開，總離人五格以上；帶著朱羽，牠落下來等你。兩格內按 E 求教，牠教你氣順：窒與心的傷害少四分之一；魂環亮起鳳翎那三分之一。' },
   };
   const VIS = { '草': [0.6, 0.42], '花': [0.62, 0.8], '棉': [0.75, 0.85], '麻': [0.72, 0.85], '沙': [0.58, 0.5], '礫': [0.62, 0.6], '田': [0.78, 0.6], '土': [0.6, 0.5], '灰': [0.6, 0.5], '雪': [0.7, 0.55],
     '水': [0.82, 0.8], '淼': [0.95, 0.9], '石': [0.72, 0.85], '山': [1.12, 1], '木': [0.9, 1], '果': [0.9, 1], '竹': [0.85, 0.95], '林': [1.0, 1], '森': [1.08, 1],
@@ -174,6 +177,10 @@
     '蜃珠': { s: 23, kind: 'item', flavor: '九塊蜃殘體在鼎裡熬成的珠。東海青龍要的就是它：帶去求教，青龍收下就教你行船的水性。' },
     '鑿齒殘體': { s: 78, kind: 'item', flavor: '斃鑿齒留下的殘體，一頭一或二塊（約三分之一的機會兩塊）。九塊加鐵三、鎢鋼一，在火旺的鼎裡鑄成一枚虎符（八成三的機會成；不成鐵與鎢鋼熔掉了，殘體退回，困難只退八塊）。' },
     '虎符': { s: 19, kind: 'item', flavor: '九塊鑿齒殘體加鐵三、鎢鋼一，在鼎裡鑄成的符，一隻伏著的虎。虎嶺的白虎要的就是它：帶去兩格內按 E 求教，白虎收下就教你抗震。' },
+    '燧石': { s: 22, kind: 'item', flavor: '打得出火星的石頭（v0.8.6）。火島的岩地、海邊偶爾露出一格「燧」；鑿石頭時五十分之一的機會出。燧石一、火把一、油脂一份做成火蝕。' },
+    '火蝕': { s: 19, kind: 'item', flavor: '燧石打出火星，引著油脂與火把，封成一團不滅的火（v0.8.6）。鑄朱羽的料：蠱雕殘體九塊、精煤一、火蝕一，在火旺的鼎裡煉。' },
+    '蠱雕殘體': { s: 74, kind: 'item', flavor: '斃蠱雕留下的殘體，一頭一或二塊（約三分之一的機會兩塊）。九塊加精煤一、火蝕一，在火旺的鼎裡煉成一根朱羽（八成三的機會成；不成精煤與火蝕燒掉了，殘體退回，困難只退八塊）。' },
+    '朱羽': { s: 12, kind: 'item', flavor: '九塊蠱雕殘體加精煤一、火蝕一，在鼎裡煉成的一根朱紅的羽。丹穴的朱雀要的就是它：帶去兩格內按 E 求教，朱雀收下就教你氣順。' },
     '油脂': { s: 18, kind: 'item', flavor: '野豬野牛身上割下的油脂（斃之 35% 的機會得一份）。要裝在麻布包裡才帶得走。棉一油脂一，做成蠟燭三根。' },
     '麻布包': { s: 16, kind: 'item', single: true, flavor: '麻布二、麻一縫的小包，專裝油脂，一包裝八份。包不會用掉，做東西時從包裡取油；沒有包，斃野豬野牛割下的油脂就帶不走。' },
     '燭龍焚溟': { s: 58, kind: 'tool', tool: '焚', dmg: 120, dur: 199, flavor: '燭龍銜火，焚盡溟海。火屬而克海水，故為神兵。膽氣卅一重方可造、可揮：面向獸按 E，三格內諸獸同受灼燒，海中之物（蜃、龜）一百二十，陸上與天上之物減半。隨身的膽氣減益與九閽鳴雷相同，兩件同帶只算一重。按 L 拿出（手上已是神兵就換另一件）、P 收回。' },
@@ -229,7 +236,7 @@
     '工具': ['grind', 'regrind', 'crush', 'forge', 'forgew', 'obsidian', 'fan', 'sling'],
     '神兵': ['hammer', 'seagod'],
     '衣甲': ['lining', 'pants', 'vest', 'cap', 'shoes', 'ironvest', 'helm', 'ironboots', 'wvest', 'whelm', 'wboots'],
-    '燈火': ['torch', 'candle', 'oilbag', 'candle2', 'lamp', 'hat'],
+    '燈火': ['torch', 'candle', 'oilbag', 'candle2', 'huoshi', 'lamp', 'hat'],
     '漁船': ['weir', 'net', 'midnet', 'bignet', 'bignet13', 'mendnet', 'raft', 'plank', 'oar', 'sail', 'ship', 'ark'],
     '食藥': ['med', 'wine'],
   };
@@ -247,6 +254,7 @@
     { id: 'torch', out: '火把', n: 4, need: { '石子': 1, '草': 3, '木': 2 }, sta: 2, note: '石子一草三木二成四根；拿在手上才亮' },
     { id: 'candle', out: '蠟燭', n: 2, need: { '棉': 1, '肉': 1 }, sta: 2, note: '拿在手上才亮，照兩格' },
     { id: 'candle2', out: '蠟燭', n: 3, need: { '棉': 1, '油脂': 1 }, sta: 2, note: '油脂做的，一份油脂三根（從麻布包裡取）' },
+    { id: 'huoshi', out: '火蝕', n: 1, need: { '燧石': 1, '火把': 1, '油脂': 1 }, sta: 2, note: '鑄朱羽的料；油脂從麻布包裡取（v0.8.6）' },
     { id: 'oilbag', out: '麻布包', n: 1, need: { '麻布': 2, '麻': 1 }, sta: 2, note: '裝油脂，一包八份；包不會用掉（v0.8.3）' },
     { id: 'lamp', out: '燈', n: 1, need: { '石': 2, '火把': 1 }, sta: 4, note: '放在地上，長明不滅' },
     { id: 'stove', out: '灶', n: 1, need: { '石': 6 }, sta: 6, note: '烤食、燒瓶、蒸餾；添木續火' },
@@ -425,9 +433,11 @@
     if (!hs.sea[k] || nearIslet(x, y, seed)) return t;           // 島裡的湖塘、小嶼與灘道四周照舊
     const dist = Math.hypot(x, y), S = (v) => U.smoothstep(0.55, 1.0, v), f = fields(x, y, seed);
     const h = f.h + (S(dist / ISLAND_R) - S(dist / (ISLAND_R * HOME_K))) * 0.6;   // 只會比原本高：往海裡收的坡推遠了
+    if (h >= 0.395 && h < 0.415 && U.rand2(x, y, seed + 977) < FLINT_BEACH) return '燧';   // 新長出來的海邊偶爾一格燧石（v0.8.6；原本的地不長）
     return classify(x, y, seed, h, f.m, f.t);
   }
   const ISLE_CELL = 250, ISLE_P = 0.78, ISLE_CLEAR = 330, ISLE_N = WORLD_R / ISLE_CELL;
+  const FLINT_BEACH = 1 / 120, FLINT_ROCK = 1 / 80;   // v0.8.6 燧石：海邊沙礫帶（擴出去的新地、外島、地界）與火島的岩地偶爾一格「燧」；本島原本的陸地不長
   const ISLE_KINDS = [['漠', 20], ['火', 14], ['川', 24], ['雪', 18], ['青', 24]];
   const ISLE_NAMES = { '漠': '漠島', '火': '火島', '川': '川島', '雪': '雪島', '青': '青島' };
   const isleCache = new Map();
@@ -461,6 +471,7 @@
     else if (isl.kind === '青') h -= 0.05;                                                      // 青島低一點，山頂才不會整片是雪
     if (h < 0.33) return '淼';
     if (h < 0.395) return '水';
+    if (h < 0.415 && U.rand2(x, y, s + 61) < FLINT_BEACH) return '燧';   // 海邊的燧石（v0.8.6）
     const d = U.rand2(x, y, s + 5), m = U.fbm(x / 40 + 300, y / 40 - 300, s + 17, 3);
     if (isl.kind === '漠') {           // 漠島：大漠、沙丘，零星的綠洲（池、椰棗、草），岩丘裡有一點煤鐵
       if (h < 0.415) return d < 0.85 ? '漠' : '礫';
@@ -473,6 +484,7 @@
     if (isl.kind === '火') {           // 火島：山頂一口熔岩，四周岩地與黑曜石脈，山腳火山灰、溫泉
       if (h < 0.415) return d < 0.5 ? '沙' : d < 0.8 ? '岩' : '礫';
       if (h > 0.8) return '熔';
+      if (h > 0.6 && U.rand2(x, y, s + 67) < FLINT_ROCK) return '燧';   // 火島岩地裡的燧石（v0.8.6）
       if (h > 0.7) return d < 0.12 ? '曜' : d < 0.15 ? '熔' : '岩';
       if (h > 0.6) return d < 0.05 ? '曜' : d < 0.7 ? '岩' : d < 0.85 ? '灰' : '石';
       if (U.fbm(x / 12 + 5, y / 12 - 5, s + 37, 2) > 0.75) return '湯';
@@ -589,7 +601,7 @@
       if (ZONE_LAND(nat)) return nat;   // 併進來的外島：陸地照舊
       const coast = z.r + (U.fbm(x / 70, y / 70, s + 21, 2) - 0.5) * 50 + (n - 0.5) * 16;   // 大的岬灣加小的起伏
       if (d > Math.max(z.solid, coast)) return d > coast + 3 ? nat : '水';
-      if (d > coast - 3) return rr < 0.75 ? '沙' : '礫';
+      if (d > coast - 3) return U.rand2(x, y, s + 61) < FLINT_BEACH ? '燧' : rr < 0.75 ? '沙' : '礫';
       const g = U.fbm(x / 30, y / 30, s + 13, 3) + (1 - (d - PEAK_RIDGE) / (z.r - PEAK_RIDGE)) * 0.22, m = U.fbm(x / 40, y / 40, s + 15, 3);
       if (g > 0.78) { const o = U.rand2(x, y, s + 17); return o < 0.05 ? '鐵' : o < 0.1 ? '煤' : '山'; }
       if (g > 0.7) return rr < 0.6 ? '石' : rr < 0.8 ? '礫' : '林';
@@ -601,7 +613,7 @@
     const mz = z.theme === 'qingqiu' ? Math.hypot(x - z.x - Math.cos(z.rot) * (z.r + 6), y - z.y - Math.sin(z.rot) * (z.r + 6)) : 99;   // 青丘之澤：島邊一定有一片澤
     const coast = Math.max(z.r + 12 + (n - 0.5) * 40, mz < 16 ? z.r + 20 : 0), q = d / z.r, core = d <= z.r;
     if (!core && d > coast) return d <= coast + 3 && !ZONE_LAND(nat) ? '水' : nat;
-    if (!core && d > coast - 2.5) return rr < 0.7 ? '沙' : '礫';
+    if (!core && d > coast - 2.5) return U.rand2(x, y, s + 61) < FLINT_BEACH ? '燧' : rr < 0.7 ? '沙' : '礫';
     const f = U.fbm(x / 11, y / 11, s + 19, 2), w = U.fbm(x / 17, y / 17, s + 23, 2);
     if (z.theme === 'mulberry') {     // 桑林：林心一塊草地，四周桑樹成林（果是桑葚）
       if (q < 0.5) return rr < 0.86 ? '草' : rr < 0.93 ? '花' : rr < 0.97 ? '木' : '果';

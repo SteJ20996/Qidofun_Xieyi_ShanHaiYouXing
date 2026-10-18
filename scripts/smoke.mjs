@@ -47,7 +47,7 @@ const result = await page.evaluate(async () => {
 
   try {
   g.ents.seaP = 0;   // 蜃也是：專門的海上測試自己開
-  g.ents.toothP = 0;   // 鑿齒也是（v0.8.5）：專門的測試自己開
+  g.ents.toothP = 0; g.ents.harpyP = 0;   // 鑿齒（v0.8.5）、蠱雕（v0.8.6）也是：專門的測試自己開
   w.fogP = 0;   // 霧障是真隨機的，測試途中跳出彈窗會把遊戲停住；專門的霧障測試自己開
   g.warnEnabled = false; w.fogStep = 1e9;   // 數值提醒的彈窗與霧障的挪動也先關掉，各自的測試再開
   g.ents.snuffP = 0; g.ents.dashT = 1e9;   // 魄吹燈與撲燈也是真隨機、真時間：專門的測試自己開
@@ -1647,6 +1647,64 @@ const result = await page.evaluate(async () => {
     const r0 = U.trueRand, cb = w.onWeather, ra = w.rainUntil, rn = w.nextRainAt; w.onWeather = null; U.trueRand = () => 0; w.rainUntil = 0; w.nextRainAt = w.time; w.step(p.x, p.y); const rainLen = w.rainUntil - w.time;
     U.trueRand = r0; w.onWeather = cb; w.rainUntil = ra; w.nextRainAt = rn;
     ok('v0.6.10: things counted in days follow the longer day (the shortest rain is a quarter of 360 = 90 s)', Math.abs(rainLen - 90) <= 0.5, rainLen); }
+  // ============ v0.8.6：心打愜意、懼；燧石、火蝕；蠱雕（啼、撲）、朱羽、朱雀（氣順、鳳翎） ============
+  { const E = g.ents, p0 = { x: p.x, y: p.y }, DB = G.DB, zhu0 = p.zhu, put = (x, y) => { p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; };
+    E.list = E.list.filter(o => o.type !== '雕' && o.type !== '朱雀'); p.sailing = false; p.ship = null; p.swimming = false;
+    // 心：打愜意不打命；朱雀的氣順減四分之一；懼：出不了手
+    p.zhu = false; p.hp = 90; p.san = 80; const dz = g.hurt(10, '心', { name: '蠱雕' });
+    ok('v0.8.6: 心 strikes sanity, not life', p.hp === 90 && Math.abs(p.san - (80 - dz)) < 1e-6 && dz > 0, [p.hp, p.san]);
+    p.zhu = true; ok('v0.8.6: 朱雀\'s 氣順 takes a quarter off 心 and 窒', Math.abs(g.kindMult('心') - 0.75 * g.baseTaken()) < 1e-9 && Math.abs(g.kindMult('窒') - 0.75 * g.baseTaken()) < 1e-9); p.zhu = false;
+    w.set(p.x + 1, p.y, '草'); const dummy = E.add('鹿', p.x + 1, p.y, { moveT: 99 }); g.addItem('石劍', 1); hold('石劍'); p.fearT = 1; p.atkT = 0; const h0 = dummy.hp; g.attack(dummy);
+    ok('v0.8.6: while 懼 you cannot strike', dummy.hp === h0 && /懼/.test(g.msgText), g.msgText);
+    g.updateStats(1.1); p.atkT = 0; g.attack(dummy); ok('v0.8.6: …and once it passes you can', dummy.hp < h0); E.remove(dummy);
+    // 燧石：海邊與火島岩地上偶爾一格「燧」，本島原本的地不長；取之得燧石；鑿石頭五十分之一
+    let flint = null; for (const isl of G.isles(g.seed).filter(i => i.kind === '火')) { const R = Math.ceil(isl.R); for (let dy = -R; dy <= R && !flint; dy++) for (let dx = -R; dx <= R && !flint; dx++) if (G.baseTile(isl.cx + dx, isl.cy + dy, g.seed) === '燧') flint = [isl.cx + dx, isl.cy + dy]; if (flint) break; }
+    let oldFlint = 0; for (let y = -100; y <= 100; y += 2) for (let x = -100; x <= 100; x += 2) if (G.oldTile(x, y, g.seed) !== G.baseTile(x, y, g.seed) && DB[G.oldTile(x, y, g.seed)].kind !== 'water') oldFlint++;
+    ok('v0.8.6: flint (燧) shows on a 火島, while the home island\'s original land is unchanged', !!flint && oldFlint === 0, [flint, oldFlint]);
+    g.removeItem('燧石', 99); put(flint[0] - 1, flint[1]); w.set(p.x, p.y, '草'); face(1, 0); p.sta = 100; g.action = null; g.pressGather(); await until(() => !g.action, 6000);
+    ok('v0.8.6: taking a 燧 gives a 燧石 and leaves gravel', g.count('燧石') === 1 && w.get(flint[0], flint[1]) === '礫', [g.count('燧石'), w.get(flint[0], flint[1])]);
+    { const tr = U.trueRand; U.trueRand = () => 0; g.addItem('石鎬', 1); hold('石鎬'); w.set(p.x + 1, p.y, '石'); g.action = null; g.pressGather(); await until(() => !g.action, 8000); U.trueRand = tr;
+      ok('v0.8.6: chiselling stone with a pick sometimes (1/50, true random) turns up a 燧石', g.count('燧石') === 2, g.count('燧石')); }
+    // 火蝕：燧石一、火把一、油脂一份（從麻布包裡取）
+    g.removeItem('火蝕', 9); g.addItem('火把', 1); g.addItem('麻布包', 1); g.addItem('油脂', 1); const oil0 = g.count('油脂'), fb0 = g.count('火把'); p.sta = 100; g.craft('huoshi');
+    ok('v0.8.6: 燧石, a 火把 and a portion of fat make a 火蝕; the fat comes out of the 麻布包, the bag stays', g.count('火蝕') === 1 && g.count('燧石') === 1 && g.count('油脂') === oil0 - 1 && g.count('火把') === fb0 - 1 && g.count('麻布包') >= 1, [g.count('火蝕'), g.count('油脂'), g.count('火把')]);
+    // 蠱雕：只在南邊（本島以南三百格外），丹穴、青丘裡不算
+    const dz2 = G.zones(g.seed).find(z => z.id === '朱雀');
+    put(p0.x, p0.y); const atHome = g.harpySky(); put(dz2.x, dz2.y); const atNest = g.harpySky(); put(dz2.x + 160, dz2.y - 140); const atSea = g.harpySky();
+    ok('v0.8.6: the 蠱雕 flies only in the south — not at home, not over 丹穴', !atHome && !atNest && atSea, [atHome, atNest, atSea]);
+    p.sailing = true; p.ship = World.newShip('孤帆'); E.harpyP = 1; for (let n = 0; n < 12 && !E.count('雕'); n++) { E.spawnAcc = 2; E.update(0.01, g); } E.harpyP = 0;
+    const hp = E.list.find(o => o.type === '雕');
+    ok('v0.8.6: over the southern sea a 蠱雕 comes, crying like a baby', !!hp && /蠱雕！/.test(toasts()), !!hp);
+    p.san = 80; p.fearT = 0; hp.cryT = 0; hp.x = p.x + 6; hp.y = p.y; hp.moveT = 99; E.update(0.01, g);
+    ok('v0.8.6: its cry is 心 — sanity −6 on normal — and 懼 for a breath and a half', Math.abs(80 - p.san - U.r4(6 * g.baseTaken())) < 1e-6 && p.fearT >= 1.4 && /嬰兒/.test(g.msgText), [80 - p.san, p.fearT]);
+    p.fearT = 0; hp.x = p.x + 1; hp.y = p.y; hp.mode = 'dive'; hp.moveT = 0; hp.atk = 0; hp.cryT = 99; p.hp = 100; E.update(0.01, g);
+    ok('v0.8.6: diving down it claws (16, 力), then lingers before it rises', Math.abs(100 - p.hp - U.r4(16 * g.takenMult())) < 1e-6 && hp.mode === 'rise' && hp.moveT > 0.5, [100 - p.hp, hp.mode]);
+    { const tr = U.trueRand; g.removeItem('蠱雕殘體', 99); U.trueRand = () => 0.5; g.kill(hp); U.trueRand = tr;
+      ok('v0.8.6: a slain 蠱雕 leaves 蠱雕殘體; the 魔物誌 counts it', g.count('蠱雕殘體') === 1 && p.codex['蠱雕'] === 1 && /蠱雕斃/.test(toasts()), g.count('蠱雕殘體')); }
+    p.sailing = false; p.ship = null;
+    // 朱羽：九塊、精煤一、火蝕一
+    { const tr = U.trueRand, kx = p0.x + 1, ky = p0.y, cnt = () => [g.count('蠱雕殘體'), g.count('精煤'), g.count('火蝕'), g.count('朱羽')].join('/');
+      put(p0.x, p0.y); w.set(kx, ky, '鼎'); w.addFuel(kx, ky, 300); face(1, 0); p.sta = 100;
+      g.removeItem('精煤', 99); g.removeItem('朱羽', 9); g.removeItem('蠱雕殘體', 99); g.addItem('蠱雕殘體', 9); g.addItem('精煤', 1);
+      await until(() => { g.msgUntil = 0; hold('蠱雕殘體'); return /煉朱羽/.test(document.getElementById('msg').textContent); }, 1500);
+      ok('v0.8.6: facing a lit 鼎 with 蠱雕殘體 in hand, the hint says what a 朱羽 needs', /煉朱羽（殘體 9\/9、精煤 1\/1、火蝕 1\/1，83%）/.test(document.getElementById('msg').textContent), document.getElementById('msg').textContent);
+      U.trueRand = () => 0.9; hold('蠱雕殘體'); g.pressPlace();
+      ok('v0.8.6: a failed 朱羽 burns the coal and the 火蝕; the nine pieces come back', cnt() === '9/0/0/0' && /燒掉/.test(g.msgText), cnt());
+      g.addItem('精煤', 1); g.addItem('火蝕', 1); U.trueRand = () => 0.5; hold('蠱雕殘體'); p.sta = 100; g.pressPlace(); U.trueRand = tr;
+      ok('v0.8.6: a good one (83%) makes a 朱羽', cnt() === '0/0/0/1' && /煉成一根朱羽/.test(toasts()), cnt());
+      w.set(kx, ky, w.base(kx, ky)); }
+    // 朱雀：丹穴四十格內現身；沒帶朱羽就飛開；帶著朱羽兩格內按 E 求教
+    put(dz2.x + 8, dz2.y); E.spawnAcc = 2; E.update(0.01, g); const ph = E.list.find(o => o.type === '朱雀');
+    ok('v0.8.6: near 丹穴 the 朱雀 appears', !!ph, !!ph);
+    const fu = g.count('朱羽'); g.removeItem('朱羽', 9); ph.x = p.x - 3; ph.y = p.y; ph.moveT = 0; const d0 = U.cheb(ph.x, ph.y, p.x, p.y); E.update(0.01, g);
+    ok('v0.8.6: without a 朱羽 it flies off when you come within five', U.cheb(ph.x, ph.y, p.x, p.y) > d0 && /飛開/.test(g.msgText), [d0, U.cheb(ph.x, ph.y, p.x, p.y)]);
+    g.addItem('朱羽', fu || 1); ph.x = p.x - 2; ph.y = p.y; ph.moveT = 0; E.update(0.01, g);
+    ok('v0.8.6: carrying a 朱羽 it stays', ph.x === p.x - 2 && ph.y === p.y);
+    p.zhu = false; g.courSig = ''; face(-1, 0); g.pressGather(); const ring = document.getElementById('soulring'); await sleep(80);
+    ok('v0.8.6: E within two tiles with a 朱羽: 朱雀 teaches 氣順, the 鳳翎 third lights up', p.zhu === true && g.count('朱羽') === 0 && /求教朱雀/.test(toasts()) && ring.classList.contains('z') && /鳳翎（朱雀，已求教）/.test(ring.title), ring.title);
+    g.save(); ok('v0.8.6: having been taught by the 朱雀 is saved', JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot))).player.zhu === true);
+    p.zhu = zhu0; g.courSig = ''; E.list = E.list.filter(o => o.type !== '雕' && o.type !== '朱雀'); p.creatures = p.creatures.filter(c => c !== '雕' && c !== '朱雀'); delete p.codex['蠱雕'];
+    for (const n of ['燧石', '火蝕', '石劍', '石鎬', '火把', '麻布包']) g.removeItem(n, 99); p.fearT = 0; put(p0.x, p0.y); }
   // ============ v0.8.5：傷害分質；鑿齒（盾）、虎符、白虎（嘯、抗震、虎魄）；死在神獸手上膽氣只掉一半 ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, DB = G.DB, cour0 = p.cour, hp0 = p.hp, bai0 = p.bai, put = (x, y) => { p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; };
     E.list = E.list.filter(o => o.type !== '齒' && o.type !== '白虎');
@@ -1679,7 +1737,7 @@ const result = await page.evaluate(async () => {
     ok('v0.8.5: from its side the blow goes round the shield — full damage', Math.abs(side - front * 10) < 1e-3 && /繞過盾/.test(g.msgText), [side, front]);
     p.hp = 100; tt.atk = 0; tt.moveT = 0; tt.turnT = 99; E.update(0.01, g); const sideHp = p.hp;
     tt.fx = -1; tt.fy = 0; tt.atk = 0; tt.moveT = 0; E.update(0.01, g); const frontHp = p.hp;
-    ok('v0.8.5: it can only ram you when you stand in front of it (14, 力)', sideHp === 100 && frontHp < 100 && Math.abs(100 - frontHp - U.r4(14 * g.takenMult())) < 1e-6, [sideHp, frontHp]);
+    ok('v0.8.6: it can only ram you when you stand in front of it (21, 力; 命 650)', DB['齒'].atk === 21 && DB['齒'].hp === 650 && sideHp === 100 && frontHp < 100 && Math.abs(100 - frontHp - U.r4(21 * g.takenMult())) < 1e-6, [sideHp, frontHp]);
     tt.fx = 0; tt.fy = 1; tt.turnT = 0.01; E.update(0.05, g); ok('v0.8.5: it turns to face you, a breath or so at a time', tt.fx === -1 && tt.fy === 0, [tt.fx, tt.fy]);
     // 斃之：殘體一或二塊
     { const tr = U.trueRand; g.removeItem('鑿齒殘體', 99); U.trueRand = () => 0.5; g.kill(tt); const one = g.count('鑿齒殘體'); U.trueRand = () => 0.1; g.kill(E.add('齒', p.x + 3, p.y + 3, { moveT: 99 })); U.trueRand = tr;

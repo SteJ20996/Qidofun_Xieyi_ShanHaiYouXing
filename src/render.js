@@ -12,7 +12,7 @@
     '果': '#c9654a', '灶': '#d9593c', '鼎': '#b4452c', '包': '#2a2724', '囊': '#5a3e2b', '煤': '#2a2724', '鐵': '#8a5a3a', '網': '#5a86a8', '罟': '#4f7a9c', '罾': '#446e90', '路': '#c9b27a', '門': '#9a7a55', '井': '#4a6f8f',
     '棉': '#e8e2d0', '礫': '#b9b4a8', '磚': '#9a5a40', '墟': '#8a8378', '窗': '#c09a6a', '沼': '#6b6a3c', '棧': '#9a6b45', '床': '#a06a4a', '橋': '#9a6b45', '漁': '#5a86a8', '麻': '#a9b07a', '偶': '#b08a5a', '櫃': '#7a4e2d', '舟': '#7a4e2d',
     '塔': '#2a2724', '寺': '#5a3e2b', '船': '#5a3e2b', '泉': '#4a6f8f', '墓': '#6e6c75', '洞': '#2a2724', '燈': '#e0a020',
-    '漠': '#e3cf98', '丘': '#d6bb7a', '池': '#5f9cc0', '棗': '#7d9a55', '熔': '#d2502a', '岩': '#5d5a62', '曜': '#2b2133', '川': '#5f9cc0', '湖': '#5a92b8', '湯': '#8cc3d0', '窟': '#3a3028'   // v0.7
+    '漠': '#e3cf98', '丘': '#d6bb7a', '池': '#5f9cc0', '棗': '#7d9a55', '熔': '#d2502a', '岩': '#5d5a62', '燧': '#2a2622', '曜': '#2b2133', '川': '#5f9cc0', '湖': '#5a92b8', '湯': '#8cc3d0', '窟': '#3a3028'   // v0.7
   };
 
   // 光照（v0.6.4；v0.6.9 改成射線）：每道光從燈芯往外射線，碰到磚、門、墟的邊就停，圍出一個多邊形——影子的邊沿著牆角斜斜射出去，不是一格一格的方塊。
@@ -320,6 +320,22 @@
           this.drawGlyph('盾', '#8a6a3c', px + sx * T * 0.62, py + sy * T * 0.62 + bob, T * 0.72, Math.atan2(sy, sx) * 0.15, 0.95);
           continue;
         }
+        if (e.type === '雕') {       // 蠱雕（v0.8.6）：灰黑的「雕」字頭上一點角；在高處盤旋時畫得高、地上一團影子，撲下來時落到地面
+          const k = Math.min(1, dt * 6), want = e.mode === 'circle' ? 1 : e.mode === 'rise' ? 0.6 : 0; e.alt = e.alt === undefined ? want : e.alt + (want - e.alt) * k;
+          const lift = e.alt * T * 0.55, flap = Math.sin(now * 7 + e.bob) * 0.08;
+          ctx.save(); ctx.fillStyle = 'rgba(28,26,23,' + (0.12 + 0.1 * (1 - e.alt)) + ')'; ctx.beginPath(); ctx.ellipse(px, py + T * 0.3, T * (0.5 - e.alt * 0.15), T * 0.16, 0, 0, 7); ctx.fill(); ctx.restore();
+          this.drawGlyph('雕', d.ink, px, py - lift, T * 1.2, flap, 1);
+          ctx.save(); ctx.strokeStyle = '#2b2d33'; ctx.lineWidth = Math.max(2, T * 0.07); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(px + T * 0.05, py - lift - T * 0.62); ctx.lineTo(px + T * 0.16, py - lift - T * 0.86); ctx.stroke(); ctx.restore();   // 頭上一隻角
+          continue;
+        }
+        if (e.type === '朱雀') {     // 南方朱雀（v0.8.6）：朱紅的大字「雀」，左右各一個「翎」字跟著拍；自己帶著暖光
+          const bob = Math.sin(now * 1.1 + e.bob) * 3, flap = Math.sin(now * 3 + e.bob) * 0.18;
+          lights.push({ x: e.x, y: e.y, cx: e.rx + 0.5, cy: e.ry + 0.5, r: 3, c: FIRE });
+          this.drawGlyph('翎', '#d9822b', px - T * 0.95, py + bob - T * 0.1, T * 0.7, -0.35 - flap, 0.95);
+          this.drawGlyph('翎', '#d9822b', px + T * 0.95, py + bob - T * 0.1, T * 0.7, 0.35 + flap, 0.95);
+          this.drawGlyph('雀', d.ink, px, py + bob, T * 1.7, 0, 1);
+          continue;
+        }
         if (e.type === '白虎') {     // 西方白虎（v0.8.5）：比青龍還大的白字，墨線描邊，背上幾個「斑」字
           const bob = Math.sin(now * 0.8 + e.bob) * 3, S = T * 1.9;
           for (const [ox2, oy2] of [[-2, 0], [2, 0], [0, -2], [0, 2], [-1.4, -1.4], [1.4, 1.4], [-1.4, 1.4], [1.4, -1.4]]) this.drawGlyph('虎', '#2f2a24', px + ox2, py + bob + oy2, S, 0, 0.85);
@@ -536,6 +552,8 @@
         else if (e.type === '青龍') { m.fillStyle = '#24766b'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '白虎') { m.fillStyle = '#f6f1e4'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); m.strokeStyle = '#2f2a24'; m.strokeRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '齒') { m.fillStyle = '#6b4a2f'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
+        else if (e.type === '雕') { m.fillStyle = '#4a4f5c'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
+        else if (e.type === '朱雀') { m.fillStyle = '#c23b22'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '豹' || e.type === '狼' || e.type === '蛇') { m.fillStyle = '#8a2a1a'; m.fillRect(i * px, j * px, px + 1, px + 1); }
       }
       m.fillStyle = '#1c1a17'; m.beginPath(); m.arc(half * px + px / 2, half * px + px / 2, 3, 0, 7); m.fill();
