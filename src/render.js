@@ -4,13 +4,14 @@
   const U = window.U, G = window.G, DB = G.DB;
   const FONT = '"LXGW WenKai TC", "BiauKai", "DFKai-SB", "標楷體", "Kaiti TC", "Kaiti SC", "STKaiti", "KaiTi", "Noto Serif TC", "Noto Serif SC", "Noto Serif CJK TC", "PingFang TC", "WenQuanYi Zen Hei", serif';   // 簡體字霞鶩文楷 TC 也有，缺的幾個落到 SC 字型
   const L = (s) => (window.I18N ? window.I18N.t(s) : s);   // 畫布上的字：選了簡體就轉（v0.5.4）
+  const MAP_VIEW_R = 30, MAP_MIN_N = MAP_VIEW_R * 2, MAP_GLYPH_PX = 10, MAP_FONT_MAX = 30;   // 大地圖放大（v0.8.24）；v0.8.25 使用者改：放到最大只看得見方圓三十格的圓；一格大過十點就寫字
   const MINI = {
     '淼': '#4a6f8f', '水': '#6f93b0', '沙': '#d9c89a', '石': '#9c9a93', '山': '#6e6c75', '雪': '#e8ecf2',
     '草': '#b9c98f', '花': '#d29b8e', '木': '#8aa86f', '林': '#5e8a55', '森': '#3b5f3a', '竹': '#7fa36b', '田': '#d1c572',
     '土': '#a98a62', '灰': '#8d8781', '白': '#f3ebd8', '火': '#d9593c', '炎': '#d9593c', '焱': '#d9593c',
-    '明': '#f0c54a', '休': '#9a6b45', '橋': '#9a6b45', '困': '#7a5a3e', '碑': '#2a2724', '亭': '#8a3a2a', '日': '#e07a4a', '月': '#e3c35a',
+    '明': '#f0c54a', '休': '#9a6b45', '困': '#7a5a3e', '碑': '#2a2724', '亭': '#8a3a2a', '桑': '#3a7a52', '若': '#a2552f', '建': '#5a4a2a', '日': '#e07a4a', '月': '#e3c35a',
     '果': '#c9654a', '灶': '#d9593c', '鼎': '#b4452c', '包': '#2a2724', '囊': '#5a3e2b', '煤': '#2a2724', '鐵': '#8a5a3a', '網': '#5a86a8', '罟': '#4f7a9c', '罾': '#446e90', '路': '#c9b27a', '門': '#9a7a55', '井': '#4a6f8f',
-    '棉': '#e8e2d0', '礫': '#b9b4a8', '磚': '#9a5a40', '墟': '#8a8378', '窗': '#c09a6a', '沼': '#6b6a3c', '棧': '#9a6b45', '床': '#a06a4a', '橋': '#9a6b45', '漁': '#5a86a8', '麻': '#a9b07a', '偶': '#b08a5a', '櫃': '#7a4e2d', '舟': '#7a4e2d',
+    '棉': '#e8e2d0', '礫': '#b9b4a8', '磚': '#9a5a40', '墟': '#8a8378', '窗': '#c09a6a', '沼': '#6b6a3c', '棧': '#9a6b45', '床': '#a06a4a', '漁': '#5a86a8', '麻': '#a9b07a', '偶': '#b08a5a', '櫃': '#7a4e2d', '舟': '#7a4e2d',
     '塔': '#2a2724', '寺': '#5a3e2b', '船': '#5a3e2b', '泉': '#4a6f8f', '墓': '#6e6c75', '洞': '#2a2724', '燈': '#e0a020',
     '漠': '#e3cf98', '丘': '#d6bb7a', '池': '#5f9cc0', '棗': '#7d9a55', '熔': '#d2502a', '岩': '#5d5a62', '燧': '#2a2622', '曜': '#2b2133', '川': '#5f9cc0', '湖': '#5a92b8', '湯': '#8cc3d0', '窟': '#3a3028'   // v0.7
   };
@@ -210,12 +211,15 @@
       this.atlas.set(key, c);
       return c;
     }
-    drawShip(cx, cy, rec, now, warded) {
-      const T = this.tile, k = G.SHIPS[rec.kind] || G.SHIPS['孤帆'], size = T * Math.max(k.w, k.h) * 0.9, hurt = rec.hp / k.hp;
-      const ctx = this.ctx;
-      ctx.save(); ctx.fillStyle = 'rgba(47,88,120,0.18)'; ctx.beginPath(); ctx.ellipse(cx, cy + size * 0.32, size * 0.5, size * 0.14, 0, 0, 7); ctx.fill(); ctx.restore();
-      this.drawGlyph('舟', hurt < 0.34 ? G.INK.red : G.INK.brown, cx, cy + Math.sin(now * 1.5) * 2, size, Math.sin(now * 1.5) * 0.04, 0.95);
-      if (warded) this.drawGlyph('骨', G.INK.red, cx, cy - size * 0.42, T * 0.42, 0, 0.9);
+    drawShip(cx, cy, rec, now, warded, aboard) {   // v0.8.17：船身一塊長方形（東西長或南北長），淡淡的甲板，上頭一個拉長的「舟」字（跟野牛一樣，橫躺拉扁、直立拉長）
+      const T = this.tile, k = G.SHIPS[rec.kind] || G.SHIPS['孤帆'], h = rec.dir === 'h', W = h ? k.h : k.w, H = h ? k.w : k.h, hurt = rec.hp / k.hp;
+      const ctx = this.ctx, bob = Math.sin(now * 1.5) * 2, bw = W * T - 4, bh = H * T - 4;
+      ctx.save(); ctx.fillStyle = 'rgba(47,88,120,0.18)'; ctx.beginPath(); ctx.ellipse(cx, cy + bh * 0.42, bw * 0.55, Math.max(T * 0.18, bh * 0.12), 0, 0, 7); ctx.fill();
+      ctx.translate(0, bob); ctx.fillStyle = aboard ? 'rgba(154,107,69,0.32)' : 'rgba(154,107,69,0.2)'; ctx.strokeStyle = hurt < 0.34 ? 'rgba(180,57,42,0.6)' : 'rgba(110,72,45,0.55)'; ctx.lineWidth = 2;
+      ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(cx - bw / 2, cy - bh / 2, bw, bh, T * 0.3); else ctx.rect(cx - bw / 2, cy - bh / 2, bw, bh); ctx.fill(); ctx.stroke(); ctx.restore();
+      const side = Math.min(W, H), size = T * side * 0.95;
+      this.drawGlyph('舟', hurt < 0.34 ? G.INK.red : G.INK.brown, cx, cy + bob, size, Math.sin(now * 1.5) * 0.04, aboard ? 0.6 : 0.95, W / side, H / side);
+      if (warded) this.drawGlyph('骨', G.INK.red, cx, cy - bh / 2 + T * 0.1, T * 0.42, 0, 0.9);
       ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     }
     drawGlyph(ch, color, px, py, size, rot, alpha, kx, ky) {   // kx、ky：橫、縱拉長幾倍（野牛的身子，v0.7.2）
@@ -226,6 +230,25 @@
       ctx.drawImage(this.glyph(ch, color), -size * 0.65, -size * 0.65, size * 1.3, size * 1.3);
       if (a < 1) ctx.globalAlpha = 1;
       ctx.setTransform(s, 0, 0, s, 0, 0);
+    }
+    drawGoldGlyph(ch, px, py, size, rot, now) {   // 金色的字（v0.8.21）：一圈呼吸的金光、一道亮光從左上掃到右下、四顆星繞著閃
+      const ctx = this.ctx, s = this.dpr, n = Math.ceil(size * 1.3 * s), c = this._goldC || (this._goldC = document.createElement('canvas')); c.width = c.height = n;
+      const g = c.getContext('2d'); g.clearRect(0, 0, n, n); g.drawImage(this.glyph(ch, '#8f6206'), 0, 0, n, n);
+      g.globalCompositeOperation = 'source-atop';
+      const t = (now * 0.55) % 1.6 - 0.3, lg = g.createLinearGradient(n * (t - 0.35), n * (t - 0.35), n * (t + 0.35), n * (t + 0.35));
+      lg.addColorStop(0, 'rgba(255,236,160,0)'); lg.addColorStop(0.5, 'rgba(255,246,200,0.8)'); lg.addColorStop(1, 'rgba(255,236,160,0)');
+      g.fillStyle = 'rgba(214,160,24,0.6)'; g.fillRect(0, 0, n, n); g.fillStyle = lg; g.fillRect(0, 0, n, n); g.globalCompositeOperation = 'source-over';
+      ctx.save();
+      const pulse = 0.5 + 0.5 * Math.sin(now * 2.4), halo = ctx.createRadialGradient(px, py, size * 0.1, px, py, size * (0.85 + 0.12 * pulse));
+      halo.addColorStop(0, 'rgba(255,212,80,' + (0.2 + 0.14 * pulse) + ')'); halo.addColorStop(1, 'rgba(255,215,90,0)');
+      ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(px, py, size * (0.85 + 0.12 * pulse), 0, 7); ctx.fill();
+      for (let i = 0; i < 4; i++) {   // 四顆小星繞著轉、輪流閃
+        const a = now * 0.9 + i * Math.PI / 2, r = size * 0.62, tw = Math.max(0, Math.sin(now * 3.1 + i * 1.7)), x = px + Math.cos(a) * r, y = py + Math.sin(a) * r * 0.8, k = size * 0.09 * (0.4 + tw);
+        ctx.globalAlpha = 0.25 + 0.75 * tw; ctx.fillStyle = '#ffe9a0'; ctx.beginPath(); ctx.moveTo(x, y - k * 2); ctx.lineTo(x + k * 0.5, y - k * 0.5); ctx.lineTo(x + k * 2, y); ctx.lineTo(x + k * 0.5, y + k * 0.5); ctx.lineTo(x, y + k * 2); ctx.lineTo(x - k * 0.5, y + k * 0.5); ctx.lineTo(x - k * 2, y); ctx.lineTo(x - k * 0.5, y - k * 0.5); ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+      const cs = rot ? Math.cos(rot) : 1, sn = rot ? Math.sin(rot) : 0;
+      ctx.save(); ctx.shadowColor = 'rgba(110,70,0,0.55)'; ctx.shadowBlur = 3 * s; ctx.setTransform(s * cs, s * sn, -s * sn, s * cs, px * s, py * s); ctx.drawImage(c, -size * 0.65, -size * 0.65, size * 1.3, size * 1.3); ctx.restore(); ctx.setTransform(s, 0, 0, s, 0, 0);
     }
     brushRect(x, y, s, color, lw) {
       const ctx = this.ctx; ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = lw || 2; ctx.lineCap = 'round';
@@ -294,6 +317,18 @@
         if (c.x + 2 < x0 || c.x - 2 > x1 || c.y + 2 < y0 || c.y - 2 > y1) continue;
         this.drawShip(ox + c.x * T, oy + c.y * T, rec, now, g.shipSkulls(rec).length > 0);
       }
+      // —— 畢方的訛火（v0.8.25）：燒著的格子一團跳動的「火」、帶著光；要燒起來的地方先畫一個紅圈
+      for (const f of g.fires || []) {
+        if (f.x < x0 || f.x > x1 || f.y < y0 || f.y > y1) continue;
+        const fx = ox + f.x * T + T / 2, fy = oy + f.y * T + T / 2, fl = Math.min(1, f.t / 1.5);
+        ctx.save(); ctx.fillStyle = 'rgba(214,92,40,' + (0.16 * fl) + ')'; ctx.fillRect(ox + f.x * T, oy + f.y * T, T, T); ctx.restore();
+        this.drawGlyph('火', '#d0451b', fx + Math.sin(now * 11 + f.x) * 1.5, fy - T * 0.05, T * (0.72 + 0.1 * Math.sin(now * 13 + f.y)), Math.sin(now * 7 + f.x) * 0.08, 0.9 * fl);
+        lights.push({ x: f.x, y: f.y, r: 2, c: FIRE });
+      }
+      for (const m of g.fireMarks || []) {
+        if (m.x < x0 || m.x > x1 || m.y < y0 || m.y > y1) continue;
+        ctx.save(); ctx.strokeStyle = 'rgba(208,69,27,0.85)'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.lineDashOffset = -now * 14; ctx.beginPath(); ctx.arc(ox + m.x * T + T / 2, oy + m.y * T + T / 2, T * (0.25 + 0.2 * (1 - m.t)), 0, 7); ctx.stroke(); ctx.restore();
+      }
       // —— 實體
       for (const e of g.ents.list) {
         if (e.x < x0 || e.x > x1 || e.y < y0 || e.y > y1) continue;
@@ -332,11 +367,63 @@
           if (shade) { this.drawGlyph('影', '#55535c', cx + T * 1.15, cy + T * 0.95, T * 0.5, 0, 0.9); ctx.restore(); }
           continue;
         }
+        if (e.type === '修蛇') {     // 修蛇（v0.8.16）：大字「蛇」當頭，後面一串「尾」越後越小；潛下去只剩水紋，要浮上來的地方先冒「泡」；吞象畫出紅線、毒涎畫出落點；纏舟時尾巴圍著船
+          const shade = !!e.shade, ink = shade ? '#2b2a30' : d.ink, tailInk = shade ? '#55535c' : '#3a4a36', SN = g.ents.constructor.SNAKE;
+          if (shade) { ctx.save(); ctx.globalAlpha = 0.72; }
+          if (e.state === 'gape') { ctx.save(); ctx.fillStyle = 'rgba(180,57,42,' + (0.14 + 0.08 * Math.sin(now * 12)) + ')'; for (const [cx2, cy2] of g.ents.gapeCells(e)) ctx.fillRect(ox + cx2 * T, oy + cy2 * T, T, T); ctx.restore(); }
+          if (e.spit) { ctx.save(); ctx.fillStyle = 'rgba(77,110,58,0.2)'; ctx.fillRect(ox + (e.spit.x - 1) * T, oy + (e.spit.y - 1) * T, T * 3, T * 3); ctx.restore(); this.drawGlyph('涎', G.INK.plant, ox + e.spit.x * T + T / 2, oy + e.spit.y * T + T / 2, T * 0.7, 0, 0.85); }
+          if (e.under) {
+            ctx.save(); ctx.strokeStyle = 'rgba(47,88,120,0.35)'; ctx.lineWidth = 1.5;
+            for (let i = 0; i < 2; i++) { const k = (now * 0.7 + i * 0.5) % 1; ctx.globalAlpha = 1 - k; ctx.beginPath(); ctx.ellipse(px, py, T * (0.4 + k * 0.9), T * (0.16 + k * 0.36), 0, 0, 7); ctx.stroke(); }
+            ctx.restore();
+            if (e.bubble) { const bx = ox + e.bubble.x * T + T / 2, by = oy + e.bubble.y * T + T / 2; for (let i = 0; i < 3; i++) this.drawGlyph('泡', G.INK.water, bx + Math.sin(now * 5 + i * 2) * T * 0.25, by - ((now * 1.5 + i / 3) % 1) * T * 0.5, T * (0.42 + 0.12 * i), 0, 0.9); }
+          } else {
+            const tail = e.tail || [], coil = e.state === 'coil' && p.sailing, box = coil && g.shipBox();   // 纏舟：尾巴繞著整艘船（v0.8.17）
+            for (let i = tail.length - 1; i >= 0; i--) {
+              let tx2, ty2;
+              if (coil) { const a = now * 1.5 + i / tail.length * Math.PI * 2, cx = box ? box.x : p.rx + 0.5, cy = box ? box.y : p.ry + 0.5, rx = box ? box.W / 2 + 0.9 : 1.4, ry = box ? box.H / 2 + 0.7 : 1.2; tx2 = ox + cx * T + Math.cos(a) * T * rx; ty2 = oy + cy * T + Math.sin(a) * T * ry; }
+              else { tx2 = ox + tail[i][0] * T + T / 2; ty2 = oy + tail[i][1] * T + T / 2 + Math.sin(now * 2 + i) * 1.5; }
+              this.drawGlyph('尾', tailInk, tx2, ty2, T * Math.max(0.5, 1.0 - i * 0.08), Math.sin(now * 1.5 + i) * 0.15, 0.95);
+            }
+            const red = !shade && e.hp / (e.max || d.hp) <= SN.spitAt, rise = e.state === 'gape' ? -T * 0.25 : 0;
+            if (coil) { ctx.save(); ctx.strokeStyle = 'rgba(180,57,42,0.5)'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.lineDashOffset = -now * 12; ctx.beginPath(); ctx.arc(px, py, T * 0.95, 0, 7); ctx.stroke(); ctx.restore(); }
+            this.drawGlyph('蛇', red ? '#5b2a20' : ink, px, py + rise + Math.sin(now * 1.6 + e.bob) * 2, T * 1.6, Math.sin(now * 0.9 + e.bob) * 0.06, 1);
+          }
+          if (shade) { this.drawGlyph('影', '#55535c', px + T * 0.85, py + T * 0.75, T * 0.5, 0, 0.9); ctx.restore(); }
+          continue;
+        }
+        if (e.type === '畢') {       // 畢方（v0.8.25）：青底朱紋的「畢」，一隻腳跳著走——跳的時候往上一彈，身上幾點朱紅
+          const hop = Math.abs(Math.sin(now * 4.2 + e.bob)) * T * 0.16, bx = px, by = py - hop;
+          ctx.save(); ctx.fillStyle = 'rgba(28,26,23,0.14)'; ctx.beginPath(); ctx.ellipse(px, py + T * 0.36, T * 0.32, T * 0.1, 0, 0, 7); ctx.fill(); ctx.restore();
+          this.drawGlyph('畢', d.ink, bx, by, T * 1.15, Math.sin(now * 4.2 + e.bob) * 0.05, 1);
+          ctx.save(); ctx.fillStyle = '#c23b22'; for (const [ax, ay] of [[-0.22, -0.18], [0.2, -0.05], [-0.05, 0.2]]) { ctx.beginPath(); ctx.arc(bx + ax * T, by + ay * T, Math.max(1.5, T * 0.05), 0, 7); ctx.fill(); } ctx.restore();   // 赤文
+          continue;
+        }
+        if (e.type === '大風') {     // 大風（v0.8.25）：在天上時地上一團影子，上方半透明的大字「風」；撲下來寫成「鳳」，左右各兩三個「羽」當翅膀
+          const shade = !!e.shade, low = e.state === 'perch' || e.state === 'tied' ? 0 : e.state === 'dive' ? 0.35 : 1, kk = Math.min(1, dt * 5);
+          e.alt = e.alt === undefined ? low : e.alt + (low - e.alt) * kk;
+          if (shade) { ctx.save(); ctx.globalAlpha = 0.72; }
+          if (e.whirl) { const wx = ox + e.whirl.x * T, wy = oy + e.whirl.y * T; ctx.save(); ctx.fillStyle = 'rgba(91,107,122,' + (0.12 + 0.08 * Math.sin(now * 10)) + ')'; ctx.fillRect(wx - T, wy - T, T * 3, T * 3); ctx.restore(); this.drawGlyph('旋', '#5b6b7a', wx + T / 2, wy + T / 2, T * 0.9, now * 6, 0.85); }
+          if (e.gale) { ctx.save(); ctx.fillStyle = 'rgba(91,107,122,' + (0.12 + 0.06 * Math.sin(now * 12)) + ')'; for (const [gx, gy] of g.ents.galeCells(e.gale)) ctx.fillRect(ox + gx * T, oy + gy * T, T, T); ctx.restore(); }
+          if (e.sand) for (const [sx, sy] of e.sand.cells) { ctx.save(); ctx.strokeStyle = 'rgba(107,90,72,0.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ox + sx * T + T / 2, oy + sy * T + T / 2, T * (0.2 + 0.25 * (1 - e.sand.t)), 0, 7); ctx.stroke(); ctx.restore(); }
+          const lift = e.alt * T * 0.9, ink = shade ? '#2b2a30' : d.ink, wing = shade ? '#55535c' : '#7d8a96', red = !shade && e.hp / (e.max || d.hp) <= 0.3;
+          ctx.save(); ctx.fillStyle = 'rgba(28,26,23,' + (0.1 + 0.12 * (1 - e.alt)) + ')'; ctx.beginPath(); ctx.ellipse(px, py + T * 0.3, T * (1.1 - e.alt * 0.35), T * 0.3, 0, 0, 7); ctx.fill(); ctx.restore();   // 地上的影子
+          if (e.alt > 0.6) this.drawGlyph('風', ink, px, py - lift + Math.sin(now * 1.4 + e.bob) * 3, T * 2.0, Math.sin(now * 0.9 + e.bob) * 0.08, 0.42 + 0.3 * (1 - e.alt));   // 天上：半透明的風
+          else {
+            const n = e.hp / (e.max || d.hp) > 0.5 ? 2 : 3, flap = Math.sin(now * 9 + e.bob) * 0.2;
+            for (let k = 0; k < n; k++) for (const sgn of [-1, 1]) this.drawGlyph('羽', wing, px + sgn * T * (1.0 + k * 0.62), py - lift - T * (0.18 + k * 0.14) + Math.sin(now * 9 + k) * 2, T * (0.8 - k * 0.1), sgn * (0.35 + flap + k * 0.12), 0.95);
+            this.drawGlyph('鳳', red ? '#8f2c20' : ink, px, py - lift, T * 1.7, 0, 1);
+          }
+          if (e.state === 'tied') this.drawGlyph('繳', G.INK.red, px + T * 0.9, py - T * 0.7, T * 0.5, 0, 0.9);
+          if (shade) { this.drawGlyph('影', '#55535c', px + T * 0.95, py + T * 0.75, T * 0.5, 0, 0.9); ctx.restore(); }
+          continue;
+        }
         if (e.type === '雕') {       // 蠱雕（v0.8.6）：灰黑的「雕」字頭上一點角；在高處盤旋時畫得高、地上一團影子，撲下來時落到地面
           const k = Math.min(1, dt * 6), want = e.mode === 'circle' ? 1 : e.mode === 'rise' ? 0.6 : 0; e.alt = e.alt === undefined ? want : e.alt + (want - e.alt) * k;
           const lift = e.alt * T * 0.55, flap = Math.sin(now * 7 + e.bob) * 0.08;
           ctx.save(); ctx.fillStyle = 'rgba(28,26,23,' + (0.12 + 0.1 * (1 - e.alt)) + ')'; ctx.beginPath(); ctx.ellipse(px, py + T * 0.3, T * (0.5 - e.alt * 0.15), T * 0.16, 0, 0, 7); ctx.fill(); ctx.restore();
           this.drawGlyph('雕', d.ink, px, py - lift, T * 1.2, flap, 1);
+          if (e.mode === 'tied') this.drawGlyph('繳', G.INK.red, px + T * 0.7, py - T * 0.6, T * 0.45, 0, 0.9);   // 被彤弓素矰的絲纏住（v0.8.25）
           ctx.save(); ctx.strokeStyle = '#2b2d33'; ctx.lineWidth = Math.max(2, T * 0.07); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(px + T * 0.05, py - lift - T * 0.62); ctx.lineTo(px + T * 0.16, py - lift - T * 0.86); ctx.stroke(); ctx.restore();   // 頭上一隻角
           continue;
         }
@@ -392,7 +479,7 @@
         if (e.provoked > 0 && U.cheb(e.x, e.y, p.x, p.y) <= 7) { ctx.save(); ctx.fillStyle = G.INK.red; ctx.font = 'bold ' + Math.round(T * 0.42) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.fillText('怒', px + T * 0.4, py - T * 0.42); ctx.restore(); }   // 被彈弓惹惱、七格內要撲過來的
       }
       // —— 彈弓的準星：手持彈弓時，面前九格內會被打到的那隻
-      { const st = g.slingTarget && g.slingTarget();
+      { const st = (g.slingTarget && g.slingTarget()) || (g.skyTarget && g.skyTarget());   // v0.8.25：彤弓素矰也畫準星
         if (st) { const sx = ox + st.rx * T + T / 2, sy = oy + st.ry * T + T / 2; ctx.save(); ctx.strokeStyle = 'rgba(180,57,42,0.75)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.lineDashOffset = -now * 10; ctx.beginPath(); ctx.arc(sx, sy, T * 0.62, 0, 7); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(sx - T * 0.8, sy); ctx.lineTo(sx - T * 0.45, sy); ctx.moveTo(sx + T * 0.45, sy); ctx.lineTo(sx + T * 0.8, sy); ctx.moveTo(sx, sy - T * 0.8); ctx.lineTo(sx, sy - T * 0.45); ctx.moveTo(sx, sy + T * 0.45); ctx.lineTo(sx, sy + T * 0.8); ctx.stroke(); ctx.restore(); } }
 
       // —— 玩家：一個「人」字
@@ -407,11 +494,12 @@
         ctx.fillStyle = halo; ctx.fillRect(px - T, py - T, T * 2, T * 2);
         ctx.fillStyle = 'rgba(30,20,10,0.16)'; ctx.beginPath(); ctx.ellipse(px, py + T * 0.44, T * 0.32, T * 0.1, 0, 0, 7); ctx.fill();
         ctx.restore();
-        if (g.totemOn && g.totemOn()) { ctx.save(); ctx.strokeStyle = 'rgba(180,57,42,.3)'; ctx.lineWidth = 2; ctx.setLineDash([8, 10]); ctx.lineDashOffset = -now * 20; ctx.strokeRect(px - T * 7.5, py - T * 7.5, T * 15, T * 15); ctx.restore(); }   // 七格內（方框，與判定一致）
-        if (p.sailing && p.ship) {   // 船身跟著人：孤帆一乘二、方舟二乘三，人站在船身裡
-          const off = (G.SHIPS[p.ship.kind] || G.SHIPS['孤帆']).off; let sx = 0, sy = 0; for (const [dx, dy] of off) { sx += dx; sy += dy; }
-          this.drawShip(ox + (p.rx + sx / off.length) * T + T / 2, oy + (p.ry + sy / off.length) * T + T / 2, p.ship, now, g.shipWarded());
+        if (p.sailing && p.ship) {   // 身下的船（v0.8.17）：船身照左上角 x0、y0 畫；開船時跟著人一起滑過去，人在船上走時船不動
+          const s = g.shipNow(), k = G.SHIPS[s.kind] || G.SHIPS['孤帆'], h = s.dir === 'h', W = h ? k.h : k.w, H = h ? k.w : k.h;
+          const sx = p.shipMove ? p.rx - p.x : 0, sy = p.shipMove ? p.ry - p.y : 0;
+          this.drawShip(ox + (s.x0 + sx + W / 2) * T, oy + (s.y0 + sy + H / 2) * T, s, now, g.shipWarded(), true);
         }
+        if (g.totemOn && g.totemOn()) { ctx.save(); ctx.strokeStyle = 'rgba(180,57,42,.3)'; ctx.lineWidth = 2; ctx.setLineDash([8, 10]); ctx.lineDashOffset = -now * 20; ctx.strokeRect(px - T * 7.5, py - T * 7.5, T * 15, T * 15); ctx.restore(); }   // 七格內（方框，與判定一致）
         if (p.swimming) {            // 落水：一圈圈水紋，人只露半身
           ctx.save(); ctx.strokeStyle = 'rgba(47,88,120,0.5)'; ctx.lineWidth = 1.5;
           for (let i = 0; i < 2; i++) { const r = T * (0.35 + ((now * 0.8 + i * 0.5) % 1) * 0.45); ctx.globalAlpha = 1 - ((now * 0.8 + i * 0.5) % 1); ctx.beginPath(); ctx.ellipse(px, py + T * 0.25, r, r * 0.4, 0, 0, 7); ctx.stroke(); }
@@ -422,7 +510,8 @@
           ctx.save(); ctx.strokeStyle = gk[1]; ctx.globalAlpha = 0.35 + 0.2 * Math.sin(now * 4); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(px, py, T * 1.1, 0, 7); ctx.stroke(); ctx.restore();
           this.drawGlyph(gk[0], gk[1], px - T * 0.95, py - T * 0.55 + Math.sin(now * 2) * 3, T * 1.1, 0, 0.9);
         }
-        this.drawGlyph('人', G.INK.black, px, py - (p.sailing ? T * 0.12 : 0) + (p.swimming ? T * 0.12 + Math.sin(now * 3) * 2 : 0), T * 1.18, rot, p.swimming ? 0.8 : 1);
+        { const gy = py - (p.sailing ? T * 0.12 : 0) + (p.swimming ? T * 0.12 + Math.sin(now * 3) * 2 : 0);   // v0.8.21 使用者定：斃了共工又拿到隱藏成就「服了？服了！」，回到大陸以後「人」是動態的金色（p.gold；共工還沒做，先畫好）
+          if (p.gold) this.drawGoldGlyph('人', px, gy, T * 1.18, rot, now); else this.drawGlyph('人', G.INK.black, px, gy, T * 1.18, rot, p.swimming ? 0.8 : 1); }
         ctx.save(); ctx.fillStyle = G.INK.red; ctx.beginPath(); ctx.arc(px + T * 0.34, py + T * 0.36, T * 0.07, 0, 7); ctx.fill(); ctx.restore();
       }
       // —— 撒網的網影：手裡拿著網、站在水邊，淺色畫出撒得到的格子（還沒撒）
@@ -465,6 +554,10 @@
         if (f.type === 'write') {
           this.drawGlyph(f.ch, f.color, px, py, T * (1.6 - 0.6 * pr), (1 - pr) * 0.4, pr * 0.9);
           ctx.save(); ctx.strokeStyle = 'rgba(180,57,42,' + (0.6 * (1 - pr)) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, T * (0.3 + 0.5 * pr), 0, 7); ctx.stroke(); ctx.restore();
+        } else if (f.type === 'shot' && f.arrow) {   // 彤弓素矰的矰（v0.8.25）：一道朱紅的線，後面拖著白絲
+          const ax = ox + f.x * T + T / 2, ay = oy + f.y * T + T / 2, qx = ox + (f.x + (f.x1 - f.x) * pr) * T + T / 2, qy = oy + (f.y + (f.y1 - f.y) * pr) * T + T / 2;
+          ctx.save(); ctx.strokeStyle = 'rgba(240,236,226,0.9)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(qx, qy); ctx.stroke();
+          const ang = Math.atan2(qy - ay, qx - ax); ctx.strokeStyle = G.INK.red; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(qx - Math.cos(ang) * T * 0.45, qy - Math.sin(ang) * T * 0.45); ctx.lineTo(qx, qy); ctx.stroke(); ctx.restore();
         } else if (f.type === 'shot') {          // 彈弓的石子：一顆小黑點飛過去
           const qx = ox + (f.x + (f.x1 - f.x) * pr) * T + T / 2, qy = oy + (f.y + (f.y1 - f.y) * pr) * T + T / 2 - Math.sin(pr * Math.PI) * T * 0.3;
           ctx.save(); ctx.fillStyle = G.INK.black; ctx.beginPath(); ctx.arc(qx, qy, T * 0.09, 0, 7); ctx.fill(); ctx.restore();
@@ -579,7 +672,10 @@
         else if (e.type === '白虎') { m.fillStyle = '#f6f1e4'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); m.strokeStyle = '#2f2a24'; m.strokeRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '齒') { m.fillStyle = '#6b4a2f'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
         else if (e.type === '豨') { m.fillStyle = '#5a3e2b'; m.fillRect(i * px - 2, j * px - 2, px * 2 + 4, px * 2 + 4); }
+        else if (e.type === '修蛇') { if (!e.under) { m.fillStyle = '#2c3b2a'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); } }
         else if (e.type === '雕') { m.fillStyle = '#4a4f5c'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
+        else if (e.type === '畢') { m.fillStyle = '#24766b'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
+        else if (e.type === '大風') { m.fillStyle = '#5b6b7a'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '朱雀') { m.fillStyle = '#c23b22'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '玄武') { m.fillStyle = '#1c1a17'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '豹' || e.type === '狼' || e.type === '蛇') { m.fillStyle = '#8a2a1a'; m.fillRect(i * px, j * px, px + 1, px + 1); }
@@ -601,24 +697,31 @@
       x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y);
       const az = (p.scaleTaken || p.azure) && g.azure;   // 拿到青鱗以後，東海青龍的所在也畫進來（v0.8）
       if (az) { x0 = Math.min(x0, az.x - 12); y0 = Math.min(y0, az.y - 12); x1 = Math.max(x1, az.x + 12); y1 = Math.max(y1, az.y + 12); }
-      const N = Math.min(2 * G.WORLD_R, Math.ceil(Math.max(x1 - x0, y1 - y0) * 1.06) + 8), px = S / N;
-      const ox = Math.round((x0 + x1) / 2 - N / 2), oy = Math.round((y0 + y1) / 2 - N / 2);
-      const X = (x) => (x - ox) * px, Y = (y) => (y - oy) * px, F = (k, min) => Math.max(min, Math.round(px * k)) + 'px ' + FONT;
-      this.mapView = { ox, oy, N, px };   // 測試看得到這張圖畫了多大的範圍
+      const heard = G.zones(w.seed).filter(z => (p.nestHints || {})[z.id] && !(p.zones || {})[z.id]);   // v0.8.19 聽說了、還沒到過的巢穴：畫一圈，圖也拉大到看得見
+      for (const z of heard) { const r = (z.ext || z.r) + 10; x0 = Math.min(x0, z.x - r); y0 = Math.min(y0, z.y - r); x1 = Math.max(x1, z.x + r); y1 = Math.max(y1, z.y + r); }
+      let N = Math.min(2 * G.WORLD_R, Math.ceil(Math.max(x1 - x0, y1 - y0) * 1.06) + 8), ox = Math.round((x0 + x1) / 2 - N / 2), oy = Math.round((y0 + y1) / 2 - N / 2);
+      const zm = Math.pow(2, g.mapZoom || 0), fitN = N;   // v0.8.24 使用者要的放大縮小：第 0 檔看得到走過的全部，每放大一檔範圍減半；放大時以你為中心（拖曳、方向鍵挪 g.mapPan）
+      if (zm > 1) { N = Math.max(MAP_MIN_N, Math.round(fitN / zm)); const pan = g.mapPan || { x: 0, y: 0 }; ox = Math.round(p.x + pan.x - N / 2); oy = Math.round(p.y + pan.y - N / 2); }
+      const px = S / N;
+      const X = (x) => (x - ox) * px, Y = (y) => (y - oy) * px, F = (k, min) => Math.max(min, Math.min(MAP_FONT_MAX, Math.round(px * k))) + 'px ' + FONT;   // v0.8.24：放大時地標、人、北這些字不跟著無限變大
+      this.mapView = { ox, oy, N, px, zoom: zm, fitN };   // 測試看得到這張圖畫了多大的範圍
       // 底：走過的地形畫在一張快取的畫布上，範圍、看過的格數、地上的字一變才重畫
-      const key = ox + ',' + oy + ',' + N + ',' + S + ',' + w.explored.size + ',' + w.ver;   // 同一塊裡多看見幾格不會改 key，所以另外每兩秒重畫一次
+      const key = ox + ',' + oy + ',' + N + ',' + S + ',' + w.explored.size + ',' + w.ver + ',' + (window.I18N && window.I18N.hans ? 1 : 0);   // 同一塊裡多看見幾格不會改 key，所以另外每兩秒重畫一次
       if (!this.mapBase || this.mapBase.width !== S) { this.mapBase = document.createElement('canvas'); this.mapBase.width = this.mapBase.height = S; this.mapKey = ''; }
       if (this.mapKey !== key || (this.mapAt || 0) + 2000 < performance.now()) {
         this.mapKey = key; this.mapAt = performance.now();
-        const b = this.mapBase.getContext('2d'), step = px >= 1 ? 1 : px >= 0.5 ? 2 : px >= 0.25 ? 4 : 8;
+        const b = this.mapBase.getContext('2d'), step = px >= 1 ? 1 : px >= 0.5 ? 2 : px >= 0.25 ? 4 : 8, glyphs = px >= MAP_GLYPH_PX;   // 放得夠大就寫字，跟走在島上看到的一樣
         b.fillStyle = '#efe5cf'; b.fillRect(0, 0, S, S); b.globalAlpha = 0.9;
+        if (glyphs) { b.textAlign = 'center'; b.textBaseline = 'middle'; b.font = Math.round(px * 0.9) + 'px ' + FONT; }
         for (const [k, bits] of w.explored) {
           const [cx, cy] = U.unkey(k), bx = cx * CHK, by = cy * CHK;
           if (bx + CHK < ox || by + CHK < oy || bx > ox + N || by > oy + N) continue;
           for (let j = 0; j < CHK; j += step) for (let i = 0; i < CHK; i += step) {
             const ii = Math.min(CHK - 1, i + (step >> 1)), jj = Math.min(CHK - 1, j + (step >> 1)), n = jj * CHK + ii;
             if (!(bits[n >> 3] & (1 << (n & 7)))) continue;
-            b.fillStyle = MINI[w.get(bx + ii, by + jj)] || '#999';
+            const ch = w.get(bx + ii, by + jj);
+            if (glyphs) { const d = DB[ch]; b.fillStyle = 'rgba(' + (d && d.kind === 'water' ? '120,160,190' : '210,196,166') + ',0.35)'; b.fillRect(X(bx + i), Y(by + j), px + 0.4, px + 0.4); b.fillStyle = (d && d.ink) || MINI[ch] || '#999'; b.fillText(L(ch), X(bx + i) + px / 2, Y(by + j) + px / 2); continue; }
+            b.fillStyle = MINI[ch] || '#999';
             b.fillRect(X(bx + i), Y(by + j), step * px + 0.4, step * px + 0.4);
           }
         }
@@ -635,6 +738,10 @@
         if (!(p.zones || {})[z.id]) continue;
         const wet = z.type === 'deep' || z.type === 'lake', dy = z.type === 'lake' ? 0 : z.type === 'deep' ? -18 : z.type === 'peak' ? -z.r * 0.8 : -(z.r + 16);
         m.font = F(z.type === 'peak' ? 9 : 6, 13); m.fillStyle = wet ? 'rgba(30,70,110,0.85)' : 'rgba(122,52,34,0.85)'; m.fillText(L(z.name), X(z.x + 0.5), Y(z.y + dy));
+      }
+      for (const z of heard) {   // 聽說了的巢穴：虛線圈＋名字打問號
+        m.save(); m.setLineDash([6, 6]); m.strokeStyle = 'rgba(122,52,34,0.6)'; m.lineWidth = 1.5; m.beginPath(); m.arc(X(z.x + 0.5), Y(z.y + 0.5), Math.max(6, (z.ext || z.r) * px), 0, 7); m.stroke(); m.restore();
+        m.font = F(6, 12); m.fillStyle = 'rgba(122,52,34,0.75)'; m.fillText(L(z.name + '？'), X(z.x + 0.5), Y(z.y + 0.5));
       }
       // 碑
       m.font = F(2.6, 9); m.fillStyle = '#1c1a17';
@@ -653,9 +760,13 @@
       }
       if (az) { m.font = F(6, 16); m.fillStyle = '#24766b'; m.fillText(L('龍'), X(az.x + 0.5), Y(az.y + 0.5)); m.font = F(3, 11); m.fillText(L(p.azure ? '青龍' : '青龍（帶蜃珠來）'), X(az.x + 0.5), Y(az.y + 0.5) + Math.max(14, px * 5)); }
       // 家、人
-      if (p.home) { m.fillStyle = '#9a6b45'; m.beginPath(); m.arc(X(p.home.x + 0.5), Y(p.home.y + 0.5), Math.max(2.5, px * 1.2), 0, 7); m.fill(); }
+      if (p.home) { m.fillStyle = '#9a6b45'; m.beginPath(); m.arc(X(p.home.x + 0.5), Y(p.home.y + 0.5), Math.min(8, Math.max(2.5, px * 1.2)), 0, 7); m.fill(); }
       m.font = F(4, 13); m.fillStyle = '#1c1a17'; m.fillText('人', X(p.x + 0.5), Y(p.y + 0.5));
-      m.fillStyle = '#b4392a'; m.beginPath(); m.arc(X(p.x + 0.5) + Math.max(4, px * 0.8), Y(p.y + 0.5) + Math.max(4, px * 0.8), Math.max(2, px * 0.6), 0, 7); m.fill();
+      m.fillStyle = '#b4392a'; m.beginPath(); m.arc(X(p.x + 0.5) + Math.min(9, Math.max(4, px * 0.8)), Y(p.y + 0.5) + Math.min(9, Math.max(4, px * 0.8)), Math.min(5, Math.max(2, px * 0.6)), 0, 7); m.fill();
+      if (zm > 1 && N <= MAP_MIN_N) {   // 放到最大：圓外蓋一層紙，只看得見方圓三十格（v0.8.25 使用者定）
+        const r = MAP_VIEW_R * px; this.mapView.circle = MAP_VIEW_R; m.save(); m.beginPath(); m.rect(0, 0, S, S); m.arc(S / 2, S / 2, r, 0, Math.PI * 2, true); m.fillStyle = 'rgba(239,229,207,0.94)'; m.fill('evenodd');
+        m.strokeStyle = 'rgba(74,66,56,0.55)'; m.lineWidth = 1.5; m.beginPath(); m.arc(S / 2, S / 2, r, 0, Math.PI * 2); m.stroke(); m.restore();
+      }
       // 北、比例
       m.font = F(3.5, 14); m.fillStyle = '#4a4238'; m.fillText('北', S - 22, 20);
       m.strokeStyle = '#4a4238'; m.lineWidth = 1.5; m.beginPath(); m.moveTo(S - 22, 32); m.lineTo(S - 22, 52); m.stroke();

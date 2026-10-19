@@ -18,9 +18,10 @@
   // 惹惱的野牛記仇比別的獸遠（十八格、三十息），擋在路上的人造磚、門、窗與墟（村裡的殘垣也算）都撞，一下隔 RAM_GAP 息；耐久在 world.js 的 WALL_HP
   const FISH_RATE = 1.8, EAGLE_RATE = 1.25;   // 魚出現得多八成、鷹多兩成五（v0.6.10 使用者定）：附近的上限與刷新的機會一起放大
   const RILE_CALM = 20, RILE_GIVEUP = 12;   // 被惹的蛛、蟾：二十息後或人走出十二格就消氣（v0.7.3；鷹十二息、野牛三十息另算）
-  const STAIRS = '台階', STAIR_SLOW = 1.5, FLIERS = '鳥龍鷹魄魚蜃雕朱雀';   // 獸也上得了階與台（v0.6.8 使用者定），一步多花一半時間
+  const STAIRS = '台階', STAIR_SLOW = 1.5, FLIERS = '鳥龍鷹魄魚蜃雕朱雀大風';   // 獸也上得了階與台（v0.6.8 使用者定），一步多花一半時間
   const SMELL = 0.7, RAM_GAP = 1.6, RAMMABLE = '磚門窗墟';
-  const MINI_BOSS = '蜃齒雕';   // 小魔王：命照難度加（v0.8.10 使用者定，見 game.js 的 bigHp）
+  const SKULL_SCARE = 8;   // v0.8.21 使用者定：船頭有獸首骨，蜃不敢近到八格內
+  const MINI_BOSS = '蜃齒雕畢';   // 小魔王：命照難度加（v0.8.10 使用者定，見 game.js 的 bigHp）
   // 魄（v0.5 加強）：玩家身上的光（手裡的火把蠟燭、頭上的燈帽）只把魄逼到 GHOST_KEEP 格外，在 GHOST_HOVER 格內徘徊；
   // 地上的光（燈、火、旺灶）GHOST_BURN 格內、龍四格內才煙滅。玩家有光時每 GHOST_DASH_GAP 息，最近那隻撲上來 GHOST_DASH 息；
   // 魄在兩格內（GHOST_SNUFF_R），手裡的光每息有 snuffP 的機會被吹熄（game.ghostTouch）
@@ -30,11 +31,30 @@
   // 十格內每 HARPY_CRY_GAP 息一聲啼（心，遊戲端結算）。朱雀（v0.8.6，神獸）：棲在丹穴，沒帶朱羽的人走進 PHOENIX_AWAY 格，牠就飛開
   const HARPY_RING = [5, 8], HARPY_DIVE = [6, 9], HARPY_LINGER = 0.9, HARPY_CRY_GAP = 9, HARPY_CRY_R = 10, HARPY_DIVE_STEP = 0.16, HARPY_RISE_STEP = 0.2, HARPY_SENSE = 16, PHOENIX_AWAY = 5;
   // 封豨（v0.8.7，大魔王）：二乘二，左上角在 (x, y)。追人一步 HOG.step 息；貼著撞（力）；豕突：蓄 HOG.wind 息（腳下揚塵、地上畫出衝的路），
-  // 再直衝 HOG.len 格（力）；拱地：蓄 HOG.rootT 息，震一圈圈往外傳到 HOG.ringR 格（震，橋棧船上不受；v0.8.9 起牠拱得動台，台上照樣挨震、挨撞）；命剩六成以下去吃桑（荐食）回命，
+  // 再直衝 HOG.len 格（力）；拱地：蓄 HOG.rootT 息，震一圈圈往外傳到 HOG.ringR 格（震，棧與船上不受；v0.8.9 起牠拱得動台，台上照樣挨震、挨撞）；命剩六成以下去吃桑（荐食）回命，
   // 吃的時候挨打超過命上限的 HOG.eatBreak 就吃不成；命剩一半起每 HOG.callGap 息叫兩頭野豬（群豕）。不離桑林島心 HOG.leash 格
   const HOG = { step: 0.42, melee: 20, meleeGap: 1.8, charge: 40, chargeStep: 0.08, len: 10, wind: 1.2, chargeGap: [7, 10], quake: 22, rootT: 1.0, ringR: 7, ringT: 1.4, quakeGap: [11, 14],
     eatAt: 0.6, eatT: 2.5, eatHeal: 0.05, eatGap: 20, eatBreak: 0.03, eatFind: 10, callAt: 0.5, callGap: 25, callN: 2, callCap: 4, leash: 40 };
   const HOG_FOOD = '木林森果竹';
+  // 修蛇（v0.8.16，大魔王）：頭在 (x, y)，身後拖 SNAKE.tail 個「尾」，照游過的路一格一格跟著；只在水裡游，不離洞庭島心 SNAKE.leash 格（墨影照自己的 leash）。
+  // 浮著追人，貼著船或人咬一口（力）；潛蹤：沉下去 SNAKE.dive 息打不到、看不見，浮上來前 SNAKE.bubbleT 息在那裡冒「泡」，浮上來撞船（船掉 SNAKE.ram）或撞人（力）；
+  // 長蛇纏舟：貼著船纏 SNAKE.coil 息，船動不了、每息掉 SNAKE.coilDmg，纏著時打頭多吃 SNAKE.coilK；吞象：頭抬起蓄 SNAKE.gapeT 息，面前三格寬、SNAKE.gapeLen 格長一條（溺），
+  // 岸上離水 SNAKE.shore 格內也搆得到；命剩一半起加毒涎：SNAKE.spitR 格內吐一口，SNAKE.spitFly 息後落地一圈三格，中了照蛇毒。打尾吃 SNAKE.tailK，命剩一半以下只剩 SNAKE.tailLow（v0.8.16 使用者定）
+  const SNAKE = { tail: 6, step: 0.34, leash: 62, sense: 40, bite: 18, biteGap: 1.8, diveGap: [12, 16], dive: [6, 10], diveStep: 0.2, diveR: 14, bubbleT: 1.5, ram: 25, coil: 4, coilDmg: 8, coilGap: [14, 18], coilK: 1.5,
+    gape: 30, gapeT: 1.5, gapeLen: 4, gapeR: 4, gapeGap: [10, 14], shore: 2, spitAt: 0.5, spitR: 6, spitFly: 0.8, spitGap: [8, 11], spitPer: 1.5, spitT: 9, tailK: 0.75, tailLow: 0.25 };
+  // 畢方（v0.8.25，小魔王）：只在火島，一隻腳跳著走，一跳兩格（BIRD.hop 息一跳），落腳的地方起訛火（遊戲端 g.falseFire）；貼著啄一下（力），
+  // 啄完一半機會跳開；BIRD.cryR 格內隔 BIRD.cryGap 息一聲鳴，你身邊三處先冒圈、一息後燒起來（遊戲端 g.birdCry）
+  const BIRD = { hop: 0.75, sense: 14, peckGap: 1.6, cryGap: [10, 13], cryR: 7 };
+  // 大風（v0.8.25，大魔王）：在天上（sky）繞著人六到十格盤旋，只有彈弓與彤弓素矰打得到；隔 WIND.diveGap 息撲下來（dive）抓一下（力，入木三分），
+  // 貼著停 WIND.linger 息（perch，近身的時候），再飛回高處（rise）。扶搖：在人腳下捲起旋風，WIND.whirlT 息後拋人、轉暈（亂）；
+  // 摧屋拔木：朝人吹一陣狂風，WIND.galeLen 格長、三格寬，吹垮人造的磚門窗墟、拔起樹，人在風裡挨一下、被推開；人躲在屋裡時撲不下來，這一招來得快一倍；
+  // 命剩 WIND.sandAt 起飛沙走石：人身邊 WIND.sandR 格內落 WIND.sandN 顆石。不離青丘島心 WIND.leash 格（墨影照自己的 leash）
+  const WIND = { ring: [6, 10], skyStep: 0.3, diveGap: [7, 10], diveStep: 0.12, linger: 1.3, riseStep: 0.18, claw: 18, clawKeep: 14, sense: 40, leash: 95,
+    choke: 4, chokePer: 3, fear: [0, 1.5, 3], whirlGap: [13, 17], whirlT: 1.3, whirl: 14, dizzy: 2.5, throwN: 3, galeGap: [18, 24], galeT: 1.0, galeLen: 9, gale: 10, galeShip: 15, galePush: 2,
+    sandAt: 0.5, sandGap: [8, 11], sandN: 5, sandR: 3, sandT: 0.9, sand: 10 };
+  const SKY_HIGH = ['sky', 'rise'];   // 大風在天上：近身的、神兵三格的都搆不到，也不擋路
+  const rnd = (a) => a[0] + Math.random() * (a[1] - a[0]);
+  const JINK_P = 0.5;   // v0.8.19 使用者定：蜃與大小魔王貼身打完一下、還在等下一下時，這個機會退一步或往側邊挪一步（進退、左右搖擺）
   const TOOTH_TURN = 1.2, TOOTH_STEP = 0.36, TOOTH_GAP = 1.8, TOOTH_FRONT = 0.38, TOOTH_SENSE = 12, TIGER_SEE = 40, TIGER_ROAR_R = 6, TIGER_ROAR_GAP = 10;
   const GHOST_KEEP = 6, GHOST_HOVER = 9, GHOST_BURN = 3, GHOST_DASH = 2.5, GHOST_DASH_GAP = [8, 14], GHOST_DASH_STEP = 0.22, GHOST_SNUFF_R = 2;
 
@@ -47,20 +67,27 @@
       this.seaP = 1 / 160;       // 行船時每一點五息有這麼點機會浮上一頭蜃（平均約二百四十息一頭）
       this.toothP = 1 / 100;     // 人在西邊的外島上，每一點五息有這麼點機會走出一頭鑿齒（平均約一百五十息一頭，v0.8.5）
       this.harpyP = 1 / 100;     // 人在南邊的海上或外島上，每一點五息有這麼點機會飛來一頭蠱雕（v0.8.6）
+      this.birdP = 1 / 100;      // 人在火島上，每一點五息有這麼點機會跳出一隻畢方（v0.8.25）
       this.snuffP = 0.1;         // 魄兩格內，手裡的光每息被吹熄的機會
       this.dashT = GHOST_DASH_GAP[0];   // 下一次撲燈還有幾息（玩家身上有光的夜裡才倒數）
     }
     // 野牛一乘二（v0.7.2 使用者定）：頭在 (x, y)，身子沿著走的方向拖一格，尾在 (x − bx, y − by)；橫著走身子橫、縱著走身子直
     hogRect(e, x, y) { const ax = x === undefined ? e.x : x, ay = y === undefined ? e.y : y; return [[ax, ay], [ax + 1, ay], [ax, ay + 1], [ax + 1, ay + 1]]; }   // 封豨的四格
-    rectDist(e, x, y) { return e.type === '豨' ? Math.max(Math.max(e.x - x, 0, x - e.x - 1), Math.max(e.y - y, 0, y - e.y - 1)) : U.cheb(e.x, e.y, x, y); }   // 到身子最近一格的距離
+    jink(e, cx, cy, p, ok) {   // 從身子中間 (cx, cy) 看人在哪：往後退一步或往兩側挪一步（隨機先試哪個）；ok(nx, ny) 那一步走不走得；回傳走了沒有
+      const ax = Math.sign(cx - p.x), ay = Math.sign(cy - p.y), opts = [[ax, ay], [-ay, ax], [ay, -ax]].filter(([dx, dy]) => dx || dy).sort(() => Math.random() - 0.5);
+      for (const [dx, dy] of opts) if (ok(e.x + dx, e.y + dy)) { e.x += dx; e.y += dy; return true; }
+      return false;
+    }
+    rectDist(e, x, y) { if (e.type === '大風' && SKY_HIGH.indexOf(e.state) >= 0) return Infinity; if (e.type === '修蛇') return e.under ? Infinity : Math.min(...this.cellsOf(e).map(([cx, cy]) => U.cheb(cx, cy, x, y))); return e.type === '豨' ? Math.max(Math.max(e.x - x, 0, x - e.x - 1), Math.max(e.y - y, 0, y - e.y - 1)) : U.cheb(e.x, e.y, x, y); }   // 到身子最近一格的距離（修蛇：頭與尾；潛著打不到）
     tail(e) { return e.type === '牛' ? [e.x - (e.bx === undefined ? 1 : e.bx), e.y - (e.by || 0)] : null; }
-    cellsOf(e) { if (e.type === '豨') return this.hogRect(e); const t = this.tail(e); return t ? [[e.x, e.y], t] : [[e.x, e.y]]; }
-    covers(e, x, y) { if (e.x === x && e.y === y) return true; if (e.type === '豨') return x >= e.x && x <= e.x + 1 && y >= e.y && y <= e.y + 1; const t = this.tail(e); return !!t && t[0] === x && t[1] === y; }
+    cellsOf(e) { if (e.type === '豨') return this.hogRect(e); if (e.type === '修蛇') return [[e.x, e.y]].concat(e.tail || []); const t = this.tail(e); return t ? [[e.x, e.y], t] : [[e.x, e.y]]; }
+    covers(e, x, y) { if (e.type === '修蛇') return !e.under && ((e.x === x && e.y === y) || (e.tail || []).some(([tx, ty]) => tx === x && ty === y)); if (e.x === x && e.y === y) return true; if (e.type === '豨') return x >= e.x && x <= e.x + 1 && y >= e.y && y <= e.y + 1; const t = this.tail(e); return !!t && t[0] === x && t[1] === y; }
     turn(e, dx, dy) { if (dx && dy) return e.bx ? [Math.sign(dx), 0] : [0, Math.sign(dy)]; return dx ? [Math.sign(dx), 0] : [0, Math.sign(dy)]; }   // 斜著走：身子照舊橫或直，換頭的朝向
     bodyFits(x, y, bx, by, night, self) { const tx = x - bx, ty = y - by; return this.canStand('牛', tx, ty, night) && !this.beastAt(tx, ty, self) && !(this.px === tx && this.py === ty); }   // 尾那一格站得上去、沒有別的獸、不是人
     bisonRoom(x, y, night) { for (const [bx, by] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (this.bodyFits(x, y, bx, by, night, null)) return [bx, by]; return null; }
-    at(x, y) { for (const e of this.list) if (this.covers(e, x, y)) return e; return null; }
-    beastAt(x, y, except) { for (const e of this.list) if (e !== except && this.covers(e, x, y) && DB[e.type].kind === 'beast' && e.type !== '魄' && e.type !== '龍' && !(e.type === '鷹' && e.tame)) return e; return null; }   // 龍與馴了的鷹不擋路
+    at(x, y) { for (const e of this.list) if (this.covers(e, x, y) && !this.aloft(e)) return e; return null; }   // 天上的大風搆不到（v0.8.25）
+    beastAt(x, y, except) { for (const e of this.list) if (e !== except && this.covers(e, x, y) && DB[e.type].kind === 'beast' && e.type !== '魄' && e.type !== '龍' && !(e.type === '鷹' && e.tame) && !this.aloft(e)) return e; return null; }   // 龍、馴了的鷹、天上的大風不擋路
+    aloft(e) { return e.type === '大風' && SKY_HIGH.indexOf(e.state) >= 0; }   // 大風在天上（v0.8.25）
     inFront(e, x, y) { const vx = x - e.x, vy = y - e.y, l = Math.hypot(vx, vy), fl = Math.hypot(e.fx || 0, e.fy || 0); return !l || !fl || (vx * e.fx + vy * e.fy) / (l * fl) > TOOTH_FRONT; }   // (x, y) 在不在牠面前
     shielded(e, x, y) { return e.type === '齒' && this.inFront(e, x, y); }   // 從 (x, y) 打鑿齒，是不是打在盾上
     faceTo(e, x, y) { const fx = Math.sign(x - e.x), fy = Math.sign(y - e.y); if (fx || fy) { e.fx = fx; e.fy = fy; } }
@@ -74,12 +101,12 @@
     rammable(x, y) { const ch = this.world.get(x, y); return RAMMABLE.indexOf(ch) >= 0 && (ch === '墟' || this.world.base(x, y) !== ch); }   // 人造的磚門窗，與所有的墟
     riled(e) { return !!e.angry && (e.type === '蛛' || e.type === '蟾' || e.type === '牛' || (e.type === '鷹' && !e.tame)); }   // 半友好的被惹了（v0.7.3：畫面上發紅變大）
     isHostile(o) {           // 會主動找人的：虎豹狼蛇、野豬、毒蛛；惹了才找人的：無毒蛛、蟾、野牛、沒馴的鷹
-      return '虎豹狼蛇豬齒雕豨'.indexOf(o.type) >= 0 || (o.type === '蛛' && o.venom) || (o.angry && (o.type === '蛛' || o.type === '蟾' || o.type === '牛' || (o.type === '鷹' && !o.tame)));
+      return '虎豹狼蛇豬齒雕豨畢'.indexOf(o.type) >= 0 || o.type === '大風' || (o.type === '修蛇' && !o.under) || (o.type === '蛛' && o.venom) || (o.angry && (o.type === '蛛' || o.type === '蟾' || o.type === '牛' || (o.type === '鷹' && !o.tame)));
     }
     hostileNear(p, r) {      // 玩家 r 格內最近的敵對獸（鷹替你打的對象）
       let best = null, bd = Infinity;
       for (const o of this.list) {
-        if (!this.isHostile(o) || o.hp <= 0 || (o.type === '雕' && o.mode === 'circle')) continue;   // 天上盤旋的蠱雕，鷹也追不上（v0.8.9）
+        if (!this.isHostile(o) || o.hp <= 0 || (o.type === '雕' && o.mode === 'circle') || o.under || this.aloft(o)) continue;   // 天上盤旋的蠱雕（v0.8.9）、天上的大風（v0.8.25），鷹也追不上
         const d = U.cheb(o.x, o.y, p.x, p.y); if (d <= r && d < bd) { bd = d; best = o; }
       }
       return best;
@@ -109,6 +136,7 @@
       if (type === '蜃') return ch === '淼';                                // 蜃只從深海浮上來
       if (type === '齒') return d.walk > 0 && d.kind !== 'object' && d.kind !== 'water' && !d.bog;   // 鑿齒：外島的陸地上（哪座島由遊戲端判斷）
       if (type === '雕') return d.kind !== 'fire';                          // 蠱雕在天上：海上陸上都來得
+      if (type === '畢') return d.walk > 0 && d.kind !== 'object' && d.kind !== 'water' && d.kind !== 'fire' && !d.bog;   // 畢方：火島的陸地上（哪座島由遊戲端判斷）
       if (type === '鹿') return '林木草竹棉麻果'.indexOf(ch) >= 0;
       if (type === '虎') return ch === '森' || (night && ch === '林');
       if (type === '豹') return ch === '森' || ch === '林';
@@ -127,10 +155,12 @@
       const ch = this.world.get(x, y), d = DB[ch];
       if (this.world.sheltered(x, y, type)) return false;                  // 小屋裡除了玩家誰也進不去；魄看難度（困難擋不住）
       if (type === '魄') return d.kind !== 'fire';
-      if (type === '鳥' || type === '龍' || type === '鷹' || type === '雕') return d.kind !== 'fire';
+      if (type === '鳥' || type === '龍' || type === '鷹' || type === '雕' || type === '大風') return d.kind !== 'fire';
+      if (type === '畢') return (d.walk > 0 || !!d.lava) && d.kind !== 'water' && !d.shelter && !d.gate && !d.bog;   // 畢方不怕火：熔岩上也站得（v0.8.25）
       if (type === '朱雀') return d.kind !== 'water' && d.kind !== 'fire';   // 朱雀不離丹穴的陸地（v0.8.6）
       if (type === '豨') return d.walk > 0 && !d.shelter && !d.gate && !d.bog && d.kind !== 'water' && d.kind !== 'object' && d.kind !== 'place';   // 封豨：上不了台階，不進屋
       if (type === '魚' || type === '蜃') return d.kind === 'water';
+      if (type === '修蛇') return d.kind === 'water' && ch !== '舟';   // 修蛇只在水裡（湖、海都游得；停著的船身不鑽）
       if (type === '青龍') return ch === '淼';   // 東海青龍只在深海上盤著（v0.8）
       if ((type === '白虎' || type === '玄武') && d.kind === 'water') return false;
       if (d.walk <= 0 || d.shelter || d.gate) return false;
@@ -308,9 +338,166 @@
         e.chargeCD = HOG.chargeGap[0] + Math.random() * (HOG.chargeGap[1] - HOG.chargeGap[0]); e.moveT = 0.15; if (g.hogWind) g.hogWind(e); return;
       }
       if (!(e.quakeCD > 0) && d <= 6) { e.state = 'root'; e.rootT = HOG.rootT; e.quakeCD = HOG.quakeGap[0] + Math.random() * (HOG.quakeGap[1] - HOG.quakeGap[0]); e.moveT = 0.15; return; }
-      if (d <= 1) { if (!(e.atk > 0) && g.bossHit) { g.bossHit(e, HOG.melee, '力', '撞'); e.atk = HOG.meleeGap; } e.moveT = 0.4; return; }
+      if (d <= 1) {
+        if (!(e.atk > 0) && g.bossHit) { g.bossHit(e, HOG.melee, '力', '撞'); e.atk = HOG.meleeGap; e.moveT = 0.4; return; }
+        if (Math.random() < JINK_P && this.jink(e, e.x + 0.5, e.y + 0.5, p, (x, y) => this.hogFits(e, x, y) && (!den || U.dist(x + 1, y + 1, den.x, den.y) <= HOG.leash))) { e.moveT = HOG.step; return; }   // 撞完一下退開或橫挪（v0.8.19）
+        e.moveT = 0.4; return;
+      }
       e.moveT = HOG.step;
       if (!this.hogToward(e, p.x + 0.5, p.y + 0.5, false)) { const sx = Math.sign(p.x - e.x), sy = Math.sign(p.y - e.y); if (!this.hogWall(e, g, sx, sy)) this.hogWall(e, g, sx, 0) || this.hogWall(e, g, 0, sy); }
+    }
+
+    // ---------- 修蛇（v0.8.16） ----------
+    snakeFresh() { return { state: 'swim', tail: [], under: false, diveCD: 8, coilCD: 4, gapeCD: 6, spitCD: 3, moveT: 1 }; }
+    snakePart(e, x, y) { return e.x === x && e.y === y ? 'head' : (e.tail || []).some(([tx, ty]) => tx === x && ty === y) ? 'tail' : null; }
+    snakeK(e, part) {   // 打在頭還是尾：纏舟時頭多吃五成；尾吃四分之三，命剩一半以下只剩四分之一
+      if (part === 'tail') return e.hp / (e.max || DB['修蛇'].hp) <= SNAKE.spitAt ? SNAKE.tailLow : SNAKE.tailK;
+      return e.state === 'coil' ? SNAKE.coilK : 1;
+    }
+    snakeReach(e, g, p) { return p.sailing ? Math.min(...g.shipCells().map(([x, y]) => U.cheb(e.x, e.y, x, y))) : U.cheb(e.x, e.y, p.x, p.y); }   // 到船身（或人）最近一格
+    nearWater(x, y, r) { for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (DB[this.world.get(x + dx, y + dy)].kind === 'water') return true; return false; }
+    gapeCells(e) {      // 吞象：面前三格寬、gapeLen 格長；岸上只搆得到離水 shore 格內
+      const out = [], dx = e.gdx || 0, dy = e.gdy || 0, px = -dy, py = dx;
+      for (let k = 1; k <= SNAKE.gapeLen; k++) for (let o = -1; o <= 1; o++) {
+        const x = e.x + dx * k + px * o, y = e.y + dy * k + py * o;
+        if (DB[this.world.get(x, y)].kind === 'water' || this.nearWater(x, y, SNAKE.shore)) out.push([x, y]);
+      }
+      return out;
+    }
+    snakeBubble(e, g, p) {   // 要浮上來的地方：船邊（或人旁邊）最近人的那一格水；人在岸上就挑離人兩格內的水
+      const ship = p.sailing ? g.shipCells() : [], onShip = (x, y) => ship.some(([sx, sy]) => sx === x && sy === y), den = e.den, lea = e.leash || SNAKE.leash;
+      let best = null, bd = Infinity;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+        const x = p.x + dx, y = p.y + dy; if ((x === p.x && y === p.y) || onShip(x, y) || !this.canStand('修蛇', x, y, true) || (den && U.dist(x, y, den.x, den.y) > lea)) continue;
+        const near = p.sailing ? Math.min(...ship.map(([sx, sy]) => U.cheb(x, y, sx, sy))) : U.cheb(x, y, p.x, p.y); if (near > 1 && !(!p.sailing && !p.swimming)) continue;
+        const dd = U.dist(x, y, p.x, p.y) + Math.random() * 0.2; if (dd < bd) { bd = dd; best = { x, y }; }
+      }
+      return best;
+    }
+    snakeStep(e, g, p, tx, ty, under) {   // 往 (tx, ty) 游一步：只走水、不離窩、不鑽別的獸；浮著時不撞進船身與人
+      const ship = p.sailing && !under ? g.shipCells() : [], den = e.den, lea = e.leash || SNAKE.leash;
+      let best = null, bd = Infinity;
+      for (const [dx, dy] of N8) {
+        const nx = e.x + dx, ny = e.y + dy;
+        if (!this.canStand('修蛇', nx, ny, true) || (den && U.dist(nx, ny, den.x, den.y) > lea) || (nx === p.x && ny === p.y) || ship.some(([sx, sy]) => sx === nx && sy === ny)) continue;
+        const o = this.beastAt(nx, ny, e); if (o) continue;
+        const dd = U.dist(nx, ny, tx, ty) + Math.random() * 0.25; if (dd < bd) { bd = dd; best = [nx, ny]; }
+      }
+      if (!best) return false;
+      e.tail = [[e.x, e.y]].concat(e.tail || []).slice(0, SNAKE.tail); e.x = best[0]; e.y = best[1];
+      return true;
+    }
+    snakeUnstick(e, g, p) {   // 浮上來的那一格若在船身底下或人身上（船開過來了），挪到旁邊最近的一格水
+      const ship = p.sailing ? g.shipCells() : [], bad = (x, y) => (x === p.x && y === p.y) || ship.some(([sx, sy]) => sx === x && sy === y);
+      if (!bad(e.x, e.y)) return;
+      for (let r = 1; r <= 3; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+        const x = e.x + dx, y = e.y + dy; if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || bad(x, y) || !this.canStand('修蛇', x, y, true) || this.beastAt(x, y, e)) continue;
+        e.tail = [[e.x, e.y]].concat(e.tail || []).slice(0, SNAKE.tail).filter(([tx, ty]) => !bad(tx, ty)); e.x = x; e.y = y; return;
+      }
+    }
+    snakeTimers(e, g, p, dt) {   // 不跟著步子走的倒數：招式的冷卻、潛著的時間、冒泡、纏舟、吞象、毒涎
+      for (const k of ['diveCD', 'coilCD', 'gapeCD', 'spitCD']) if (e[k] > 0) e[k] = Math.max(0, e[k] - dt);
+      if (e.state === 'coil') {
+        e.coilLeft -= dt; e.coilAcc = (e.coilAcc || 0) + dt;
+        while (e.coilAcc >= 1) { e.coilAcc -= 1; if (g.snakeCoilTick) g.snakeCoilTick(e); }
+        if (e.coilLeft <= 0 || !p.sailing) { e.state = 'swim'; e.coilCD = rnd(SNAKE.coilGap); e.moveT = 0.6; if (g.snakeCoilEnd) g.snakeCoilEnd(e); }
+      }
+      if (e.state === 'gape') { e.gapeLeft -= dt; if (e.gapeLeft <= 0) { e.state = 'swim'; e.gapeCD = rnd(SNAKE.gapeGap); e.moveT = 0.5; if (g.snakeGape) g.snakeGape(e, this.gapeCells(e)); } }
+      if (e.spit) { e.spit.t -= dt; if (e.spit.t <= 0) { const s = e.spit; e.spit = null; if (g.snakeSpit) g.snakeSpit(e, s); } }
+      if (e.under) {
+        e.diveLeft -= dt;
+        if (!e.bubble && e.diveLeft <= SNAKE.bubbleT) e.bubble = this.snakeBubble(e, g, p) || { x: e.x, y: e.y };
+        if (e.diveLeft <= 0) { this.snakeUnstick(e, g, p); e.under = false; e.diveCD = rnd(SNAKE.diveGap); const b = e.bubble; e.bubble = null; e.moveT = 0.5; if (g.snakeSurface) g.snakeSurface(e, b); }
+      }
+    }
+    snakeAct(e, g, p, night) {
+      const d = U.cheb(e.x, e.y, p.x, p.y), frac = e.hp / (e.max || DB['修蛇'].hp), den = e.den;
+      if (e.state === 'coil' || e.state === 'gape') { e.moveT = 0.2; return; }
+      if (e.under) { const t = e.bubble || p; e.moveT = SNAKE.diveStep; if (U.cheb(e.x, e.y, t.x, t.y) > 0) this.snakeStep(e, g, p, t.x, t.y, true); return; }
+      if (d > SNAKE.sense) { e.moveT = 1 + Math.random(); if (den && U.dist(e.x, e.y, den.x, den.y) > 12) this.snakeStep(e, g, p, den.x, den.y, false); else { const [dx, dy] = N8[Math.floor(Math.random() * 8)]; this.snakeStep(e, g, p, e.x + dx * 3, e.y + dy * 3, false); } return; }
+      const reach = this.snakeReach(e, g, p);
+      if (!(e.diveCD > 0) && d <= SNAKE.diveR) { e.under = true; e.diveLeft = rnd(SNAKE.dive); e.bubble = null; e.moveT = 0.3; if (g.snakeDive) g.snakeDive(e); return; }   // 潛蹤
+      if (p.sailing && reach <= 1 && !(e.coilCD > 0)) { e.state = 'coil'; e.coilLeft = SNAKE.coil; e.coilAcc = 0; e.moveT = 0.2; if (g.snakeCoilStart) g.snakeCoilStart(e); return; }   // 長蛇纏舟
+      if (!(e.gapeCD > 0) && d >= 1 && d <= SNAKE.gapeR) { e.state = 'gape'; e.gapeLeft = SNAKE.gapeT; e.gdx = Math.sign(p.x - e.x); e.gdy = Math.sign(p.y - e.y); e.moveT = 0.2; if (g.snakeGapeWind) g.snakeGapeWind(e); return; }   // 吞象：方向這時定下
+      if (frac <= SNAKE.spitAt && !(e.spitCD > 0) && !e.spit && d <= SNAKE.spitR) { e.spit = { x: p.x, y: p.y, t: SNAKE.spitFly }; e.spitCD = rnd(SNAKE.spitGap); if (g.snakeSpitOut) g.snakeSpitOut(e); }   // 毒涎（命剩一半起）
+      if (reach <= 1) {
+        if (!(e.atk > 0) && g.bossHit) { g.bossHit(e, SNAKE.bite, '力', '咬'); e.atk = SNAKE.biteGap; e.moveT = 0.4; return; }
+        if (Math.random() < JINK_P) { const ax = Math.sign(e.x - p.x), ay = Math.sign(e.y - p.y), side = Math.random() < 0.5 ? [-ay, ax] : [ay, -ax], [dx, dy] = Math.random() < 0.5 ? [ax, ay] : side; if ((dx || dy) && this.snakeStep(e, g, p, e.x + dx * 3, e.y + dy * 3, false)) { e.moveT = SNAKE.step; return; } }   // 咬完一下游開或橫擺（v0.8.19）
+        e.moveT = 0.4; return;
+      }
+      e.moveT = SNAKE.step; this.snakeStep(e, g, p, p.x, p.y, false);
+    }
+
+    // ---------- 畢方（v0.8.25） ----------
+    birdHop(e, g, p, away, night) {   // 一跳兩格：往人跳（或跳開；p 不給就亂跳），落腳的地方起訛火
+      const ox = e.x, oy = e.y;
+      for (let k = 0; k < 2; k++) {
+        if (p) { if (!this.stepTo(e, p.x, p.y, away, night)) break; if (!away && U.cheb(e.x, e.y, p.x, p.y) <= 1) break; }
+        else this.wander(e, night, null);
+      }
+      if ((e.x !== ox || e.y !== oy) && g.falseFire) g.falseFire(e.x, e.y);
+      return e.x !== ox || e.y !== oy;
+    }
+    birdAct(e, g, p, night, sheltered) {
+      const d = U.cheb(e.x, e.y, p.x, p.y);
+      if (d <= 1 && !sheltered) {
+        if (!(e.atk > 0)) { g.hit(e, DB['畢'].atk); e.atk = BIRD.peckGap; e.moveT = 0.5; return; }
+        if (Math.random() < JINK_P && this.birdHop(e, g, p, true, night)) { e.moveT = BIRD.hop; return; }   // 啄完一下跳開（v0.8.19 那一套）
+        e.moveT = 0.4; return;
+      }
+      if (d <= this.sense(e, p, BIRD.sense) && !sheltered) { e.moveT = BIRD.hop; this.birdHop(e, g, p, false, night); return; }
+      e.moveT = 1.2 + Math.random(); if (Math.random() < 0.5) this.birdHop(e, g, null, false, night);
+    }
+    // ---------- 大風（v0.8.25） ----------
+    windFresh() { return { state: 'sky', diveCD: 4, whirlCD: 7, galeCD: 12, sandCD: 3, claws: 0, moveT: 1 }; }
+    galeCells(gl) {      // 摧屋拔木：從牠那裡朝人吹，galeLen 格長、三格寬
+      const out = [], px = -gl.dy, py = gl.dx;
+      for (let k = 1; k <= WIND.galeLen; k++) for (let o = -1; o <= 1; o++) out.push([gl.x + gl.dx * k + px * o, gl.y + gl.dy * k + py * o]);
+      return out;
+    }
+    windStep(e, p, tx, ty, away) {   // 天上飛一步：不出青丘（墨影照自己的 leash）、不落在人身上；撲下來時不鑽別的獸
+      const den = e.den, lea = e.leash || WIND.leash; let best = null, bd = away ? -1 : Infinity;
+      for (const [dx, dy] of N8) {
+        const nx = e.x + dx, ny = e.y + dy;
+        if (!this.canStand('大風', nx, ny, true) || (nx === p.x && ny === p.y) || (den && U.dist(nx, ny, den.x, den.y) > lea && U.dist(nx, ny, den.x, den.y) >= U.dist(e.x, e.y, den.x, den.y))) continue;
+        if (e.state === 'dive' && this.beastAt(nx, ny, e)) continue;
+        const dd = U.dist(nx, ny, tx, ty) + Math.random() * 0.25; if (away ? dd > bd : dd < bd) { bd = dd; best = [nx, ny]; }
+      }
+      if (!best) return false;
+      e.x = best[0]; e.y = best[1]; return true;
+    }
+    windTimers(e, g, p, dt) {   // 不跟著步子走的倒數：招式的冷卻、入木三分的分數、被繳住、扶搖、狂風、飛石
+      for (const k of ['diveCD', 'whirlCD', 'galeCD', 'sandCD', 'tieCD', 'clawT']) if (e[k] > 0) e[k] = Math.max(0, e[k] - dt);
+      if (!(e.clawT > 0)) e.claws = 0;   // 隔太久沒再抓，入木三分從頭算
+      if (e.tiedT > 0) { e.tiedT -= dt; if (e.tiedT <= 0) { e.tiedT = 0; e.state = 'rise'; e.moveT = 0.3; if (g.windFree) g.windFree(e); } }
+      if (e.whirl) { e.whirl.t -= dt; if (e.whirl.t <= 0) { const wh = e.whirl; e.whirl = null; if (g.windWhirl) g.windWhirl(e, wh); } }
+      if (e.gale) { e.gale.t -= dt; if (e.gale.t <= 0) { const gl = e.gale; e.gale = null; if (g.windGale) g.windGale(e, gl, this.galeCells(gl)); } }
+      if (e.sand) { e.sand.t -= dt; if (e.sand.t <= 0) { const sd = e.sand; e.sand = null; if (g.windSand) g.windSand(e, sd.cells); } }
+    }
+    windAct(e, g, p, roofed) {
+      const d = U.cheb(e.x, e.y, p.x, p.y), den = e.den, frac = e.hp / (e.max || DB['大風'].hp), lea = e.leash || WIND.leash;
+      if (e.state === 'tied') { e.moveT = 0.2; return; }
+      if (e.state === 'perch') { e.state = 'rise'; e.moveT = WIND.riseStep; if (g.windRise) g.windRise(e); return; }   // 貼著停夠了，飛回高處
+      if (e.state === 'rise') { e.moveT = WIND.riseStep; this.windStep(e, p, p.x, p.y, true); if (U.cheb(e.x, e.y, p.x, p.y) >= WIND.ring[0]) { e.state = 'sky'; e.diveCD = rnd(WIND.diveGap); } return; }
+      if (e.state === 'dive') {
+        if (roofed) { e.state = 'rise'; e.galeCD = Math.min(e.galeCD || 0, 1.5); e.moveT = 0.3; if (g.windRoofed) g.windRoofed(e); return; }   // 人躲進屋裡：撲不下來，改吹屋子
+        if (d <= 1) { e.state = 'perch'; e.moveT = WIND.linger; if (g.windClaw) g.windClaw(e); return; }
+        if (d > WIND.sense) { e.state = 'sky'; e.moveT = 0.4; return; }
+        e.moveT = WIND.diveStep; if (!this.windStep(e, p, p.x, p.y, false)) e.state = 'rise'; return;
+      }
+      if (den && U.dist(e.x, e.y, den.x, den.y) > lea) { e.moveT = WIND.skyStep; this.windStep(e, p, den.x, den.y, false); return; }   // 不出青丘
+      if (d > WIND.sense) { e.moveT = 0.8 + Math.random(); const [dx, dy] = N8[Math.floor(Math.random() * 8)]; this.windStep(e, p, e.x + dx * 4, e.y + dy * 4, false); return; }
+      if (frac <= WIND.sandAt && !(e.sandCD > 0) && !e.sand && d <= 12) {   // 飛沙走石（命剩一半起）：人身邊落幾顆石，先畫出落點
+        const cells = []; for (let k = 0; k < 40 && cells.length < WIND.sandN; k++) { const x = p.x + Math.round((Math.random() * 2 - 1) * WIND.sandR), y = p.y + Math.round((Math.random() * 2 - 1) * WIND.sandR); if (!cells.some(([cx, cy]) => cx === x && cy === y)) cells.push([x, y]); }
+        if (!cells.some(([cx, cy]) => cx === p.x && cy === p.y)) cells[0] = [p.x, p.y];   // 總有一顆衝著你來
+        e.sand = { t: WIND.sandT, cells }; e.sandCD = rnd(WIND.sandGap); if (g.windSandWarn) g.windSandWarn(e);
+      }
+      if (!(e.galeCD > 0) && !e.gale && d <= WIND.galeLen) { e.gale = { x: e.x, y: e.y, dx: Math.sign(p.x - e.x), dy: Math.sign(p.y - e.y), t: WIND.galeT }; e.galeCD = rnd(WIND.galeGap) * (roofed ? 0.5 : 1); e.moveT = 0.4; if (g.windGaleWarn) g.windGaleWarn(e); return; }   // 摧屋拔木：這時定下方向
+      if (!(e.whirlCD > 0) && !e.whirl && d <= 12) { e.whirl = { x: p.x, y: p.y, t: WIND.whirlT }; e.whirlCD = rnd(WIND.whirlGap); if (g.windWhirlWarn) g.windWhirlWarn(e); }   // 扶搖：人腳下先捲起來
+      if (!(e.diveCD > 0) && !roofed) { e.state = 'dive'; e.moveT = 0.1; if (g.windDive) g.windDive(e); return; }
+      if (d > WIND.ring[1]) { e.moveT = WIND.skyStep; this.windStep(e, p, p.x, p.y, false); }
+      else if (d < WIND.ring[0]) { e.moveT = WIND.skyStep; this.windStep(e, p, p.x, p.y, true); }
+      else { e.moveT = 0.35 + Math.random() * 0.25; const [dx, dy] = N8[Math.floor(Math.random() * 8)], nd = U.cheb(e.x + dx, e.y + dy, p.x, p.y); if (nd >= WIND.ring[0] && nd <= WIND.ring[1]) this.windStep(e, p, e.x + dx * 2, e.y + dy * 2, false); }
     }
 
     update(dt, g) {
@@ -363,6 +550,11 @@
           const m = this.spawnNear('齒', p, 8, 14, night, { moveT: 1.5, turnT: TOOTH_TURN });
           if (m) { this.faceTo(m, p.x, p.y); if (g.toothRose) g.toothRose(m); }
         }
+        // 畢方（v0.8.25）：人在火島上，從八到十四格外跳出來；一次只一隻
+        if (!p.sailing && !p.swimming && this.count('畢') === 0 && Math.random() < this.birdP && g.fireIsle && g.fireIsle()) {
+          const m = this.spawnNear('畢', p, 8, 14, night, { moveT: 1, cryT: 4 });
+          if (m && g.birdRose) g.birdRose(m);
+        }
         // 蜃：只在玩家行船或落水時，從十到十六格外的深海浮上來；機率低，一次只一隻
         if ((p.sailing || p.swimming) && this.count('蜃') === 0 && Math.random() < this.seaP) {
           const m = this.spawnNear('蜃', p, 10, 16, night, { moveT: 1.5, fogT: 4 });
@@ -385,7 +577,7 @@
         if (d <= 9 && !e.shade) g.saw(e.type);   // 玄武吐的墨影（v0.8.8）不算見過真身
         if (!e.heard && d <= 8 && this.isHostile(e) && w.clear(e.x, e.y, p.x, p.y)) { e.heard = true; if (g.beastCall) g.beastCall(e); }   // 走近了先聽見牠（各有各的聲音）
         else if (e.heard && d > 14) e.heard = false;
-        if (e.type !== '龍' && e.type !== '豨' && !e.tame && d > 48) { this.list.splice(i, 1); continue; }   // 封豨由遊戲端收（逃跑、死了、斃了）
+        if (e.type !== '龍' && e.type !== '豨' && e.type !== '修蛇' && e.type !== '大風' && !e.tame && d > 48) { this.list.splice(i, 1); continue; }   // 大魔王由遊戲端收（走出地界、認輸、死了、斃了）
         if (e.type === '鷹') {
           if (e.tame) { e.sta = Math.min(100, e.sta + dt); e.hp = Math.min(DB['鷹'].hp, e.hp + 0.3 * dt); }   // 體力每息回一點，傷慢慢好
           if (e.angryT > 0) { e.angryT -= dt; if (e.angryT <= 0) e.angry = false; }
@@ -413,6 +605,11 @@
           if (e.mode === 'circle') e.diveT = (e.diveT === undefined ? HARPY_DIVE[0] : e.diveT) - dt;
         }
         if (e.type === '豨') this.hogTimers(e, g, p, dt);
+        if (e.type === '修蛇') this.snakeTimers(e, g, p, dt);
+        if (e.type === '大風') this.windTimers(e, g, p, dt);
+        if (e.type === '畢') { e.cryT = (e.cryT === undefined ? 4 : e.cryT) - dt; if (e.cryT <= 0 && d <= BIRD.cryR) { e.cryT = rnd(BIRD.cryGap); if (g.birdCry) g.birdCry(e); } }   // 畢方一聲鳴：人身邊三處起訛火
+        if (e.tieCD > 0 && e.type === '雕') e.tieCD -= dt;
+        if (e.tiedT > 0 && e.type === '雕') { e.tiedT -= dt; if (e.tiedT <= 0) { e.tiedT = 0; e.mode = 'rise'; e.moveT = 0.2; } }   // 蠱雕被彤弓素矰的絲纏住（繳，v0.8.25）
         if (e.type === '齒') { e.turnT = (e.turnT === undefined ? TOOTH_TURN : e.turnT) - dt; if (e.turnT <= 0) { e.turnT = TOOTH_TURN; this.faceTo(e, p.x, p.y); } }   // 一息多才轉一回身
         if (e.type === '白虎') {   // 沒帶虎符的人進了六格：一聲嘯，地跟著抖
           e.roarT = (e.roarT === undefined ? 2 : e.roarT) - dt;
@@ -446,22 +643,28 @@
         if (e.type === '蜃') {
           const atSea = p.sailing || p.swimming, warded = p.sailing && g.shipWarded();
           const dShip = p.sailing ? Math.min(...g.shipCells().map(([x, y]) => U.cheb(e.x, e.y, x, y))) : d;   // 到船身最近一格
-          if (atSea && warded && dShip <= 3) { e.moveT = 0.5; this.stepTo(e, p.x, p.y, true, night); if (!e.warned) { e.warned = true; g.message('船頭的' + g.shipSkullName() + '鎮著，蜃不敢近。'); } }
+          if (atSea && warded && dShip <= SKULL_SCARE) { e.moveT = 0.5; this.stepTo(e, p.x, p.y, true, night); if (!e.warned) { e.warned = true; g.message('船頭的' + g.shipSkullName() + '鎮著，蜃不敢近。'); } }
           else if (atSea && !warded && dShip <= 1) {
             if (e.atk <= 0) { e.atk = 2.5; if (p.sailing) g.ramShip(e); else g.hit(e, DB['蜃'].atk); }
+            else if (Math.random() < JINK_P) { const ship = p.sailing ? g.shipCells() : []; this.jink(e, e.x, e.y, p, (x, y) => this.canStand('蜃', x, y, night) && !this.beastAt(x, y, e) && !(x === p.x && y === p.y) && !ship.some(([sx, sy]) => sx === x && sy === y)); }   // 撞完一下不乾等：退開或繞著船挪（v0.8.19）
             e.moveT = 0.6;
-          } else if (atSea && d <= 14) { e.moveT = 0.4; this.stepTo(e, p.x, p.y, false, night); }
+          } else if (atSea && warded && dShip <= SKULL_SCARE + 3) { e.moveT = 0.8; this.wander(e, night, null); }   // 鎮著的船：在八格外打轉，不往前湊
+          else if (atSea && d <= 14) { e.moveT = 0.4; this.stepTo(e, p.x, p.y, false, night); }
           else { e.moveT = 1 + Math.random() * 1.5; this.wander(e, night, null); }
           continue;
         }
         if (e.type === '齒') {     // 鑿齒：貼著時人在盾前才撞得到，在身側背後就等牠轉過身來；十二格內追過來
-          if (d <= 1 && !sheltered) { if (this.inFront(e, p.x, p.y) && e.atk <= 0) { g.hit(e, DB['齒'].atk); e.atk = TOOTH_GAP; } e.moveT = 0.3; }
+          if (d <= 1 && !sheltered) { if (this.inFront(e, p.x, p.y) && e.atk <= 0) { g.hit(e, DB['齒'].atk); e.atk = TOOTH_GAP; } else if (e.atk > 0 && Math.random() < JINK_P * 0.5 && this.jink(e, e.x, e.y, p, (x, y) => this.canStand('齒', x, y, night) && this.climbOk(e, x, y) && !this.beastAt(x, y, e) && !(x === p.x && y === p.y))) { e.moveT = TOOTH_STEP; return; } e.moveT = 0.3; }
           else if (d <= this.sense(e, p, TOOTH_SENSE) && !sheltered) { e.moveT = TOOTH_STEP; const ox = e.x, oy = e.y; if (this.stepTo(e, p.x, p.y, false, night)) this.faceTo(e, e.x + (e.x - ox), e.y + (e.y - oy)); }
           else { e.moveT = 1 + Math.random() * 1.5; if (Math.random() < 0.5) this.wander(e, night, null); }
           continue;
         }
         if (e.type === '豨') { this.hogAct(e, g, p, night, sheltered); continue; }
+        if (e.type === '修蛇') { this.snakeAct(e, g, p, night); continue; }
+        if (e.type === '大風') { this.windAct(e, g, p, roofed); continue; }
+        if (e.type === '畢') { this.birdAct(e, g, p, night, sheltered); continue; }
         if (e.type === '雕') {     // 蠱雕：盤旋 → 撲下來抓一下、貼著停一會兒 → 飛回高處
+          if (e.mode === 'tied') { e.moveT = 0.2; continue; }   // 被繳住了，落在地上動不了（v0.8.25）
           if (e.mode === 'dive') {
             if (roofed) { e.mode = 'rise'; e.moveT = 0.4; }
             else if (d <= 1) { if (e.atk <= 0) { g.hit(e, DB['雕'].atk); e.atk = 1.2; } e.mode = 'rise'; e.moveT = HARPY_LINGER; }
@@ -600,7 +803,7 @@
           else { e.moveT = 1 + Math.random() * 2; if (Math.random() < 0.4) this.wander(e, night, e.type === '蟾' ? '草沙土水' : null); }
         }
         // 山海衣：七格內主動攻擊的獸行動慢一倍
-        if (g.totemNear && this.isHostile(e) && e.type !== '鷹' && e.type !== '豨' && g.totemNear(e.x, e.y)) e.moveT *= 2;   // 大魔王不吃山海衣這一套
+        if (g.totemNear && this.isHostile(e) && e.type !== '鷹' && e.type !== '豨' && e.type !== '修蛇' && e.type !== '大風' && g.totemNear(e.x, e.y)) e.moveT *= 2;   // 大魔王不吃山海衣這一套（v0.8.25 修：修蛇原本漏了）
       }
     }
 
@@ -608,5 +811,5 @@
     restore(arr) { for (const s of arr || []) { if (s.t === '蜃') continue; this.add(s.t, s.x, s.y, s.tame ? { hp: s.hp, sta: s.sta, tame: true } : {}); } }   // 蜃不跟著讀檔回來：沒解決的蜃由遊戲端扣膽氣
   }
 
-  root.Entities = Entities;
+  root.Entities = Entities; Entities.SNAKE = SNAKE; Entities.WIND = WIND; Entities.BIRD = BIRD;
 })();

@@ -50,41 +50,75 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 @keyframes warn-flash { 0%, 100% { box-shadow: none; border-color: rgba(28,26,23,.75); } 6%, 26% { box-shadow: 0 0 0 3px rgba(224,162,60,.8), 0 0 12px 4px rgba(224,162,60,.55); border-color: #c9892a; } 40% { box-shadow: none; border-color: rgba(28,26,23,.75); } }
 @keyframes low-flash { 0%, 100% { box-shadow: none; border-color: rgba(28,26,23,.75); } 10%, 42% { box-shadow: 0 0 0 3px rgba(180,57,42,.85), 0 0 14px 5px rgba(180,57,42,.6); border-color: var(--red); } 60% { box-shadow: none; border-color: rgba(28,26,23,.75); } }
 
-#topright { position: absolute; right: calc(18px + env(safe-area-inset-right, 0px)); top: calc(16px + env(safe-area-inset-top, 0px)); display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+#topright { position: absolute; right: calc(18px + env(safe-area-inset-right, 0px)); top: calc(16px + env(safe-area-inset-top, 0px)); display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }   /* v0.8.22：狀態列、珠、魂環之間拉開 */
 #status { font: 16px var(--font); color: var(--ink-2); background: rgba(239,229,207,.75); padding: 6px 12px; border: 1px solid rgba(28,26,23,.35); border-radius: 4px; }
 #status b { font-size: 20px; color: var(--ink); }
 #mapwrap { --cour: 0%; width: 166px; height: 166px; border-radius: 50%; padding: 8px; background: conic-gradient(#d4af37 var(--cour), rgba(28,26,23,.18) 0); box-shadow: 0 2px 6px rgba(0,0,0,.15); }
-/* 魂環（v0.8.2；v0.8.3 跟膽氣環隔開十二點）：膽氣環外面一圈，三等分——上右青龍（龍魂）、下朱雀（鳳翎）、左上白虎（虎魄）；求教過的那一分才上色。
-   圈本身六點寬，用遮罩只留外緣一圈；內外各一道細墨線，白虎那一分在紙色上也看得清 */
-#soulring { --q: rgba(28,26,23,.10); --z: rgba(28,26,23,.10); --b: rgba(28,26,23,.10); position: relative; padding: 18px; border-radius: 50%; }
+/* 魂環（v0.8.2；v0.8.3 跟膽氣環隔開十二點）：膽氣環外面一圈，三等分——右上龍魂（修蛇）、下鳳翎（大風）、左上虎魄（封豨）；斃了那一隻大魔王，那一分才上色。
+   v0.8.22 使用者定：三分之間留出看得見的缺口（正北、四點鐘、八點鐘），每一分各自描邊；求教過同一屬性的神獸，那一分正中多一顆十字星 */
+#soulring { --q: rgba(28,26,23,.08); --z: rgba(28,26,23,.08); --b: rgba(28,26,23,.08); position: relative; padding: 18px; border-radius: 50%; }
 #soulring::before, #soulring::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
-#soulring::before { background: conic-gradient(var(--q) 0 118deg, transparent 118deg 122deg, var(--z) 122deg 238deg, transparent 238deg 242deg, var(--b) 242deg 358deg, transparent 358deg);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 6px)); mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 6px)); }
-#soulring::after { background: radial-gradient(farthest-side, transparent calc(100% - 7px), rgba(28,26,23,.32) calc(100% - 7px) calc(100% - 6px), transparent calc(100% - 6px) calc(100% - 1px), rgba(28,26,23,.32) calc(100% - 1px)); }
+#soulring::before { background: conic-gradient(transparent 0 4deg, rgba(28,26,23,.42) 4deg 116deg, transparent 116deg 124deg, rgba(28,26,23,.42) 124deg 236deg, transparent 236deg 244deg, rgba(28,26,23,.42) 244deg 356deg, transparent 356deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 7px)); mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 7px)); }
+#soulring::after { background: conic-gradient(transparent 0 4.7deg, var(--q) 4.7deg 115.3deg, transparent 115.3deg 124.7deg, var(--z) 124.7deg 235.3deg, transparent 235.3deg 244.7deg, var(--b) 244.7deg 355.3deg, transparent 355.3deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 6px) calc(100% - 1px), transparent calc(100% - 1px)); mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 6px) calc(100% - 1px), transparent calc(100% - 1px)); }
 #soulring.q { --q: #24766b; } #soulring.z { --z: #c0392b; } #soulring.b { --b: #fbf8f1; }
-/* 玄武的四次取經：魂環正北四顆小珠——空心是還沒到、朱紅潤點是取過、墨黑打叉是錯過（v0.8.3 使用者定） */
-#jingbeads { position: absolute; top: -2px; left: 50%; transform: translateX(-50%); display: flex; gap: 3px; z-index: 1; }
-#jingbeads i { width: 9px; height: 9px; border-radius: 50%; box-sizing: border-box; border: 1.5px solid rgba(28,26,23,.7); background: var(--paper); position: relative; }
-#jingbeads i.got { border-color: #8f2a1f; background: radial-gradient(circle at 35% 30%, #f4a08c 0 18%, #c0392b 45%, #8f2a1f 100%); }
+#soulring .star { position: absolute; left: calc(50% - 12px); top: calc(50% - 19px); width: 24px; height: 38px; display: none; z-index: 2; overflow: visible; pointer-events: none; filter: drop-shadow(0 1px 1.5px rgba(28,26,23,.45)); }
+#soulring .star.q { transform: rotate(60deg) translateY(-101px); } #soulring .star.z { transform: rotate(180deg) translateY(-101px); } #soulring .star.b { transform: rotate(300deg) translateY(-101px); }
+#soulring.sq .star.q, #soulring.sz .star.z, #soulring.sb .star.b { display: block; }
+#soulring .star .sf { stroke: #1c1a17; stroke-width: 1.3; stroke-linejoin: round; } #soulring .star .sh { fill: url(#star-hatch); }
+#soulring .star.q .sf { fill: #3a9a8c; } #soulring .star.z .sf { fill: #e0624f; } #soulring .star.b .sf { fill: #fbf8f1; }
+/* 四顆珠（v0.8.3；v0.8.22 使用者定：從魂環上拿下來，自成一排放在狀態列與魂環之間；前三顆靠近，第四顆隔開一點） */
+#jingbeads { display: flex; justify-content: center; width: 202px; }
+#jingbeads .pill { display: flex; gap: 7px; align-items: center; padding: 4px 10px; background: rgba(239,229,207,.82); border: 1px solid rgba(28,26,23,.22); border-radius: 13px; }   /* 淡紙色的底：灰點、灰問號疊在地圖上也看得清 */
+#jingbeads i:last-child { margin-left: 24px; }   /* 第四顆（共工）隔開一點 */
+#jingbeads i { width: 16px; height: 16px; border-radius: 50%; box-sizing: border-box; border: 2.5px solid #1c1a17; background: var(--paper); position: relative; box-shadow: 0 0 0 2px var(--paper), 0 1px 4px rgba(28,26,23,.45); }
+#jingbeads i.none { border: none; box-shadow: none; background: radial-gradient(circle, #9a958c 0 3px, transparent 3.5px); }   /* v0.8.21 使用者定：灰點還沒挑戰、紅圈拿著經、紅問號拿著經在打、紅點拿著經斃了、黑問號沒拿牠的經在打、黑叉沒拿經斃了 */
+#jingbeads i.held { border-color: #c0392b; background: var(--paper); }
+#jingbeads i.won, #jingbeads i.got { border-color: #8f2a1f; background: radial-gradient(circle at 35% 30%, #f4a08c 0 18%, #c0392b 45%, #8f2a1f 100%); }
+#jingbeads i.fightJing, #jingbeads i.trialOn { border-color: #8f2a1f; background: #c0392b; }
 #jingbeads i.miss { border-color: #1c1a17; background: #1c1a17; }
-#jingbeads i.miss::before, #jingbeads i.miss::after { content: ''; position: absolute; left: 50%; top: 1px; bottom: 1px; width: 1.5px; background: var(--paper); transform: translateX(-50%) rotate(45deg); }
+#jingbeads i.miss::before, #jingbeads i.miss::after { content: ''; position: absolute; left: 50%; top: 1px; bottom: 1px; width: 2.5px; background: var(--paper); transform: translateX(-50%) rotate(45deg); }
 #jingbeads i.miss::after { transform: translateX(-50%) rotate(-45deg); }
-#jingbeads i.ask { border-color: #1c1a17; background: #1c1a17; }
-#jingbeads i.ask::before { content: '?'; position: absolute; inset: 0; color: var(--paper); font: bold 7px/7px sans-serif; text-align: center; }
+#jingbeads i.fightNo { border-color: #1c1a17; background: #1c1a17; }
+#jingbeads i.fightNo::before, #jingbeads i.fightJing::before, #jingbeads i.trialOn::before { content: '?'; position: absolute; inset: 0; color: var(--paper); font: bold 11px/11px sans-serif; text-align: center; }
+#jingbeads i.ask { border: none; box-shadow: none; background: none; }   /* 第四顆（v0.8.22）：三個魂環集齊了，灰問號 */
+#jingbeads i.ask::before { content: '?'; position: absolute; inset: 0; color: #9a958c; font: bold 15px/16px sans-serif; text-align: center; }
+#jingbeads i.blink { animation: bead-blink 1s steps(2, jump-none) infinite; }   /* 沒拿共工經去打共工：黑問號一閃一閃 */
+@keyframes bead-blink { 0% { opacity: 1; } 100% { opacity: .25; } }
 /* 右下的減益框（v0.8.2 先放溺水）：紅框一閃一閃 */
-#debuffs { position: absolute; right: calc(18px + env(safe-area-inset-right, 0px)); bottom: calc(150px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 14px; background: rgba(239,229,207,.92); border: 2px solid var(--red); border-radius: 6px; color: var(--red); font-family: var(--font); animation: low-flash 1s infinite; z-index: 3; }
+#debuffs { position: absolute; right: calc(18px + env(safe-area-inset-right, 0px)); bottom: calc(260px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 14px; background: rgba(239,229,207,.92); border: 2px solid var(--red); border-radius: 6px; color: var(--red); font-family: var(--font); animation: low-flash 1s infinite; z-index: 3; }
 #debuffs b { font: 30px/1 var(--font); }
+/* v0.8.19 船艙：右下角，帶著的船一艘一列（命、首骨、修過幾次）；點一下選中 */
+#hold { position: absolute; right: calc(18px + env(safe-area-inset-right, 0px)); bottom: calc(44px + env(safe-area-inset-bottom, 0px)); width: 236px; padding: 6px 8px 8px; background: rgba(239,229,207,.92); border: 1px solid rgba(90,62,43,.45); border-radius: 6px; font: 13px var(--ui); color: var(--ink); z-index: 2; }
+#hold .hhead { display: flex; align-items: baseline; justify-content: space-between; font: 15px var(--font); color: #5a3e2b; margin-bottom: 4px; }
+#hold .hhead small { font: 11px var(--ui); color: var(--dim); }
+#hold .hrow { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; padding: 3px 6px; margin-top: 3px; border: 1px solid rgba(90,62,43,.25); border-radius: 4px; background: rgba(226,214,186,.55); cursor: pointer; }
+#hold .hrow b { font: 15px var(--font); color: #5a3e2b; }
+#hold .hrow .hp.low { color: var(--red); }
+#hold .hrow .sk, #hold .hrow .fx { font-size: 11px; color: var(--ink-2); }
+#hold .hrow.sel { border-color: var(--red); background: #f2e4c4; box-shadow: 0 0 0 1px var(--red) inset; }
+#hold .hrow.cur { cursor: default; background: rgba(200,214,226,.45); border-style: dashed; }
+.recipe.shipfix { background: rgba(200,214,226,.35); }
+.recipe.godfix { background: rgba(212,175,55,.16); }   /* v0.8.22 神兵那一類最上面的「修」 */
 /* 大魔王的命條（v0.8.7）：畫面下方、「面前」那行之上 */
 #bossbar { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(168px + env(safe-area-inset-bottom, 0px)); width: min(440px, calc(100vw - 32px)); padding: 6px 12px 8px; background: rgba(239,229,207,.94); border: 2px solid var(--ink); border-radius: 6px; font-family: var(--font); z-index: 3; pointer-events: none; }
 #bossbar .bb-head { display: flex; align-items: baseline; gap: 10px; color: var(--ink); font-size: 14px; }
 #bossbar .bb-head b { font-size: 20px; color: #5a3e2b; }
-#bossbar #bossbar-mane { color: var(--red); letter-spacing: 1px; }
 #bossbar #bossbar-note { margin-left: auto; color: var(--ink-2); }
+#minibars { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(168px + 66px + env(safe-area-inset-bottom, 0px)); width: min(293px, calc((100vw - 32px) * 2 / 3)); display: flex; flex-direction: column-reverse; gap: 6px; pointer-events: none; z-index: 3; font-family: var(--font); }   /* v0.8.21 小魔王的命條：大魔王那條的三分之二長；大魔王的命條收著時往下挪到它的位置 */
+#bossbar.hidden ~ #minibars { bottom: calc(168px + env(safe-area-inset-bottom, 0px)); }
+#minibars .minibar { padding: 4px 10px 6px; background: rgba(239,229,207,.94); border: 2px solid var(--ink); border-radius: 4px; }
+#minibars .bb-head { display: flex; align-items: baseline; gap: 8px; color: var(--ink); font-size: 13px; } #minibars .bb-head b { font-size: 16px; color: #5a3e2b; } #minibars .bb-head span { margin-left: auto; color: var(--ink-2); }
+#minibars .bb-bar { height: 8px; margin-top: 3px; background: #d8c9a8; border-radius: 3px; overflow: hidden; } #minibars .bb-bar i { display: block; height: 100%; background: linear-gradient(90deg, #8f2c20, #b4392a); transition: width .2s; }
+#minibars .minibar.dead { opacity: .85; }
 #bossbar .bb-bar { height: 10px; margin-top: 4px; background: #d8c9a8; border-radius: 3px; overflow: hidden; }
 #bossbar .bb-bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #8f2c20, #b4392a); transition: width .2s; }
 #bossbar.guard { border-color: #24766b; } #bossbar.lock { border-color: var(--red); animation: low-flash 1s infinite; }
 #bossask-text ul { margin: 8px 0 0; padding-left: 20px; text-align: left; } #bossask-text li { margin: 3px 0; }
-#bossask-text li.warn { color: var(--red); }
+#bossask-text li.warn { color: var(--red); } #bossask-text li.warn.ink { color: #1c1a17; }
+.panel button.red { background: var(--red); border-color: var(--red); color: var(--paper); }   /* v0.8.21：拿錯經的「確認」是紅色，沒經的是黑色（照舊的墨色鈕） */
+#bossbar.wrong { border-color: #1c1a17; } #bossbar.wrong .bb-bar i { background: #1c1a17; } #bossbar.wrong #bossbar-note { color: var(--red); }   /* v0.8.20 要先斃別隻：這一隻命鎖在一點 */
 #bossbar.away { opacity: .88; border-style: dotted; } #bossbar.away .bb-bar i { background: linear-gradient(90deg, #a89b80, #c2b496); }   /* v0.8.10 戰事掛著、人在地界外 */
 #bossbar.shade { border-style: dashed; background: rgba(224,220,212,.94); } #bossbar.shade .bb-head b { color: #3b3a40; } #bossbar.shade .bb-bar i { background: linear-gradient(90deg, #2b2a30, #55535c); }
 #talk-text { text-align: left; max-height: 52vh; overflow-y: auto; } #talk-text p { margin: 6px 0; line-height: 1.6; }
@@ -111,7 +145,7 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 #totemswitch.on .track { background: var(--red); }
 #totemswitch.on .knob { left: 20px; }
 #totemswitch.on .state { color: var(--red-2); }
-#companions { position: absolute; right: calc(18px + env(safe-area-inset-right, 0px)); top: calc(340px + env(safe-area-inset-top, 0px)); display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+#companions { position: absolute; right: calc(18px + env(safe-area-inset-right, 0px)); top: calc(404px + env(safe-area-inset-top, 0px));   /* v0.8.22：右上角多了一排珠，往下挪 */ display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
 .comp { display: flex; gap: 6px; align-items: flex-end; background: rgba(239,229,207,.78); padding: 4px 7px; border-radius: 4px; border: 1px solid rgba(28,26,23,.3); }
 .comp .ch { font: 26px/1 var(--font); color: var(--ink); }
 .comp .vbars { display: flex; gap: 3px; height: 44px; align-items: flex-end; }
@@ -291,6 +325,7 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 .stoverow button:disabled:hover { background: var(--ink); border-color: var(--ink); }
 .stoverow .fuelpair { display: inline-flex; gap: 4px; }
 .stoverow .shelfslot { min-width: 120px; }
+.stoverow.telelist { max-height: 52vh; overflow-y: auto; }   /* v0.8.21 傳送：到過的地方多了就捲 */
 .stoverow button small .lack { color: #f0a08f; font-weight: 600; }   /* 鼎：不夠的料標紅（v0.8.14） */
 .stoverow span.shelfslot.empty { display: inline-flex; align-items: center; justify-content: center; border: 2px dashed rgba(28,26,23,.3); border-radius: 6px; padding: 6px 14px; color: var(--dim); font: 16px var(--font); }
 .panel.fogpanel h2 { margin: 0 0 8px; }
@@ -299,3 +334,10 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 .knocktext { text-align: center; color: #efe5cf; font: 120px/1 var(--font); text-shadow: 0 0 30px rgba(0,0,0,.6); animation: knock-sway 2s ease-in-out infinite; }
 .knocktext small { display: block; font-size: 18px; margin-top: 8px; opacity: .85; }
 @keyframes knock-sway { 50% { transform: rotate(4deg) translateY(4px); } }
+#journal .tease { color: #8a6a1f; font-size: 13px; margin: 8px 0 2px; letter-spacing: .05em; }   /* v0.8.22 成就頁那一句：誰都不靠、只靠自己 */
+#journal .tease-list { list-style: none; padding-left: 0; margin: 4px 0 8px; } #journal .tease-list li { margin: 3px 0; } #journal .tease-list li b { display: inline-block; width: 1.4em; color: #8a6a1f; }   /* v0.8.23 成就頁的謎：○ 還做得到、● 做到了、✕ 不行了 */
+#journal .tease-list li i { margin-left: 8px; font-style: normal; font-size: 12px; color: var(--dim); } #journal .tease-list li.no { color: var(--dim); text-decoration: line-through; } #journal .tease-list li.no b { color: var(--dim); }
+.diff-hint { margin: 2px 0 6px; font-size: 13px; color: var(--dim); letter-spacing: .05em; transition: color .2s; } .diff-hint.hard { color: #8a6a1f; }   /* v0.8.23 起始頁的暗示：一直看得到，選困難時亮一點 */
+#pause-diff-hint { color: #8a6a1f; font-size: 14px; margin: 4px 0; letter-spacing: .05em; }   /* 從沒換過難度的困難存檔要換難度時蹦出來 */
+#map .mapzoom { display: inline-block; min-width: 3em; text-align: center; font: 15px var(--font); color: var(--ink-2); }   /* v0.8.24 大地圖的放大倍數 */
+#bigmap { touch-action: none; }
