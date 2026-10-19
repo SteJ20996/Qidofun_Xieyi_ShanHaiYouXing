@@ -28,8 +28,8 @@
     '雪': { s: 11, walk: 0.7, kind: 'ground', ink: INK.snow, flavor: '高處積雪，寒。' },
     '路': { s: 13, walk: 1.4, kind: 'ground', ink: INK.sand, flavor: '走的人多了，也便成了路。' },
     '灘': { s: 22, walk: 1.2, kind: 'ground', ink: INK.sand, flavor: '潮退則沙，潮漲則水。' },
-    '沼': { s: 8, walk: 0.3, kind: 'ground', bog: true, ink: INK.bog, flavor: '爛泥沼澤，極少見。走進去慢得像拖著腿，力不回反掉（約每息一點五）、身子發冷（每息暖 −0.6）；力耗盡就跟累倒一樣，每息掉命二。獸除了蟾都不進沼。選中木板面向它按 F，鋪成棧道就好走了。' },
-    '棧': { s: 12, walk: 1.0, kind: 'object', flam: 0.3, ink: INK.brown, yield: { '木板': 1 }, time: 1.0, place: true, to: '沼', flavor: '鋪在沼上的木板棧道，走起來跟平地一樣。拆了收回木板，底下還是沼。' },
+    '沼': { s: 8, walk: 0.3, kind: 'ground', bog: true, ink: INK.bog, flavor: '爛泥沼澤，極少見。走進去慢得像拖著腿，力不回反掉（約每息一點五）、身子發冷（每息暖 −0.6）；力耗盡就跟累倒一樣，每息掉命二。獸除了蟾都不進沼。選中棧面向它按 F 搭上棧就好走了（v0.8.22 起木板不再鋪棧）。' },
+    '棧': { s: 12, walk: 1.0, kind: 'object', flam: 0.3, ink: INK.brown, yield: { '棧': 1 }, time: 1.0, place: true, onWater: true, flavor: '搭在淺水、淺灘或沼上的木板棧，穩穩當當，走起來跟平地一樣；漲潮退潮都走得過，船身挨著它就上得了船。拆了收回，底下還原。' },   // v0.8.22 使用者定：橋與棧併成一樣
     // —— v0.7 外島的新地形：漠島（漠丘池棗）、火島（熔岩曜）、川島（川湖）、雪島（湯窟）
     '漠': { s: 14, walk: 1.0, kind: 'ground', desert: true, ink: INK.desert, yield: { '沙': 1 }, time: 0.8, flavor: '大漠黃沙。白天烈日當頭，力不回反掉（每息約 −0.4）；夜裡冷得刺骨（暖每息再 −0.8）。綠洲的池水、椰棗救得了命。' },
     '丘': { s: 5, walk: 0.6, kind: 'ground', desert: true, ink: INK.desert, yield: { '沙': 2 }, time: 1.2, to: '漠', flavor: '沙丘，一步一陷，走得慢。蛇藏在丘裡。' },
@@ -39,7 +39,7 @@
     '岩': { s: 8, walk: 0.7, kind: 'rock', ink: INK.basalt, yield: { '石': 1 }, time: 3.0, bonus: { '石子': 0.3 }, fast: '鎬', flavor: '火山冷下來的岩地。跟石地一樣，鎬採之快一倍，偶得石子。' },
     '曜': { s: 18, walk: 0, kind: 'rock', ink: INK.obsidian, yield: { '黑曜石': 1 }, time: 3.0, need: '鎬', to: '岩', flavor: '黑曜石脈，要用鎬。黑曜石二、木一、麻一，磨成曜刃。' },
     '燧': { s: 17, kind: 'rock', walk: 0.8, ink: INK.black, yield: { '燧石': 1 }, time: 1.5, to: '礫', flavor: '燧石露頭（v0.8.6）：火島的岩地上、海邊的沙礫裡偶爾一格。取之得燧石，不用鎬。燧石一、火把一、油脂一份做成火蝕。鑿石頭（石、山、磊、岩）也有五十分之一的機會出燧石。' },
-    '川': { s: 3, walk: 0, kind: 'water', fresh: true, ink: INK.river, flavor: '河。淡水：空瓶取了就能喝；有筏可渡，可架橋。河裡也有魚。' },
+    '川': { s: 3, walk: 0, kind: 'water', fresh: true, ink: INK.river, flavor: '河。淡水：空瓶取了就能喝；有筏可渡，可搭棧。河裡也有魚。' },
     '湖': { s: 12, walk: 0, kind: 'water', fresh: true, ink: INK.river, flavor: '湖。淡水：空瓶取了就能喝；有筏可渡。' },
     '湯': { s: 12, walk: 0.6, kind: 'ground', spring: true, heat: true, ink: INK.spring, flavor: '溫泉（古稱湯泉）。走進去泡著：暖每息 +4、命 +1、愜意 +0.3；旁邊兩格也暖。空瓶可取淡水。' },
     '窟': { s: 13, walk: 1.0, kind: 'ground', cave: true, ink: INK.cave, flavor: '山腹裡的洞窟。走進去白天也黑，要帶光；也比外頭涼。窟邊的山壁煤鐵多。' },
@@ -49,12 +49,12 @@
     '棉': { s: 12, walk: 1.0, kind: 'plant', flam: 0.5, ink: INK.cotton, yield: { '棉': 2 }, time: 0.8, to: '草', regrow: 150, place: true, flavor: '野棉花。六團棉、兩塊木，是一張床。' },
     '麻': { s: 11, walk: 1.0, kind: 'plant', flam: 0.5, ink: INK.hemp, yield: { '麻': 2 }, time: 0.8, to: '草', regrow: 150, place: true, flavor: '野麻。麻四棉二織成麻布。' },
     '木': { s: 4, walk: 0.8, kind: 'plant', flam: 0.6, ink: INK.plant, yield: { '木': 1 }, time: 1.4, fast: '斧', regrow: 180, place: true, flavor: '一棵樹。斧伐之快一倍。' },
-    '果': { s: 8, walk: 0.8, kind: 'plant', flam: 0.6, ink: INK.red, yield: { '果': 2 }, time: 0.8, to: '木', regrow: 210, place: true, food: { eat: 20 }, flavor: '野果樹。摘之可食；果在囊裡放過十五夜會醉。' },
+    '果': { s: 8, walk: 1.0, kind: 'plant', flam: 0.6, ink: INK.red, yield: { '果': 2 }, time: 0.8, to: '木', regrow: 210, place: true, food: { eat: 20 }, flavor: '野果樹。摘之可食；果在囊裡放過十五夜會醉。' },
     '竹': { s: 6, walk: 0.7, kind: 'plant', flam: 0.7, ink: INK.plant, yield: { '竹': 2 }, time: 1.2, fast: '斧', regrow: 180, place: true, flavor: '竹。可為筏、可為魚梁。' },
     '林': { s: 8, walk: 0.6, kind: 'plant', flam: 0.7, ink: INK.forest, yield: { '木': 2 }, time: 2.4, fast: '斧', regrow: 180, flavor: '雙木成林。' },
     '森': { s: 12, walk: 0.5, kind: 'plant', flam: 0.8, ink: INK.forest, yield: { '木': 3 }, time: 3.4, fast: '斧', regrow: 240, flavor: '三木成森，虎豹踞其中。' },
     // —— 水
-    '水': { s: 4, walk: 0, kind: 'water', ink: INK.water, flavor: '淺水。有筏可渡，可架橋；空瓶可取海水。' },
+    '水': { s: 4, walk: 0, kind: 'water', ink: INK.water, flavor: '淺水。有筏可渡，可搭棧；空瓶可取海水。' },
     '淼': { s: 12, walk: 0, kind: 'water', ink: INK.deep, flavor: '深水。唯船可渡。' },
     // —— 山石
     '石': { s: 5, walk: 0.7, kind: 'rock', ink: INK.rock, yield: { '石': 1 }, time: 3.0, bonus: { '石子': 0.3 }, fast: '鎬', place: true, flavor: '石地。鎬採之快一倍，偶得石子。' },
@@ -76,15 +76,17 @@
     '階': { s: 12, walk: 1.0, kind: 'object', stair: true, ink: INK.brown, yield: { '階': 1 }, time: 1.0, place: true, flavor: '上台的階梯。人獸都走得上去，獸在上頭腳步慢半倍。' },
     '門': { s: 8, walk: 1.0, kind: 'object', gate: true, ink: INK.brown, opaque: true, yield: { '門': 1 }, time: 1.0, place: true, flavor: '人能過，獸不能；跟磚一樣擋光。面向它按 E 可問路。' },
     '燈': { s: 16, walk: 0, kind: 'object', light: 6, ink: INK.gold, yield: { '燈': 1 }, time: 1.0, place: true, flavor: '石與火把成燈，長明不滅，只怕屋外的雨。魄三格內即煙滅；人跨得過，獸過不去。' },
-    '橋': { s: 16, walk: 1.0, kind: 'object', flam: 0.3, ink: INK.brown, yield: { '橋': 1 }, time: 1.0, place: true, onWater: true, flavor: '架在水上的橋。' },
     '漁': { s: 14, walk: 0, kind: 'object', ink: INK.water, yield: { '漁': 1 }, time: 1.0, place: true, onWater: true, flavor: '魚梁。放在水上，隔一陣子就有魚。' },
     '網': { s: 14, walk: 0, kind: 'object', ink: INK.water, place: true, onWater: true, net: 1, flavor: '下在水上的小網（v0.5.1 前的舊法）：九十息一條魚、存三條。面向按 E 取魚，空網再按 E 收回，收回就是撒網。' },
     '罟': { s: 10, walk: 0, kind: 'object', ink: INK.water, place: true, onWater: true, net: 2, flavor: '下在水上的中網（舊法）：三十息一條魚、存八條。面向按 E 取魚，空網收回。' },
     '罾': { s: 17, walk: 0, kind: 'object', ink: INK.water, place: true, onWater: true, net: 3, flavor: '下在水上的大網（舊法）：十息一條魚、存二十條。面向按 E 取魚，空網收回。' },
     '偶': { s: 11, walk: 0, kind: 'object', ink: INK.brown, yield: { '偶': 1 }, time: 1.0, place: true, flavor: '稻草人。四十五天內獸不近身：前半十格，後半七格。再放一個可以續到六十天；面向按 E 拆下，重放重計。' },
     '櫃': { s: 18, walk: 0, kind: 'object', ink: INK.brown, yield: { '櫃': 1 }, time: 1.0, place: true, flavor: '四角用石、四邊用木的櫃子。面向它按 E 開，二十四格。' },
-    '舟': { s: 6, walk: 0, kind: 'object', ink: INK.brown, place: true, onWater: true, flavor: '停著的船（孤帆一乘二、方舟二乘三）。面向它按 E 上船；上了船，深水亦可渡。' },
+    '舟': { s: 6, walk: 0, kind: 'object', ink: INK.brown, place: true, onWater: true, flavor: '停著的船（孤帆一乘二、方舟二乘三）。從船邊走上去或面向它按 E 上船，面向它按 F 收回船艙（船身一整條邊靠著岸才收得回）；船上 WASD 走動，1 左 2 上 3 下 4 右開船，C 修船，深水亦可渡，漲潮時沙洲也過得去。' },
     '碑': { s: 13, walk: 0, kind: 'object', ink: INK.black, flavor: '古碑，刻著活下去的法子。讀之，力氣漸長。' },
+    '桑': { s: 10, walk: 0, kind: 'object', ink: '#3a7a52', flavor: '扶桑（v0.8.21 傳送點）：「湯谷上有扶桑，十日所浴。」（《山海經·海外東經》）東邊的地界第一次踏上時立起來。面向它按 E，寫一個地名就到那裡（符紙一、力十、飽八）。' },
+    '若': { s: 9, walk: 0, kind: 'object', ink: '#a2552f', flavor: '若木（v0.8.21 傳送點）：「若木在建木西，末有十日，其華照下地。」（《淮南子·墬形訓》）西邊的地界第一次踏上時立起來。面向它按 E 傳送。' },
+    '建': { s: 9, walk: 0, kind: 'object', ink: '#5a4a2a', flavor: '建木（v0.8.21 傳送點）：「建木在都廣，眾帝所自上下。」（《淮南子·墬形訓》）第一次踏上一座外島、或南北的地界、不周山時立起來。面向它按 E 傳送。' },
     '亭': { s: 9, walk: 0, kind: 'object', ink: '#8a3a2a', flavor: '惜字亭（v0.8.8）：寫過字的紙不隨便丟，送到亭裡焚化，叫敬惜字紙。第一次向玄武取經以後，它立在你被寫出來的地方附近；面向它按 E 許願。' },
     '包': { s: 5, walk: 0, kind: 'object', ink: INK.black, flavor: '落下的荷包。死時囊裡、具欄裡、身上的東西都在裡面。' },
     '囊': { s: 22, walk: 0, kind: 'object', ink: INK.brown, flavor: '小囊。囊滿了放不下的要緊東西（青鱗、蜃珠），用小囊包著擱在最近睡過的床邊。面向它按 E 取。' },
@@ -117,8 +119,11 @@
     '青龍': { s: 24, kind: 'beast', light: 4, ink: INK.azure, hp: 9999, name: '青龍', flavor: '東海青龍，盤在本島往東約六百格的深海上，不近人也不避人。帶一顆蜃珠（蜃殘體九塊在鼎裡熬成）去求教，牠教你行船的水性：孤帆、方舟從此自己慢慢回命，落了水也撐得久些；右上角的魂環亮起青龍那三分之一。' },
     '齒': { s: 15, kind: 'beast', ink: INK.brown, hp: 650, atk: 21, name: '鑿齒', flavor: '鑿齒（v0.8.5；v0.8.6 使用者調成命六百五、一撞二十一）：齒長如鑿，手裡一面盾，在西邊的外島上鑿石頭。命六百五十（照難度加：簡單七百、一般八百、困難九百），一撞二十一。牠面朝哪邊盾就在哪邊：從正面三格打上去只有一成傷，要繞到身側或背後；牠轉身慢，一息多才轉一回。斃之得鑿齒殘體一或二塊。' },
     '白虎': { s: 13, kind: 'beast', ink: '#f6f1e4', hp: 9999, name: '白虎', flavor: '白虎（v0.8.5），四象之西，伏在虎嶺上，四十格內才看得見。不近人也不避人；沒帶虎符的人走到六格內，牠一聲嘯，地跟著抖（震）。帶一枚虎符去，兩格內按 E 求教，牠教你抗震：震的傷害少四分之一；魂環亮起虎魄那三分之一。' },
-    '豨': { s: 14, kind: 'beast', ink: INK.brown, hp: 2000, atk: 20, name: '封豨', flavor: '封豨（v0.8.7，大魔王）：桑林裡的大豬，二乘二，命二千（v0.8.10 從三千降下來；照難度加：簡單二千二、一般二千五、困難二千九），頭上一圈鬃，越惱鬃越多。豕突：蓄力一息多、直衝十格（力四十）；拱地：震一圈圈往外傳（震二十二，站在橋、棧上不受；牠拱得動台，台擋不住）；貼著撞（力二十）。命剩六成去啃桑回命（荐食），吃的時候打牠就吃不成；剩一半起叫野豬（群豕）。《淮南子·本經訓》：「禽封豨於桑林。」' },
+    '豨': { s: 14, kind: 'beast', ink: INK.brown, hp: 2000, atk: 20, name: '封豨', flavor: '封豨（v0.8.7，大魔王）：桑林裡的大豬，二乘二，命二千（v0.8.10 從三千降下來；照難度加：簡單二千二、一般二千五、困難二千九），頭上一圈鬃，越惱鬃越多。豕突：蓄力一息多、直衝十格（力四十）；拱地：震一圈圈往外傳（震二十二，站在棧上不受；牠拱得動台，台擋不住）；貼著撞（力二十）。命剩六成去啃桑回命（荐食），吃的時候打牠就吃不成；剩一半起叫野豬（群豕）。《淮南子·本經訓》：「禽封豨於桑林。」' },
+    '修蛇': { s: 21, kind: 'beast', ink: '#2c3b2a', hp: 2400, atk: 18, name: '修蛇', flavor: '修蛇（v0.8.16，大魔王）：洞庭湖裡的長蛇，大字「蛇」當頭，身後拖著六個「尾」。命二千四（照難度加：簡單二千七、一般三千、困難三千五），只在水裡。浮著時追著船咬（力十八）；潛蹤：沉下去打不到，冒泡的地方一息半後浮上來撞船（船掉二十五）；長蛇纏舟：船四息動不了、每息掉八，纏著時打頭多吃五成；吞象：面前三格寬、四格長咬下去（溺三十），岸上離水兩格內也搆得到；命剩一半起吐毒涎（照蛇毒）。打尾吃四分之三，命剩一半以下只剩四分之一。' },
     '雕': { s: 16, kind: 'beast', ink: '#4a4f5c', hp: 520, atk: 16, name: '蠱雕', flavor: '蠱雕（v0.8.6，小魔王）：像雕，頭上一隻角，在南邊的海上與外島上空盤旋。命五百二十（照難度加：簡單六百、一般七百、困難八百）。隔一陣一聲啼，像嬰兒在哭，聽得心裡發慌（心：愜意掉，懼得一息多出不了手）；再一陣從天上撲下來抓人（力十六），抓完又飛回高處。牠在天上時只有彈弓打得到，撲下來貼著你時才是出手的時候。斃之得蠱雕殘體一或二塊。' },
+    '畢': { s: 11, kind: 'beast', ink: '#24766b', hp: 600, atk: 14, name: '畢方', flavor: '畢方（v0.8.25，小魔王）：〈西山經〉「其狀如鶴，一足，赤文青質而白喙……見則其邑有訛火」。青底朱紋的「畢」字，一隻腳跳著走，只在火島上。命六百（照難度加：簡單七百、一般八百、困難九百），貼著啄一下十四（力）。落腳的地方就起訛火，踩上去灼傷；隔一陣一聲鳴，你身邊三處先冒出圈，一息後燒起來。斃之得畢方羽一或二根，對空神兵的料。' },
+    '大風': { s: 9, kind: 'beast', ink: '#5b6b7a', hp: 1600, atk: 18, name: '大風', flavor: '大風（v0.8.25，大魔王）：青丘之澤上的大鳥，在天上是風，撲下來是鳥。命一千六（照難度加：簡單一千八、一般二千、困難二千三）。在天上只有彈弓與彤弓素矰打得到；撲下來抓一下（力，入木三分：一分鎖喉、二分加懼、三分深懼），貼著停一會兒，那是近身的時候。扶搖：腳下捲起旋風，把人拋出去、轉得暈頭（亂）；摧屋拔木：一陣狂風，吹垮磚牆、拔起樹；命剩一半起飛沙走石。' },
     '朱雀': { s: 17, kind: 'beast', light: 3, ink: '#c23b22', hp: 9999, name: '朱雀', flavor: '朱雀（v0.8.6），四象之南，棲在丹穴，四十格內才看得見。沒帶朱羽的人走近，牠就飛開，總離人五格以上；帶著朱羽，牠落下來等你。兩格內按 E 求教，牠教你氣順：窒與心的傷害少四分之一；魂環亮起鳳翎那三分之一。' },
     '玄武': { s: 13, kind: 'beast', ink: '#1c1a17', hp: 9999, name: '玄武', flavor: '玄武（v0.8.8），四象之北，龜與蛇，伏在玄洲島心，像一塊很久沒動的石頭，四十格內才看得見。不收信物：兩格內按 E 取經，每打一隻大魔王之前取一卷，四次。取經是一場試煉，玄武吐一個墨寫的影子讓你先打一回。' },
   };
@@ -145,11 +150,11 @@
     '狼首骨': { s: 29, kind: 'use', ward: 1, flavor: '狼的頭骨。放在船頭，一日內蜃不敢撞船，時間到了風化。' },
     '扇': { s: 10, kind: 'use', flavor: '草四木一紮成的蒲扇，一搧就散。帶在囊裡：走進霧障時會問你要不要用它吹散；選中按 V，三格內的霧障也吹得散。' },
     '麻布': { s: 22, kind: 'item', flavor: '麻四棉二織成的布。做稻草人、船帆、燈帽。' },
-    '木板': { s: 12, kind: 'item', flavor: '木二劈成兩塊板。造船用；選中面向沼澤按 F，鋪成棧道。' },
+    '木板': { s: 12, kind: 'item', flavor: '木二劈成兩塊板。造船、修船用；落了水，倒數到底時抱一塊多撐八息。' },
     '船槳': { s: 29, kind: 'item', flavor: '木板二木一。' },
     '船帆': { s: 23, kind: 'item', flavor: '麻布四木二。' },
-    '孤帆': { s: 16, kind: 'build', tile: '舟', ship: '孤帆', span: 2, single: true, flavor: '一葉孤帆，一乘二。木板八、槳一、帆一。命一百二十，船頭放得下兩個獸首骨。放在淺水上，面向按 E 上船可渡深海。在囊裡、櫃裡一艘佔兩格，不疊放；落了水選中按 F 放船下水。' },
-    '方舟': { s: 14, kind: 'build', tile: '舟', ship: '方舟', span: 5, single: true, flavor: '兩船相並為方舟，二乘三。木板三十六、槳四、帆三、鐵八、麻布六、鎢鋼二。命四百二十，船快只有孤帆的六成，船頭放得下五個獸首骨。要六格淺水才放得下。在囊裡、櫃裡一艘佔五格，不疊放；落了水選中按 F 放船下水。' },
+    '孤帆': { s: 16, kind: 'build', tile: '舟', ship: '孤帆', span: 2, single: true, flavor: '一葉孤帆，一乘二（往東西開就東西長，往南北開就南北長）。木板八、槳一、帆一。命一百二十，船頭放得下兩個獸首骨。造好放在船艙（右下角，最多帶三艘）。正對著水、面前三乘三都是水就放得下，從船邊走上去或面向按 E 上船，船上 WASD 走、1234 開船、C 開船的介面（修船、放取首骨；最多修四次），可渡深海；面向它再按 F 收回船艙（船身一整條邊靠著岸才收得回）。落了水按 F 放船下水。' },
+    '方舟': { s: 14, kind: 'build', tile: '舟', ship: '方舟', span: 5, single: true, flavor: '兩船相並為方舟，二乘三（往東西開就東西長，往南北開就南北長）。木板三十六、槳四、帆三、鐵八、麻布六、鎢鋼二。命四百二十，船快只有孤帆的六成，船頭放得下五個獸首骨。造好放在船艙（右下角，最多帶三艘）。正對著水、面前三乘三都是水才放得下，靠了岸按 F 收得回船艙；船上 C 開船的介面（修船最多三次、放取首骨）。落了水按 F 放船下水。' },
     '肉': { s: 6, kind: 'food', food: { eat: 20, hurt: 8 }, flavor: '生肉。生食傷身，烤之則美。' },
     '烤魚': { s: 21, kind: 'food', food: { eat: 40 }, flavor: '灶上烤的魚。香。' },
     '烤肉': { s: 16, kind: 'food', food: { eat: 55, heal: 10 }, flavor: '灶上烤的肉。更香，還補一點血（+10）。' },
@@ -181,11 +186,14 @@
     '鑿齒殘體': { s: 78, kind: 'item', flavor: '斃鑿齒留下的殘體，一頭一或二塊（約三分之一的機會兩塊）。九塊加鐵三、鎢鋼一，在火旺的鼎裡鑄成一枚虎符（八成三的機會成；不成鐵與鎢鋼熔掉了，殘體退回，困難只退八塊）。' },
     '虎符': { s: 19, kind: 'item', flavor: '九塊鑿齒殘體加鐵三、鎢鋼一，在鼎裡鑄成的符，一隻伏著的虎。虎嶺的白虎要的就是它：帶去兩格內按 E 求教，白虎收下就教你抗震。' },
     '燧石': { s: 22, kind: 'item', flavor: '打得出火星的石頭（v0.8.6）。火島的岩地、海邊偶爾露出一格「燧」；鑿石頭時五十分之一的機會出。燧石一、火把一、油脂一份做成火蝕。' },
+    '符紙': { s: 21, kind: 'item', flavor: '竹漿抄的黃紙，煤煙調墨、花汁點硃（v0.8.21）。在惜字亭或建木、扶桑、若木前按 E，寫一個到過的地名，紙一摺就到了那裡：一張符紙、力十、飽八。' },
     '火蝕': { s: 19, kind: 'item', flavor: '燧石打出火星，引著油脂與火把，封成一團不滅的火（v0.8.6）。鑄朱羽的料：蠱雕殘體九塊、精煤一、火蝕一，在火旺的鼎裡煉。' },
     '蠱雕殘體': { s: 74, kind: 'item', flavor: '斃蠱雕留下的殘體，一頭一或二塊（約三分之一的機會兩塊）。九塊加精煤一、火蝕一，在火旺的鼎裡煉成一根朱羽（八成三的機會成；不成精煤與火蝕燒掉了，殘體退回，困難只退八塊）。' },
     '朱羽': { s: 12, kind: 'item', flavor: '九塊蠱雕殘體加精煤一、火蝕一，在鼎裡煉成的一根朱紅的羽。丹穴的朱雀要的就是它：帶去兩格內按 E 求教，朱雀收下就教你氣順。' },
     '油脂': { s: 18, kind: 'item', flavor: '野豬野牛身上割下的油脂（斃之 35% 的機會得一份）。要裝在麻布包裡才帶得走。棉一油脂一，做成蠟燭三根。' },
     '麻布包': { s: 16, kind: 'item', single: true, flavor: '麻布二、麻一縫的小包，專裝油脂，一包裝八份。包不會用掉，做東西時從包裡取油；沒有包，斃野豬野牛割下的油脂就帶不走。' },
+    '畢方羽': { s: 21, kind: 'item', flavor: '斃畢方留下的羽，一頭一或二根（約三分之一的機會兩根），青底朱紋，摸上去是燙的（v0.8.25）。對空神兵彤弓素矰的料：畢方羽六、鎢鋼三、竹六、麻布三。不是殘體，惜字亭不收。' },
+    '彤弓素矰': { s: 37, kind: 'tool', tool: '矰', dmg: 120, dur: 199, flavor: '〈海內經〉：「帝俊賜羿彤弓素矰，以扶下國。」朱紅的弓，白羽的矰，矰尾繫著絲，射出去收得回來，不用箭。對空神兵（v0.8.25）：膽氣卅一重方可造、可挽。面前十格內最近的一隻，天上的（蠱雕、大風）一百二十（照難度再加三到五分），陸上海中的只有一成；射中天上的，絲纏住牠（繳），兩息半落不回天上。隨身則膽氣減得快，同九閽鳴雷。' },
     '燭龍焚溟': { s: 58, kind: 'tool', tool: '焚', dmg: 120, dur: 199, flavor: '燭龍銜火，焚盡溟海。火屬而克海水，故為神兵。膽氣卅一重方可造、可揮：面向獸按 E，三格內諸獸同受灼燒，海中之物（蜃、龜）一百二十（照難度再加三到五分），陸上與天上之物減半。隨身的膽氣減益與九閽鳴雷相同，兩件同帶只算一重。按 L 拿出（手上已是神兵就換另一件）、P 收回。' },
     '九閽鳴雷': { s: 26, kind: 'tool', tool: '鎚', dmg: 120, dur: 199, flavor: '撼地之鎚。膽氣卅一重方可造、可掄：面向獸按 E，三格內諸獸同受一百二十傷（照難度再加三到五分）。隨身則膽氣減得快（簡單四日、一般三日、困難二日一減，下限廿八／廿七／廿六重；困難另慢慢掉力），兩件神兵同帶也只算一重；低於卅一重掄不動。按 L 拿出、P 收回。' },
     '鐵礦': { s: 21, flavor: '鐵礦石。礦二煤一入旺灶，煉成鐵。' },
@@ -226,18 +234,18 @@
     '鎢鋼劍': { s: 21, kind: 'tool', tool: '劍', dmg: 84, dur: 112, tung: true, flavor: '鎢鋼劍。一下八十四，耐久一百一十二。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二，耗力八、飽十。' },
     '鎢鋼斧': { s: 21, kind: 'tool', tool: '斧', dmg: 32, dur: 112, tung: true, flavor: '鎢鋼斧。耐久一百一十二。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二，耗力八、飽十。' },
   };
-  const TOOL_NAMES = { '刀': '刀', '鎬': '鎬', '鋤': '鋤', '劍': '劍', '斧': '斧', '鎚': '九閽鳴雷', '焚': '燭龍焚溟' };   // 石、鋼、鎢鋼都算
+  const TOOL_NAMES = { '刀': '刀', '鎬': '鎬', '鋤': '鋤', '劍': '劍', '斧': '斧', '鎚': '九閽鳴雷', '焚': '燭龍焚溟', '矰': '彤弓素矰' };   // 石、鋼、鎢鋼都算
   // 船：兩種。off 是行船時船身相對於人的格子（人站在船身裡）；hp 命；slots 船頭放得下幾個獸首骨
   const SHIPS = {
-    '孤帆': { w: 1, h: 2, hp: 120, slots: 2, speed: 1, off: [[0, 0], [0, 1]] },
-    '方舟': { w: 2, h: 3, hp: 420, slots: 5, speed: 0.6, off: [[0, 0], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]] },   // 船快是孤帆的六成   // 第一格是人站的那格（左邊中間）
+    '孤帆': { w: 1, h: 2, hp: 120, slots: 2, speed: 1 },   // v0.8.21 使用者定：孤帆改回一乘二、方舟改回二乘三（v0.8.18–v0.8.20 是二乘二、三乘三）；開船的方向定哪邊長
+    '方舟': { w: 2, h: 3, hp: 420, slots: 5, speed: 0.6 },   // 船快是孤帆的六成；w×h 是南北長擺法，東西長倒過來（v0.8.17）
   };
   // 製作欄的大類（左側選）：每條配方照 id 歸類，沒列到的進「材料」
   const CRAFT_CATS = ['全部', '居所', '工具', '神兵', '衣甲', '燈火', '漁船', '食藥', '材料'];
   const CAT_OF = {
     '居所': ['brick', 'door', 'window', 'bed', 'chest', 'stove', 'cauldron', 'scarecrow', 'bridge', 'platform', 'steps'],
     '工具': ['grind', 'regrind', 'crush', 'forge', 'forgew', 'obsidian', 'fan', 'sling'],
-    '神兵': ['hammer', 'seagod'],
+    '神兵': ['hammer', 'seagod', 'skygod'],
     '衣甲': ['lining', 'pants', 'vest', 'cap', 'shoes', 'ironvest', 'helm', 'ironboots', 'wvest', 'whelm', 'wboots'],
     '燈火': ['torch', 'candle', 'oilbag', 'candle2', 'huoshi', 'lamp', 'hat'],
     '漁船': ['weir', 'net', 'midnet', 'bignet', 'bignet13', 'mendnet', 'raft', 'plank', 'oar', 'sail', 'ship', 'ark'],
@@ -257,6 +265,7 @@
     { id: 'torch', out: '火把', n: 4, need: { '石子': 1, '草': 3, '木': 2 }, sta: 2, note: '石子一草三木二成四根；拿在手上才亮' },
     { id: 'candle', out: '蠟燭', n: 2, need: { '棉': 1, '肉': 1 }, sta: 2, note: '拿在手上才亮，照兩格' },
     { id: 'candle2', out: '蠟燭', n: 3, need: { '棉': 1, '油脂': 1 }, sta: 2, note: '油脂做的，一份油脂三根（從麻布包裡取）' },
+    { id: 'talisman', out: '符紙', n: 2, need: { '竹': 2, '麻布': 1, '煤': 1, '花': 1 }, sta: 6, note: '傳送用：惜字亭或建木、扶桑、若木前按 E（v0.8.21）' },
     { id: 'huoshi', out: '火蝕', n: 1, need: { '燧石': 1, '火把': 1, '油脂': 1 }, sta: 2, note: '鑄朱羽的料；油脂從麻布包裡取（v0.8.6）' },
     { id: 'oilbag', out: '麻布包', n: 1, need: { '麻布': 2, '麻': 1 }, sta: 2, note: '裝油脂，一包八份；包不會用掉（v0.8.3）' },
     { id: 'lamp', out: '燈', n: 1, need: { '石': 2, '火把': 1 }, sta: 4, note: '放在地上，長明不滅' },
@@ -289,7 +298,7 @@
     { id: 'scarecrow', out: '偶', n: 1, need: { '麻布': 2, '石子': 2, '木': 3, '草': 4 }, sta: 8, note: '四十五天內獸不近身' },
     { id: 'med', out: '藥', n: 1, need: { '草': 3, '果': 1 }, sta: 3, note: '療傷 +35，解毒' },
     { id: 'wine', out: '果酒', n: 1, need: { '醉果': 2, '淡水瓶': 1 }, sta: 2, note: '飽 +12，愜意 +20' },
-    { id: 'bridge', out: '橋', n: 2, need: { '木': 4 }, sta: 5, note: '架在淺水上' },
+    { id: 'bridge', out: '棧', n: 2, need: { '木': 4 }, sta: 5, note: '搭在淺水、淺灘、沼上（v0.8.22 橋與棧併成一樣）' },
     { id: 'platform', out: '台', n: 1, need: { '磚': 6, '石': 4 }, sta: 12, food: 8, note: '射手台：從階上去；獸也上得來，但慢半倍；台上的彈弓越得過磚，從台下撲上來的獸掉血、減速' },
     { id: 'steps', out: '階', n: 1, need: { '磚': 2, '石': 2 }, sta: 6, food: 4, note: '上台的階梯，人獸都能走（獸慢半倍）' },
     { id: 'raft', out: '竹筏', n: 1, need: { '竹': 6 }, sta: 8, note: '可行於淺水' },
@@ -303,8 +312,9 @@
     { id: 'oar', out: '船槳', n: 1, need: { '木板': 2, '木': 1 }, sta: 4, note: '造船用' },
     { id: 'sail', out: '船帆', n: 1, need: { '麻布': 4, '木': 2 }, sta: 6, note: '造船用' },
     { id: 'ship', out: '孤帆', n: 1, need: { '木板': 8, '船槳': 1, '船帆': 1 }, sta: 16, level: 8, note: '膽氣八重方可造。一乘二，命一百二十，船頭兩個首骨' },
-    { id: 'ark', out: '方舟', n: 1, need: { '木板': 36, '船槳': 4, '船帆': 3, '鐵': 8, '麻布': 6, '鎢鋼': 2 }, sta: 48, level: 8, note: '二乘三，命四百二十，船頭五個首骨，船速是孤帆的六成；要六格淺水' },
-    { id: 'hammer', out: '九閽鳴雷', n: 1, need: { '鐵': 12, '煤': 6, '石子': 9, '麻布': 2, '果酒': 1 }, sta: 60, level: 31, note: '三格內諸獸同受 120 傷（看難度再加 3–5%）；隨身膽氣減得快，看難度' },
+    { id: 'ark', out: '方舟', n: 1, need: { '木板': 36, '船槳': 4, '船帆': 3, '鐵': 8, '麻布': 6, '鎢鋼': 2 }, sta: 48, level: 8, note: '二乘三，命四百二十，船頭五個首骨，船速是孤帆的六成；面前三乘三都是水才放得下' },
+    { id: 'hammer', out: '九閽鳴雷', n: 1, need: { '鐵': 12, '煤': 6, '石子': 9, '麻布': 2, '果酒': 1 }, sta: 60, level: 31, note: '三格內諸獸同受 120 傷（看難度再加 3–5%）；天上海中的減半；隨身膽氣減得快，看難度' },
+    { id: 'skygod', out: '彤弓素矰', n: 1, need: { '畢方羽': 6, '鎢鋼': 3, '竹': 6, '麻布': 3 }, sta: 60, level: 31, note: '對空神兵（v0.8.25）：面前十格內一隻，天上的 120、陸上海中一成；射中天上的纏住兩息半（繳）' },
   ];
 
   // ---------- 一紙之島 ----------
@@ -584,9 +594,38 @@
     return null;
   }
   const ZONE_LAND = (t) => DB[t].kind !== 'water';
+  // v0.8.24 使用者定：龍淵中心方圓十五到二十格這一圈，零星幾個小礁（每個四到十格），上得了岸、放得了灶鼎。照種子固定，第一格一定是沙
+  // v0.8.25 使用者改：至少兩個、最多五個；礁跟礁之間至少隔五格水（兩個礁最近的兩格，橫、豎、斜都隔著五格以上，REEF_GAP）
+  const REEF_RING = [15, 20], REEF_MIN = 2, REEF_MAX = 5, REEF_AREA = [4, 10], REEF_GAP = 5;
+  function dragonReefs(z, seed) {
+    if (z.reef) return z.reef;
+    const keys = new Map(), list = [], N4 = [[1, 0], [-1, 0], [0, 1], [0, -1]], n = REEF_MIN + Math.floor(U.rand2(z.x, z.y, seed + 971) * (REEF_MAX - REEF_MIN + 1));
+    const ring = (x, y) => { const d = Math.hypot(x - z.x, y - z.y); return d >= REEF_RING[0] && d <= REEF_RING[1]; };
+    const near = (x, y) => { for (let j = -REEF_GAP; j <= REEF_GAP; j++) for (let i = -REEF_GAP; i <= REEF_GAP; i++) if (keys.has((x + i) + ',' + (y + j))) return true; return false; };   // 跟別的礁至少隔五格水
+    for (let t = 0; list.length < n && t < 400; t++) {
+      const a = U.rand2(t, 1, seed + 973) * Math.PI * 2, rd = REEF_RING[0] + 1 + U.rand2(t, 2, seed + 973) * (REEF_RING[1] - REEF_RING[0] - 2);
+      const cx = Math.round(z.x + Math.cos(a) * rd), cy = Math.round(z.y + Math.sin(a) * rd);
+      if (!ring(cx, cy) || near(cx, cy)) continue;
+      const area = REEF_AREA[0] + Math.floor(U.rand2(t, 3, seed + 973) * (REEF_AREA[1] - REEF_AREA[0] + 1)), cells = [[cx, cy]], own = new Set([cx + ',' + cy]);
+      for (let g = 0; cells.length < area && g < 300; g++) {
+        const [bx, by] = cells[Math.floor(U.rand2(t * 331 + g, 4, seed + 977) * cells.length)], [dx, dy] = N4[Math.floor(U.rand2(t * 331 + g, 5, seed + 977) * 4)];
+        const nx = bx + dx, ny = by + dy, k = nx + ',' + ny;
+        if (own.has(k) || !ring(nx, ny) || near(nx, ny)) continue;
+        own.add(k); cells.push([nx, ny]);
+      }
+      if (cells.length < REEF_AREA[0]) continue;
+      cells.forEach(([x, y], i) => keys.set(x + ',' + y, i));
+      list.push(cells);
+    }
+    return (z.reef = { keys, list });
+  }
+  function reefs(seed) { const z = zones(seed).find(o => o.id === '青龍'); return dragonReefs(z, seed).list; }   // 龍淵的小礁（gen-check、測試用）
   function zoneTile(x, y, seed, z, nat) {
     const dx = x - z.x, dy = y - z.y, d = Math.hypot(dx, dy), s = z.ns, rr = U.rand2(x, y, s + 1), n = U.fbm(x / 26, y / 26, s + 3, 3);
-    if (z.type === 'deep') return d <= z.r ? '淼' : nat;   // 龍淵：方圓 r 格都是深水（找到的地方本來就是，只有 forced 才削）
+    if (z.type === 'deep') {      // 龍淵：方圓 r 格都是深水（找到的地方本來就是，只有 forced 才削）；v0.8.24 起十五到二十格那一圈有幾個小礁
+      if (d >= REEF_RING[0] - 1 && d <= REEF_RING[1] + 1) { const i = dragonReefs(z, seed).keys.get(x + ',' + y); if (i !== undefined) return i === 0 ? '沙' : rr < 0.48 ? '沙' : rr < 0.78 ? '礫' : rr < 0.93 ? '草' : '石'; }
+      return d <= z.r ? '淼' : nat;
+    }
     if (z.type === 'lake') {      // 洞庭：淡水湖，外面一圈礁，四個口子
       const lake = Math.max(z.r + 1, LAKE_R + (n - 0.5) * 8), reef = lake + 4 + U.fbm(x / 14, y / 14, s + 5, 2) * 6;
       if (d <= lake) return '湖';
@@ -812,11 +851,11 @@
     return ({ '淼': '深水', '水': '淺水', '沙': '沙地', '礫': '碎石地', '石': '石灘', '山': '群山', '雪': '雪原',
       '草': '草原', '花': '花野', '棉': '棉田', '麻': '麻田', '木': '疏林', '果': '果林', '林': '林地', '森': '深林', '竹': '竹林', '田': '田野',
       '土': '荒土', '灰': '焦土', '白': '白紙', '火': '火場', '炎': '火場', '焱': '火場', '灶': '灶邊', '鼎': '鼎邊', '磚': '磚邊', '床': '床邊', '櫃': '櫃邊', '偶': '稻草人旁',
-      '燈': '燈下', '橋': '橋上', '漁': '魚梁', '舟': '船邊', '包': '荷包', '煤': '煤層', '鐵': '鐵礦脈', '網': '網邊', '罟': '網邊', '罾': '網邊', '碑': '古碑', '亭': '惜字亭', '囊': '囊', '路': '小路', '塔': '塔下', '寺': '寺中', '船': '船邊',
+      '燈': '燈下', '棧': '棧上', '漁': '魚梁', '舟': '船邊', '包': '荷包', '煤': '煤層', '鐵': '鐵礦脈', '網': '網邊', '罟': '網邊', '罾': '網邊', '碑': '古碑', '亭': '惜字亭', '囊': '囊', '路': '小路', '塔': '塔下', '寺': '寺中', '船': '船邊',
       '泉': '泉邊', '墓': '墓前', '洞': '洞口', '井': '井邊', '墟': '村中', '門': '門口',
       '漠': '大漠', '丘': '沙丘', '池': '綠洲', '棗': '綠洲', '熔': '熔岩邊', '岩': '岩地', '曜': '黑曜石脈', '川': '河邊', '湖': '湖畔', '湯': '溫泉', '窟': '洞窟' })[ch] || ch;
   }
 
   RECIPES.forEach(r => { r.cat = '材料'; for (const c in CAT_OF) if (CAT_OF[c].indexOf(r.id) >= 0) r.cat = c; });
-  root.G = { stelePaths, isleWell, INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, WORLD_R, HOME_R, HOME_K, isleAt, isleOf, isles, ISLE_CELL, ISLE_NAMES, azureAt, zones, zoneAt, ZONE_DEFS };
+  root.G = { reefs, REEF_RING, REEF_AREA, REEF_MIN, REEF_MAX, REEF_GAP, stelePaths, isleWell, INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, WORLD_R, HOME_R, HOME_K, isleAt, isleOf, isles, ISLE_CELL, ISLE_NAMES, azureAt, zones, zoneAt, ZONE_DEFS };
 })();

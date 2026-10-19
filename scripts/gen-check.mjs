@@ -41,13 +41,23 @@ function zoneProbs(seed, probs) {
     if (ux * z.x + uy * z.y < 0.6 * Math.hypot(z.x, z.y) * Math.hypot(ux, uy)) probs.push(tag + '不在' + (z.id === '共工' ? '西北' : '該在的方位') + '（' + z.x + ', ' + z.y + '）');
     if (Math.max(Math.abs(z.x), Math.abs(z.y)) + z.ext > G.WORLD_R || Math.max(Math.abs(z.x), Math.abs(z.y)) - z.ext < 170) probs.push(tag + '出了紙或碰到本島');
     for (const o of zs) if (o !== z && Math.hypot(z.x - o.x, z.y - o.y) < z.ext + o.ext) probs.push(tag + '和「' + o.name + '」疊在一起');
-    const R = z.solid; let bad = 0;
+    const R = z.solid, reefKeys = new Set(z.type === 'deep' ? G.reefs(seed).flat().map(([x, y]) => x + ',' + y) : []); let bad = 0;
     for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
       if (dx * dx + dy * dy > R * R) continue; const t = T(z.x + dx, z.y + dy);
-      if (z.type === 'land' ? !walk(t) : z.type === 'peak' ? wet(t) : !wet(t)) bad++;
+      if (z.type === 'land' ? !walk(t) : z.type === 'peak' ? wet(t) : !wet(t) && !(z.type === 'deep' && reefKeys.has((z.x + dx) + ',' + (z.y + dy)))) bad++;   // 龍淵那一圈小礁（v0.8.24）不算
     }
     if (bad) probs.push(tag + '方圓 ' + R + ' 格裡有 ' + bad + ' 格不是' + (z.type === 'land' ? '走得上去的陸地' : z.type === 'peak' ? '陸地' : '水'));
     if (z.type === 'deep' && T(z.x, z.y) !== '淼') probs.push(tag + '中心不是深水');
+    if (z.type === 'deep') {   // v0.8.24 龍淵的小礁：每個四到十格，都在十五到二十格那一圈，每個至少有一格放得了灶鼎；v0.8.25 起二到五個、彼此隔五格水
+      const rs = G.reefs(seed); zoneStat.reefs = (zoneStat.reefs || 0) + rs.length;
+      if (rs.length < G.REEF_MIN || rs.length > G.REEF_MAX) probs.push(tag + '小礁有 ' + rs.length + ' 個');
+      rs.forEach((cells, i) => {
+        if (cells.length < G.REEF_AREA[0] || cells.length > G.REEF_AREA[1]) probs.push(tag + '第 ' + (i + 1) + ' 個小礁 ' + cells.length + ' 格');
+        if (cells.some(([x, y]) => { const d = Math.hypot(x - z.x, y - z.y); return d < G.REEF_RING[0] || d > G.REEF_RING[1]; })) probs.push(tag + '第 ' + (i + 1) + ' 個小礁出了那一圈');
+        if (!cells.some(([x, y]) => { const k = G.DB[T(x, y)].kind; return k === 'ground' || k === 'plant'; })) probs.push(tag + '第 ' + (i + 1) + ' 個小礁沒有放得了灶鼎的地');
+        rs.forEach((o, j) => { if (j > i && cells.some(([x, y]) => o.some(([u, v]) => Math.max(Math.abs(x - u), Math.abs(y - v)) <= G.REEF_GAP))) probs.push(tag + '第 ' + (i + 1) + '、' + (j + 1) + ' 個小礁隔不到五格水'); });
+      });
+    }
     // 走得通：陸的從島心走到岸邊（貼著水的格子）；洞庭從外海開方舟（三乘三都是水）進到湖心
     const ext = z.ext + 4, inside = (x, y) => (x - z.x) ** 2 + (y - z.y) ** 2 <= ext * ext;
     if (z.type === 'land' || z.type === 'peak') {
@@ -99,5 +109,6 @@ const ratio = sumNew / sumOld;
 console.log('v0.7 本島陸地平均：' + Math.round(sumOld / N) + ' → ' + Math.round(sumNew / N) + ' 格（×' + ratio.toFixed(3) + '）');
 if (Math.abs(ratio - 1.45) > 0.05) { bad++; console.log('陸地平均多了 ' + Math.round((ratio - 1) * 100) + '%，不是四成五上下'); }
 console.log('v0.8.4 四方地界：壓到外島的 ' + zoneStat.forced + ' 處；不周山平均併進 ' + (zoneStat.merged / N).toFixed(2) + ' 座外島');
+console.log('v0.8.25 龍淵小礁：平均 ' + ((zoneStat.reefs || 0) / N).toFixed(2) + ' 個');
 console.log(bad ? ('有 ' + bad + ' 座島有問題') : ('全部 ' + N + ' 座島都玩得下去'));
 process.exit(bad ? 1 : 0);

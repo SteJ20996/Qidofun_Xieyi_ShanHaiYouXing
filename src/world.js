@@ -382,7 +382,7 @@
       return f;
     }
     removeFog(id) { const f = this.fogs.get(id); if (!f) return; for (const k of f.cells) if (this.fogCells.get(k) === id) this.fogCells.delete(k); this.fogs.delete(id); }
-    // 在玩家附近的陸地上起一片霧：找一處陸地當中心，配一個隨機的形；蓋得到的地太少（小島、橋上、屋邊）或壓到玩家身邊就換個地方（最多八次）
+    // 在玩家附近的陸地上起一片霧：找一處陸地當中心，配一個隨機的形；蓋得到的地太少（小島、棧上、屋邊）或壓到玩家身邊就換個地方（最多八次）
     spawnFog(px, py) {
       for (let attempt = 0; attempt < 8; attempt++) { const f = this.growFog(px, py); if (f) return f; }
       this.fogMiss = (this.fogMiss || 0) + 1;   // 都起不來：記一筆，測試與除錯用
@@ -419,10 +419,12 @@
     }
     // ---------- 船 ----------
     shipAt(x, y) { const ak = this.shipCells.get(U.key(x, y)); return ak ? this.ships.get(ak) || null : null; }
-    shipFootprint(kind, ax, ay) { return (SHIPS[kind] || SHIPS['孤帆']).off.map(([dx, dy]) => [ax + dx, ay + dy]); }
-    shipFits(kind, ax, ay, ok) { return this.shipFootprint(kind, ax, ay).every(([x, y]) => ok(x, y)); }
-    addShip(ax, ay, rec) {              // 把船停在錨點：船身每格寫成「舟」
-      const cells = this.shipFootprint(rec.kind, ax, ay), ak = U.key(ax, ay);
+    // v0.8.17 船身是一塊長方形：(ax, ay) 是左上角，dir 'v' 南北長、'h' 東西長；第一格是左上角
+    shipFootprint(kind, ax, ay, dir) { const [W, H] = World.shipDims(kind, dir), out = []; for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) out.push([ax + i, ay + j]); return out; }
+    shipFits(kind, ax, ay, ok, dir) { return this.shipFootprint(kind, ax, ay, dir).every(([x, y]) => ok(x, y)); }
+    addShip(ax, ay, rec) {              // 把船停在左上角 (ax, ay)：船身每格寫成「舟」
+      rec.dir = World.shipDir(rec);
+      const cells = this.shipFootprint(rec.kind, ax, ay, rec.dir), ak = U.key(ax, ay);
       rec.cells = cells; this.ships.set(ak, rec);
       for (const [x, y] of cells) { this.shipCells.set(U.key(x, y), ak); this.set(x, y, '舟'); }
       return rec;
@@ -430,7 +432,7 @@
     removeShip(ak) {                    // 船開走或毀了：船身還原成底下的水
       const rec = this.ships.get(ak); if (!rec) return null;
       this.ships.delete(ak);
-      for (const [x, y] of rec.cells) { const k = U.key(x, y); if (this.shipCells.get(k) === ak) { this.shipCells.delete(k); const b = this.base(x, y); if (this.get(x, y) === '舟') this.set(x, y, DB[b] && DB[b].kind === 'water' ? b : '水'); } }
+      for (const [x, y] of rec.cells) { const k = U.key(x, y); if (this.shipCells.get(k) === ak) { this.shipCells.delete(k); const b = this.base(x, y); if (this.get(x, y) === '舟') this.set(x, y, (DB[b] && DB[b].kind === 'water') || b === '灘' ? b : '水'); } }   // 停在沙洲上的船開走了：還原成灘，不變成水（v0.8.18）
       return rec;
     }
     shipCenter(rec) { let sx = 0, sy = 0; for (const [x, y] of rec.cells) { sx += x; sy += y; } return { x: sx / rec.cells.length + 0.5, y: sy / rec.cells.length + 0.5 }; }
@@ -667,7 +669,7 @@
       const wallHp = {}; for (const [k, v] of this.wallHp) wallHp[k] = v;
       return { seed: this.seed, dayLen: DAY, time: U.r4(this.time), wallHp, diff, burn, timers, stoves, shelves, bags, weirs, explored, seen, scarecrows, ores: Object.fromEntries([...this.ores].map(([k, v]) => [k, U.r4(v)])), chests, nets, rainUntil: U.r4(this.rainUntil), nextRainAt: U.r4(this.nextRainAt),
         fogs: [...this.fogs.values()].map(f => [U.r4(f.until), [...f.cells].join(';'), f.sea ? 1 : 0, f.shape, [U.r4(f.x), U.r4(f.y), U.r4(f.age || 0), U.r4(f.ang || 0)]]), fogPlan: this.fogPlan.map(U.r4), fogDay: this.fogDay,
-        ships: Object.fromEntries([...this.ships].map(([k, v]) => [k, { kind: v.kind, hp: U.r4(v.hp), skulls: (v.skulls || []).map(([n, e]) => [n, U.r4(e)]), repairs: v.repairs || 0, cells: v.cells }])) };
+        ships: Object.fromEntries([...this.ships].map(([k, v]) => [k, { kind: v.kind, hp: U.r4(v.hp), skulls: (v.skulls || []).map(([n, e]) => [n, U.r4(e)]), repairs: v.repairs || 0, cells: v.cells, fid: v.fid, dir: v.dir, t: v.t }])) };   // t：下水的時刻（v0.8.21）   // fid：洞庭那一場用過這艘（v0.8.16）
     }
     restore(s, briefDay) {
       const t0 = s.time || DAY * MORNING; this.time = t0; this.timeShift = 0;
@@ -680,7 +682,7 @@
       }
       const sh = (v) => typeof v === 'number' && v > 0 ? U.r4(v + this.timeShift) : v;
       this.diff = new Map(Object.entries(s.diff || {})); this.ver = (this.ver || 0) + 1;
-      for (const [k, v] of this.diff) if (v === '牆') this.diff.set(k, '墟');   // v0.6.2 前的殘牆字
+      for (const [k, v] of this.diff) if (v === '牆') this.diff.set(k, '墟'); else if (v === '橋') this.diff.set(k, '棧');   // v0.6.2 前的殘牆字；v0.8.22 橋與棧併成棧
       this.wallHp = new Map(Object.entries(s.wallHp || {}));
       this.lamps = new Set(); for (const [k, v] of this.diff) if (v === '燈') this.lamps.add(k);
       this.rainUntil = sh(s.rainUntil || 0) > this.time ? sh(s.rainUntil) : 0;
@@ -697,7 +699,7 @@
           if (anchor) this.addShip(anchor[0], anchor[1], old); else { const b = this.base(ax, ay); this.set(ax, ay, DB[b].kind === 'water' ? b : '水'); }
           continue;
         }
-        const rec = { kind: SHIPS[v.kind] ? v.kind : '孤帆', hp: v.hp, skulls: (v.skulls || []).map(([n, e]) => [n, sh(e)]).filter(x => x[1] > this.time), repairs: v.repairs || 0, cells: v.cells };
+        const rec = { kind: SHIPS[v.kind] ? v.kind : '孤帆', hp: v.hp, skulls: (v.skulls || []).map(([n, e]) => [n, sh(e)]).filter(x => x[1] > this.time), repairs: v.repairs || 0, cells: v.cells, fid: v.fid, t: v.t === undefined ? undefined : sh(v.t) }; rec.dir = v.dir || World.shipDir(rec);   // v0.8.17 前的船沒記擺向：照船身量
         this.ships.set(k, rec); for (const [x, y] of rec.cells) this.shipCells.set(U.key(x, y), k);
       }
       for (const [k, v] of this.diff) if (v === '舟' && !this.shipCells.has(k)) { const [x, y] = U.unkey(k), b = this.base(x, y); this.set(x, y, DB[b].kind === 'water' ? b : '水'); }   // 沒有記錄的舟字：還原成水
@@ -708,8 +710,19 @@
         for (const [x, y] of rec.cells) { const b = this.base(x, y); if (DB[b].kind !== 'water') this.set(x, y, b); }
         const ok = (x, y) => { const t = this.get(x, y); return DB[t].kind === 'water' && t !== '舟'; };
         let spot = null;
-        for (let r = 1; r <= 60 && !spot; r++) for (let i = -r; i <= r && !spot; i++) for (const [x, y] of [[ax + i, ay - r], [ax + i, ay + r], [ax - r, ay + i], [ax + r, ay + i]]) if (!spot && this.shipFits(rec.kind, x, y, ok)) spot = [x, y];
+        for (let r = 1; r <= 60 && !spot; r++) for (let i = -r; i <= r && !spot; i++) for (const [x, y] of [[ax + i, ay - r], [ax + i, ay + r], [ax - r, ay + i], [ax + r, ay + i]]) if (!spot && this.shipFits(rec.kind, x, y, ok, rec.dir)) spot = [x, y];
         if (spot) { this.addShip(spot[0], spot[1], rec); this.movedShips++; }
+      }
+      this.resizedShips = 0; this.lostShips = [];
+      for (const [ak, rec] of [...this.ships]) {   // v0.8.18 船改了大小（孤帆二乘二、方舟三乘三）：舊船照新大小重停，先找蓋得住原本左上角的擺法，再往外找；六十格內都停不下就交給遊戲端收進囊
+        const [W, H] = World.shipDims(rec.kind, rec.dir); if (rec.cells.length === W * H) continue;
+        const x0 = Math.min(...rec.cells.map(c => c[0])), y0 = Math.min(...rec.cells.map(c => c[1])), old = new Set(rec.cells.map(([x, y]) => U.key(x, y)));
+        this.removeShip(ak); delete rec.cells;
+        const ok = (x, y) => { const t = this.get(x, y); return DB[t].kind === 'water' && DB[this.raw(x, y)].kind === 'water' && !this.shipCells.has(U.key(x, y)); };
+        let spot = null, best = -1;
+        for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const ax = x0 - i, ay = y0 - j; if (!this.shipFits(rec.kind, ax, ay, ok, rec.dir)) continue; const n = this.shipFootprint(rec.kind, ax, ay, rec.dir).filter(([x, y]) => old.has(U.key(x, y))).length; if (n > best) { best = n; spot = [ax, ay]; } }
+        for (let r = 1; r <= 60 && !spot; r++) for (let i = -r; i <= r && !spot; i++) for (const [x, y] of [[x0 + i, y0 - r], [x0 + i, y0 + r], [x0 - r, y0 + i], [x0 + r, y0 + i]]) if (!spot && this.shipFits(rec.kind, x, y, ok, rec.dir)) spot = [x, y];
+        if (spot) { this.addShip(spot[0], spot[1], rec); this.resizedShips++; } else this.lostShips.push(rec);
       }
       this.fogPlan = (s.fogPlan || []).filter(t => typeof t === 'number').map(sh);
       this.fogDay = typeof s.fogDay === 'number' ? s.fogDay : Math.floor(this.time / DAY);
@@ -732,6 +745,13 @@
   }
 
   World.SHIPS = SHIPS;
+  World.shipDims = (kind, dir) => { const k = SHIPS[kind] || SHIPS['孤帆']; return dir === 'h' ? [k.h, k.w] : [k.w, k.h]; };   // 船身寬、長（東西、南北各幾格）
+  World.shipDir = (rec) => {   // 擺向：記著的就照記的，沒記的（v0.8.17 前）照船身量，量不出就是南北長
+    if (rec.dir === 'h' || rec.dir === 'v') return rec.dir;
+    const c = rec.cells; if (!c || !c.length) return 'v';
+    const xs = c.map(a => a[0]), ys = c.map(a => a[1]);
+    return Math.max(...xs) - Math.min(...xs) > Math.max(...ys) - Math.min(...ys) ? 'h' : 'v';
+  };
   World.newShip = (kind) => ({ kind: SHIPS[kind] ? kind : '孤帆', hp: (SHIPS[kind] || SHIPS['孤帆']).hp, skulls: [], repairs: 0 });
   root.World = World;
   root.World.CH = CH;
