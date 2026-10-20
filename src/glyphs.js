@@ -7,7 +7,7 @@
 
   const INK = {
     black: '#1c1a17', water: '#2f5878', deep: '#223f5a', rock: '#4a4f5c', snow: '#7f8ea3',
-    plant: '#263428', forest: '#1b261d', red: '#b4392a', gold: '#9c6d12', brown: '#5a3e2b',
+    plant: '#263428', forest: '#1b261d', red: '#b4392a', gold: '#9c6d12', qing: '#2a6f7a', brown: '#5a3e2b',
     sand: '#8d7a4b', ash: '#6f6a66', soil: '#6b4a2f', field: '#4f5a2f', beast: '#2a2320', ghost: '#3b3550', cotton: '#6f6a5a', brick: '#7a4a35', hemp: '#5a6a3a', bog: '#4d4a2c',
     desert: '#9a7f45', lava: '#c2461f', basalt: '#3d3a40', obsidian: '#2b2133', river: '#3a6f92', spring: '#4f8aa0', cave: '#3a3028',   // v0.7 外島的新地形
     azure: '#24766b'   // v0.8 東海青龍
@@ -61,7 +61,7 @@
     '磊': { s: 15, walk: 0, kind: 'rock', ink: INK.rock, yield: { '石': 3 }, time: 3.0, need: '鎬', flavor: '三石為磊。要用鎬。' },
     '山': { s: 3, walk: 0, kind: 'rock', ink: INK.rock, yield: { '石': 2 }, time: 2.0, need: '鎬', to: '石', flavor: '山不可越，鎬可鑿之。' },
     '煤': { s: 13, walk: 0, kind: 'rock', ink: INK.black, yield: { '煤': 2 }, time: 3.0, need: '鎬', to: '石', flavor: '煤層。要用鎬。入灶火旺而久；礦二煤一入旺灶，煉成鐵。' },
-    '鐵': { s: 21, walk: 0, kind: 'rock', ink: INK.brick, yield: { '鐵礦': 2 }, bonus: { '鎢礦': 1 / 18 }, trueBonus: true, time: 3.5, need: '鎬', to: '石', flavor: '鐵礦脈。要用鎬。礦二煤一入旺灶，煉成鐵；鐵可打甲、盔、靴，鍛鋼具。鑿時十八分之一得鎢礦（真隨機）。鑿掉七到十日後原地長回來，那時那格得是石、草或白紙。' },
+    '鐵': { s: 21, walk: 0, kind: 'rock', ink: INK.brick, yield: { '鐵礦': 2 }, bonus: { '鎢礦': 1 / 25 }, trueBonus: true, time: 3.5, need: '鎬', to: '石', flavor: '鐵礦脈。要用鎬。礦二煤一入旺灶，煉成鐵；鐵可打甲、盔、靴，鍛鋼具。鑿時十八分之一得鎢礦（真隨機）。鑿掉七到十日後原地長回來，那時那格得是石、草或白紙。' },
     // —— 火
     '火': { s: 4, walk: 0, kind: 'fire', light: 2.5, ink: INK.red, flavor: '火。虎豹畏之。' },
     '炎': { s: 8, walk: 0, kind: 'fire', light: 3.5, ink: INK.red, flavor: '二火為炎。' },
@@ -123,7 +123,8 @@
     '修蛇': { s: 21, kind: 'beast', ink: '#2c3b2a', hp: 2400, atk: 18, name: '修蛇', flavor: '修蛇（v0.8.16，大魔王）：洞庭湖裡的長蛇，大字「蛇」當頭，身後拖著六個「尾」。命二千四（照難度加：簡單二千七、一般三千、困難三千五），只在水裡。浮著時追著船咬（力十八）；潛蹤：沉下去打不到，冒泡的地方一息半後浮上來撞船（船掉二十五）；長蛇纏舟：船四息動不了、每息掉八，纏著時打頭多吃五成；吞象：面前三格寬、四格長咬下去（溺三十），岸上離水兩格內也搆得到；命剩一半起吐毒涎（照蛇毒）。打尾吃四分之三，命剩一半以下只剩四分之一。' },
     '雕': { s: 16, kind: 'beast', ink: '#4a4f5c', hp: 520, atk: 16, name: '蠱雕', flavor: '蠱雕（v0.8.6，小魔王）：像雕，頭上一隻角，在南邊的海上與外島上空盤旋。命五百二十（照難度加：簡單六百、一般七百、困難八百）。隔一陣一聲啼，像嬰兒在哭，聽得心裡發慌（心：愜意掉，懼得一息多出不了手）；再一陣從天上撲下來抓人（力十六），抓完又飛回高處。牠在天上時只有彈弓打得到，撲下來貼著你時才是出手的時候。斃之得蠱雕殘體一或二塊。' },
     '畢': { s: 11, kind: 'beast', ink: '#24766b', hp: 600, atk: 14, name: '畢方', flavor: '畢方（v0.8.25，小魔王）：〈西山經〉「其狀如鶴，一足，赤文青質而白喙……見則其邑有訛火」。青底朱紋的「畢」字，一隻腳跳著走，只在火島上。命六百（照難度加：簡單七百、一般八百、困難九百），貼著啄一下十四（力）。落腳的地方就起訛火，踩上去灼傷；隔一陣一聲鳴，你身邊三處先冒出圈，一息後燒起來。斃之得畢方羽一或二根，對空神兵的料。' },
-    '大風': { s: 9, kind: 'beast', ink: '#5b6b7a', hp: 1600, atk: 18, name: '大風', flavor: '大風（v0.8.25，大魔王）：青丘之澤上的大鳥，在天上是風，撲下來是鳥。命一千六（照難度加：簡單一千八、一般二千、困難二千三）。在天上只有彈弓與彤弓素矰打得到；撲下來抓一下（力，入木三分：一分鎖喉、二分加懼、三分深懼），貼著停一會兒，那是近身的時候。扶搖：腳下捲起旋風，把人拋出去、轉得暈頭（亂）；摧屋拔木：一陣狂風，吹垮磚牆、拔起樹；命剩一半起飛沙走石。' },
+    '大風': { s: 9, kind: 'beast', ink: '#5b6b7a', hp: 1600, atk: 18, name: '大風', flavor: '大風（v0.8.25，大魔王）：青丘之澤上的大鳥，在天上是風，撲下來是鳥。命一千六（照難度加：簡單一千八、一般二千、困難二千三）。在天上只有彈弓與青冥落羽打得到；撲下來抓一下（力，入木三分：一分鎖喉、二分加懼、三分深懼），貼著停一會兒，那是近身的時候。扶搖：腳下捲起旋風，把人拋出去、轉得暈頭（亂）；摧屋拔木：一陣狂風，吹垮磚牆、拔起樹；命剩一半起飛沙走石。' },
+    '共工': { s: 9, kind: 'beast', ink: '#b4392a', hp: 7200, atk: 30, name: '共工', flavor: '共工（v0.9，終極魔王）：人面蛇身，朱髮，「怒而觸不周之山，天柱折，地維絕」。命七千二（照難度加：簡單八千一、一般九千、困難一萬零四百），再照取經與獨力的公式加。三副樣子輪著換：海（潛在地裡游，身後化成淖，從人腳下鑽出來）、陸（立成三格高的「工」，吸人、頭觸、隕石）、空（倒懸的「天」，力壓千鈞、星移斗轉）；換的時候現本相，那幾息不出招。凡鐵傷不深：非神兵只有三分之一；要用對的神兵——海是燭龍焚溟、陸是九閽鳴雷、空是青冥落羽，錯的只有三成。' },
     '朱雀': { s: 17, kind: 'beast', light: 3, ink: '#c23b22', hp: 9999, name: '朱雀', flavor: '朱雀（v0.8.6），四象之南，棲在丹穴，四十格內才看得見。沒帶朱羽的人走近，牠就飛開，總離人五格以上；帶著朱羽，牠落下來等你。兩格內按 E 求教，牠教你氣順：窒與心的傷害少四分之一；魂環亮起鳳翎那三分之一。' },
     '玄武': { s: 13, kind: 'beast', ink: '#1c1a17', hp: 9999, name: '玄武', flavor: '玄武（v0.8.8），四象之北，龜與蛇，伏在玄洲島心，像一塊很久沒動的石頭，四十格內才看得見。不收信物：兩格內按 E 取經，每打一隻大魔王之前取一卷，四次。取經是一場試煉，玄武吐一個墨寫的影子讓你先打一回。' },
   };
@@ -192,14 +193,14 @@
     '朱羽': { s: 12, kind: 'item', flavor: '九塊蠱雕殘體加精煤一、火蝕一，在鼎裡煉成的一根朱紅的羽。丹穴的朱雀要的就是它：帶去兩格內按 E 求教，朱雀收下就教你氣順。' },
     '油脂': { s: 18, kind: 'item', flavor: '野豬野牛身上割下的油脂（斃之 35% 的機會得一份）。要裝在麻布包裡才帶得走。棉一油脂一，做成蠟燭三根。' },
     '麻布包': { s: 16, kind: 'item', single: true, flavor: '麻布二、麻一縫的小包，專裝油脂，一包裝八份。包不會用掉，做東西時從包裡取油；沒有包，斃野豬野牛割下的油脂就帶不走。' },
-    '畢方羽': { s: 21, kind: 'item', flavor: '斃畢方留下的羽，一頭一或二根（約三分之一的機會兩根），青底朱紋，摸上去是燙的（v0.8.25）。對空神兵彤弓素矰的料：畢方羽六、鎢鋼三、竹六、麻布三。不是殘體，惜字亭不收。' },
-    '彤弓素矰': { s: 37, kind: 'tool', tool: '矰', dmg: 120, dur: 199, flavor: '〈海內經〉：「帝俊賜羿彤弓素矰，以扶下國。」朱紅的弓，白羽的矰，矰尾繫著絲，射出去收得回來，不用箭。對空神兵（v0.8.25）：膽氣卅一重方可造、可挽。面前十格內最近的一隻，天上的（蠱雕、大風）一百二十（照難度再加三到五分），陸上海中的只有一成；射中天上的，絲纏住牠（繳），兩息半落不回天上。隨身則膽氣減得快，同九閽鳴雷。' },
+    '畢方羽': { s: 21, kind: 'item', flavor: '斃畢方留下的羽，一頭一或二根（約三分之一的機會兩根），青底朱紋，摸上去是燙的（v0.8.25）。對空神兵青冥落羽的料：畢方羽六、鎢鋼三、竹六、麻布三。不是殘體，惜字亭不收。' },
+    '青冥落羽': { s: 37, kind: 'tool', tool: '弋', dmg: 120, dur: 199, flavor: '〈悲回風〉：「據青冥而攄虹兮，遂儵忽而捫天。」青冥是天。青竹為弓，白羽的矰，矰尾繫著絲，射出去收得回來，不用箭（以絲繫矰而射叫弋，手上這一件的字就是「弋」，v0.8.32）；中了天上之物，羽紛紛落下。對空神兵（v0.8.25 叫彤弓素矰，v0.8.31 使用者改名）：膽氣卅一重方可造、可挽。面前十格內最近的一隻，天上的（蠱雕、大風）一百二十（照難度再加三到五分），陸上海中的只有一成；射中天上的，絲纏住牠（繳），兩息半落不回天上。隨身則膽氣減得快，同九閽鳴雷。' },
     '燭龍焚溟': { s: 58, kind: 'tool', tool: '焚', dmg: 120, dur: 199, flavor: '燭龍銜火，焚盡溟海。火屬而克海水，故為神兵。膽氣卅一重方可造、可揮：面向獸按 E，三格內諸獸同受灼燒，海中之物（蜃、龜）一百二十（照難度再加三到五分），陸上與天上之物減半。隨身的膽氣減益與九閽鳴雷相同，兩件同帶只算一重。按 L 拿出（手上已是神兵就換另一件）、P 收回。' },
     '九閽鳴雷': { s: 26, kind: 'tool', tool: '鎚', dmg: 120, dur: 199, flavor: '撼地之鎚。膽氣卅一重方可造、可掄：面向獸按 E，三格內諸獸同受一百二十傷（照難度再加三到五分）。隨身則膽氣減得快（簡單四日、一般三日、困難二日一減，下限廿八／廿七／廿六重；困難另慢慢掉力），兩件神兵同帶也只算一重；低於卅一重掄不動。按 L 拿出、P 收回。' },
     '鐵礦': { s: 21, flavor: '鐵礦石。礦二煤一入旺灶，煉成鐵。' },
     '棗': { s: 12, kind: 'food', food: { eat: 15 }, flavor: '綠洲的椰棗，曬乾了，放多久都不會醉。飽 +15。' },
     '黑曜石': { s: 12, kind: 'item', flavor: '火島上鑿來的黑曜石，碎口鋒利如刀。黑曜石二、木一、麻一，磨成曜刃。' },
-    '鎢礦': { s: 21, flavor: '鎢礦石，鑿鐵礦脈時十八分之一的機會挖到（真隨機）。鎢礦一、鐵礦二、精煤一入旺灶，煉成鎢鋼。' },
+    '鎢礦': { s: 21, flavor: '鎢礦石，鑿鐵礦脈時二十五分之一的機會挖到（真隨機）。鎢礦一、鐵礦二、精煤一入旺灶，煉成鎢鋼。' },
     '精煤': { s: 14, flavor: '八塊煤煉成的精煤。煉鎢鋼、鍛鎢鋼具要它；入灶可燒九百息。' },
     '鎢鋼': { s: 21, flavor: '鎢鋼。可鍛刀鎬鋤劍斧，可打甲盔靴，強過鋼。' },
     '鎢鋼甲': { s: 21, kind: 'wear', slot: '甲', red: 0.22, iron: true, tung: true, life: 360, flavor: '鎢鋼甲。受傷減二成二，壽命三百六十日。修補第一次鐵一、再來鐵二、鐵三鎢鋼一、鐵六鎢鋼二，力十二、飽十五。' },
@@ -234,7 +235,7 @@
     '鎢鋼劍': { s: 21, kind: 'tool', tool: '劍', dmg: 84, dur: 112, tung: true, flavor: '鎢鋼劍。一下八十四，耐久一百一十二。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二，耗力八、飽十。' },
     '鎢鋼斧': { s: 21, kind: 'tool', tool: '斧', dmg: 32, dur: 112, tung: true, flavor: '鎢鋼斧。耐久一百一十二。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二，耗力八、飽十。' },
   };
-  const TOOL_NAMES = { '刀': '刀', '鎬': '鎬', '鋤': '鋤', '劍': '劍', '斧': '斧', '鎚': '九閽鳴雷', '焚': '燭龍焚溟', '矰': '彤弓素矰' };   // 石、鋼、鎢鋼都算
+  const TOOL_NAMES = { '刀': '刀', '鎬': '鎬', '鋤': '鋤', '劍': '劍', '斧': '斧', '鎚': '九閽鳴雷', '焚': '燭龍焚溟', '弋': '青冥落羽' };   // v0.8.32：青冥落羽的字從「矰」改「弋」，射出去的仍是矰   // 石、鋼、鎢鋼都算
   // 船：兩種。off 是行船時船身相對於人的格子（人站在船身裡）；hp 命；slots 船頭放得下幾個獸首骨
   const SHIPS = {
     '孤帆': { w: 1, h: 2, hp: 120, slots: 2, speed: 1 },   // v0.8.21 使用者定：孤帆改回一乘二、方舟改回二乘三（v0.8.18–v0.8.20 是二乘二、三乘三）；開船的方向定哪邊長
@@ -314,7 +315,7 @@
     { id: 'ship', out: '孤帆', n: 1, need: { '木板': 8, '船槳': 1, '船帆': 1 }, sta: 16, level: 8, note: '膽氣八重方可造。一乘二，命一百二十，船頭兩個首骨' },
     { id: 'ark', out: '方舟', n: 1, need: { '木板': 36, '船槳': 4, '船帆': 3, '鐵': 8, '麻布': 6, '鎢鋼': 2 }, sta: 48, level: 8, note: '二乘三，命四百二十，船頭五個首骨，船速是孤帆的六成；面前三乘三都是水才放得下' },
     { id: 'hammer', out: '九閽鳴雷', n: 1, need: { '鐵': 12, '煤': 6, '石子': 9, '麻布': 2, '果酒': 1 }, sta: 60, level: 31, note: '三格內諸獸同受 120 傷（看難度再加 3–5%）；天上海中的減半；隨身膽氣減得快，看難度' },
-    { id: 'skygod', out: '彤弓素矰', n: 1, need: { '畢方羽': 6, '鎢鋼': 3, '竹': 6, '麻布': 3 }, sta: 60, level: 31, note: '對空神兵（v0.8.25）：面前十格內一隻，天上的 120、陸上海中一成；射中天上的纏住兩息半（繳）' },
+    { id: 'skygod', out: '青冥落羽', n: 1, need: { '畢方羽': 6, '鎢鋼': 3, '竹': 6, '麻布': 3 }, sta: 60, level: 31, note: '對空神兵（v0.8.25）：面前十格內一隻，天上的 120、陸上海中一成；射中天上的纏住兩息半（繳）' },
   ];
 
   // ---------- 一紙之島 ----------
@@ -450,11 +451,22 @@
     return classify(x, y, seed, h, f.m, f.t);
   }
   const ISLE_CELL = 250, ISLE_P = 0.78, ISLE_CLEAR = 330, ISLE_N = WORLD_R / ISLE_CELL;
+  // v0.8.26 使用者定（海上航行太悶）：生成版本。舊存檔（沒寫 gen）照第一版；新開的島（含渡海開的新紙）用第二版——
+  //   外島半徑 ISLE_R2（28 起、最大 100，仍整座留在自己那塊方塊裡），開闊的海上散著孤嶼（見下面 skerryAt）。本島、地界、碑、地標一律照舊。
+  // v0.8.27 使用者定：第三版——整張紙的陸地約四成（大陸與島），見下面「第三版」那一段；第二版只留給 v0.8.26 開的存檔
+  const GEN_NEW = 3, ISLE_R2 = [28, 72];
+  let GEN = 1;
+  function setGen(g) {   // 開島或讀檔時定下（game.js 在 new World() 之前叫）；換了版本，跟外島、大陸有關的快取都要重算
+    g = g >= 3 ? 3 : g >= 2 ? 2 : 1; if (g === GEN) return GEN;
+    GEN = g; isleCache.clear(); skerryCache.clear(); siteCache.clear(); for (const c of [zoneCache, thetaCache, massCache, gateCache, siteFixCache, nameCache]) for (const k of Object.keys(c)) delete c[k];
+    return GEN;
+  }
   const FLINT_BEACH = 1 / 120, FLINT_ROCK = 1 / 80;   // v0.8.6 燧石：海邊沙礫帶（擴出去的新地、外島、地界）與火島的岩地偶爾一格「燧」；本島原本的陸地不長
   const ISLE_KINDS = [['漠', 20], ['火', 14], ['川', 24], ['雪', 18], ['青', 24]];
   const ISLE_NAMES = { '漠': '漠島', '火': '火島', '川': '川島', '雪': '雪島', '青': '青島' };
   const isleCache = new Map();
-  function isleAt(ci, cj, seed) {   // 第 (ci, cj) 塊方塊裡的島（沒有就 null）
+  function isleAt(ci, cj, seed) {   // 第 (ci, cj) 塊方塊裡的島（沒有就 null）；第三版是那塊的地域，地域的中心在陸上才算
+    if (GEN >= 3) { const st = siteAt(ci, cj, seed); return st && st.onLand ? st : null; }
     const k = seed + ':' + ci + ',' + cj;
     if (isleCache.has(k)) return isleCache.get(k);
     let isl = null;
@@ -463,7 +475,7 @@
       const cx = Math.round(ox + mg + U.rand2(ci, cj, seed + 607) * (ISLE_CELL - 2 * mg)), cy = Math.round(oy + mg + U.rand2(ci, cj, seed + 613) * (ISLE_CELL - 2 * mg));
       if (Math.hypot(cx, cy) >= ISLE_CLEAR) {
         const edge = Math.min(cx - ox, ox + ISLE_CELL - cx, cy - oy, oy + ISLE_CELL - cy);   // 島整個留在自己那塊方塊裡，查一格只要看一座島
-        const R = Math.min(20 + Math.pow(U.rand2(ci, cj, seed + 619), 1.4) * 55, edge / 1.4);
+        const u = U.rand2(ci, cj, seed + 619), R = GEN >= 2 ? Math.min(ISLE_R2[0] + Math.pow(u, 1.2) * ISLE_R2[1], edge / 1.25) : Math.min(20 + Math.pow(u, 1.4) * 55, edge / 1.4);   // v0.8.26 第二版：大一些（位置、種類照舊）
         let r = U.rand2(ci, cj, seed + 631) * 100, kind = '青';
         for (const [kk, wgt] of ISLE_KINDS) { if (r < wgt) { kind = kk; break; } r -= wgt; }
         isl = { id: ci + ',' + cj, ci, cj, cx, cy, R, kind, name: ISLE_NAMES[kind], key: U.hash2(ci, cj, seed + 641) & 0xffff };
@@ -472,7 +484,8 @@
     isleCache.set(k, isl); return isl;
   }
   function isles(seed) { const out = []; for (let cj = -ISLE_N; cj < ISLE_N; cj++) for (let ci = -ISLE_N; ci < ISLE_N; ci++) { const i = isleAt(ci, cj, seed); if (i) out.push(i); } return out; }
-  function isleOf(x, y, seed) {     // 這格在哪座外島的範圍裡（海上也算，到島半徑的 1.25 倍）
+  function isleOf(x, y, seed) {     // 這格在哪座外島的範圍裡（海上也算，到島半徑的 1.25 倍）；第三版：陸上這格屬於哪個地域（海上是 null）
+    if (GEN >= 3) return contLand(x, y, seed) ? regionAt(x, y, seed) : null;
     const isl = isleAt(Math.floor(x / ISLE_CELL), Math.floor(y / ISLE_CELL), seed);
     return isl && Math.hypot(x - isl.cx, y - isl.cy) <= isl.R * 1.25 ? isl : null;
   }
@@ -480,22 +493,78 @@
     const a = U.rand2(isl.key, 3, seed + 709) * Math.PI * 2;
     return { x: Math.round(isl.cx + Math.cos(a) * isl.R * 0.3), y: Math.round(isl.cy + Math.sin(a) * isl.R * 0.3) };
   }
+  // v0.8.26 孤嶼（第二版才有；取謝靈運〈登江中孤嶼〉，跟燈塔那座「小嶼」是兩回事）：每 SKERRY_CELL 格見方一塊、SKERRY_P 的機會一座，半徑二到十二格、四周一圈淺水，整座留在自己那塊方塊裡；
+  //   離本島方框、地界與大魔王的戰場（ext 與 ground 取大）、紙邊隔 SKERRY_GAP 格，離外島的範圍（島半徑的 1.25 倍）只隔一圈淺水加兩格，所以地界、戰場、大風的陸海比都不受孤嶼影響。
+  //   沒有名字、不長膽氣、不立傳送點；林嶼有木果竹，石嶼有山石、零星的煤（鐵更少，免得鐵與鎢鋼一下子多太多），草嶼有棉麻花，泉嶼島心一口淡水的池。
+  const SKERRY_CELL = 40, SKERRY_P = 0.7, SKERRY_R = [2, 12], SKERRY_SHOAL = 4, SKERRY_GAP = 14, SKERRY_EDGE = 30, SKERRY_NEAR = SKERRY_SHOAL + 2;
+  const SKERRY_KINDS = [['林', 38], ['石', 24], ['草', 26], ['泉', 12]], SKERRY_SPRING_R = 5;
+  const skerryCache = new Map();
+  function skerryAt(ci, cj, seed) {   // 第 (ci, cj) 塊小方塊裡的孤嶼（沒有就 null）
+    if (GEN < 2) return null;
+    const k = seed + ':' + ci + ',' + cj;
+    if (skerryCache.has(k)) return skerryCache.get(k);
+    let it = null;
+    if (U.rand2(ci, cj, seed + 1101) < SKERRY_P) {
+      const ox = ci * SKERRY_CELL, oy = cj * SKERRY_CELL, mg = SKERRY_SHOAL + SKERRY_R[0] + 2;
+      const cx = Math.round(ox + mg + U.rand2(ci, cj, seed + 1103) * (SKERRY_CELL - 2 * mg)), cy = Math.round(oy + mg + U.rand2(ci, cj, seed + 1105) * (SKERRY_CELL - 2 * mg));
+      const edge = Math.min(cx - ox, ox + SKERRY_CELL - 1 - cx, cy - oy, oy + SKERRY_CELL - 1 - cy);
+      const r = Math.min(SKERRY_R[0] + Math.pow(U.rand2(ci, cj, seed + 1107), 1.6) * (SKERRY_R[1] - SKERRY_R[0]), edge - SKERRY_SHOAL - 1);
+      let ok = Math.max(Math.abs(cx), Math.abs(cy)) + r + SKERRY_GAP < WORLD_R - SKERRY_EDGE && Math.max(Math.abs(cx), Math.abs(cy)) - r - SKERRY_SHOAL > HOME_BOX + SKERRY_GAP;
+      const ii = Math.floor(cx / ISLE_CELL), ij = Math.floor(cy / ISLE_CELL);
+      if (GEN >= 3) { const far = r + SKERRY_SHOAL + 3, th = contTheta(seed) - CONT_OPEN; if (ok) ok = [[0, 0], [far, 0], [-far, 0], [0, far], [0, -far]].every(([dx, dy]) => contVal(cx + dx, cy + dy, seed) < th); }   // v0.8.27 第三版：只長在離大陸夠遠的開闊海上
+      else for (let j = ij - 1; ok && j <= ij + 1; j++) for (let i = ii - 1; ok && i <= ii + 1; i++) { const isl = isleAt(i, j, seed); if (isl && Math.hypot(cx - isl.cx, cy - isl.cy) < isl.R * 1.25 + r + SKERRY_NEAR) ok = false; }
+      if (ok) for (const z of zones(seed)) if (Math.hypot(cx - z.x, cy - z.y) < Math.max(z.ext, z.ground || 0) + r + SKERRY_GAP) { ok = false; break; }
+      if (ok) {
+        let q = U.rand2(ci, cj, seed + 1109) * 100, kind = '林';
+        for (const [kk, wgt] of SKERRY_KINDS) { if (q < wgt) { kind = kk; break; } q -= wgt; }
+        if (kind === '泉' && r < SKERRY_SPRING_R) kind = '草';   // 太小的放不下一口池（池邊要有一圈陸地）
+        it = { id: ci + ',' + cj, cx, cy, r, kind, key: U.hash2(ci, cj, seed + 1111) & 0xffff };
+      }
+    }
+    skerryCache.set(k, it); return it;
+  }
+  function skerryOf(x, y, seed) {   // 這格在哪座孤嶼的範圍裡（連四周的淺水）
+    const it = skerryAt(Math.floor(x / SKERRY_CELL), Math.floor(y / SKERRY_CELL), seed);
+    return it && Math.hypot(x - it.cx, y - it.cy) <= it.r + SKERRY_SHOAL ? it : null;
+  }
+  function skerries(seed) {          // 整張紙的孤嶼（gen-check、測試用）
+    const out = [], n0 = Math.floor(-WORLD_R / SKERRY_CELL), n1 = Math.ceil(WORLD_R / SKERRY_CELL);   // 1250／40 不是整數：照實際用到的小方塊（Math.floor）列
+    for (let cj = n0; cj < n1; cj++) for (let ci = n0; ci < n1; ci++) { const it = skerryAt(ci, cj, seed); if (it) out.push(it); }
+    return out;
+  }
+  function skerryTile(x, y, seed) {
+    const it = skerryOf(x, y, seed); if (!it) return '淼';
+    const d = Math.hypot(x - it.cx, y - it.cy), s = seed + 1121 + it.key, h = 1 - d / it.r + (U.fbm(x / 5, y / 5, s, 2) - 0.5) * 0.5;
+    if (h < -0.32) return '淼';
+    if (h < 0) return '水';
+    const rr = U.rand2(x, y, s + 3);
+    if (h < 0.2) return rr < FLINT_BEACH ? '燧' : rr < 0.68 ? '沙' : rr < 0.9 ? '礫' : '石';
+    if (it.kind === '泉' && d <= Math.max(1, it.r * 0.2)) return '池';
+    if (it.kind === '林') return h > 0.55 ? (rr < 0.45 ? '林' : rr < 0.85 ? '木' : '竹') : rr < 0.35 ? '木' : rr < 0.47 ? '果' : rr < 0.53 ? '竹' : rr < 0.58 ? '花' : '草';
+    if (it.kind === '石') return h > 0.5 ? (rr < 0.02 ? '鐵' : rr < 0.08 ? '煤' : rr < 0.6 ? '山' : '石') : rr < 0.45 ? '石' : rr < 0.7 ? '礫' : rr < 0.8 ? '木' : '草';
+    if (it.kind === '草') return rr < 0.55 ? '草' : rr < 0.65 ? '棉' : rr < 0.74 ? '麻' : rr < 0.84 ? '花' : rr < 0.92 ? '木' : '果';
+    return rr < 0.5 ? '草' : rr < 0.75 ? '木' : rr < 0.85 ? '果' : rr < 0.92 ? '花' : '竹';   // 泉嶼
+  }
   function isleTile(x, y, seed) {
-    const isl = isleOf(x, y, seed); if (!isl) return '淼';
+    const isl = isleOf(x, y, seed); if (!isl) return GEN >= 2 ? skerryTile(x, y, seed) : '淼';
     const q = Math.hypot(x - isl.cx, y - isl.cy) / isl.R, s = seed + 701 + isl.key;
     let h = U.fbm(x / 34, y / 34, s, 4) * 0.6 + (1 - U.smoothstep(0.2, 1.1, q)) * 0.5 - 0.12;   // 島心高、往外收成海（島心平均約 0.68，起伏 ±0.12）
     if (isl.kind === '火') h += (1 - U.smoothstep(0, 0.45, q)) * 0.14;                          // 火島另有一座火山錐
     else if (isl.kind === '青') h -= 0.05;                                                      // 青島低一點，山頂才不會整片是雪
+    return kindTile(isl.kind, x, y, s, h, isl.kind === '漠' || isl.kind === '雪' ? isleWell(isl, seed) : null);
+  }
+  // 照地貌的種類（漠火川雪青）與高度 h 寫一格；外島（第一、二版）與大陸的地域（v0.8.27 第三版）共用。well 是保證有綠洲、溫泉的地方
+  function kindTile(kind, x, y, s, h, well) {
     if (h < 0.33) return '淼';
     if (h < 0.395) return '水';
     if (h < 0.415 && U.rand2(x, y, s + 61) < FLINT_BEACH) return '燧';   // 海邊的燧石（v0.8.6）
     const d = U.rand2(x, y, s + 5), m = U.fbm(x / 40 + 300, y / 40 - 300, s + 17, 3);
-    if ((isl.kind === '漠' || isl.kind === '雪') && h >= 0.415) {   // v0.8.9：每座漠島保證一處綠洲、每座雪島保證一處溫泉（離島心三成島半徑的地方）
-      const w = isleWell(isl, seed), dw = Math.hypot(x - w.x, y - w.y);
-      if (isl.kind === '漠' && dw <= 3.2) return dw <= 1.6 ? '池' : d < 0.4 ? '棗' : '草';
-      if (isl.kind === '雪' && dw <= 1.6) return '湯';
+    if ((kind === '漠' || kind === '雪') && h >= 0.415 && well) {   // v0.8.9：每座漠島保證一處綠洲、每座雪島保證一處溫泉（離島心三成島半徑的地方）
+      const dw = Math.hypot(x - well.x, y - well.y);
+      if (kind === '漠' && dw <= 3.2) return dw <= 1.6 ? '池' : d < 0.4 ? '棗' : '草';
+      if (kind === '雪' && dw <= 1.6) return '湯';
     }
-    if (isl.kind === '漠') {           // 漠島：大漠、沙丘，零星的綠洲（池、椰棗、草），岩丘裡有一點煤鐵
+    if (kind === '漠') {           // 漠島：大漠、沙丘，零星的綠洲（池、椰棗、草），岩丘裡有一點煤鐵
       if (h < 0.415) return d < 0.85 ? '漠' : '礫';
       const oa = U.fbm(x / 16 + 77, y / 16 - 77, s + 23, 2);
       if (oa > 0.72 && h < 0.64) return oa > 0.77 ? '池' : d < 0.35 ? '棗' : d < 0.8 ? '草' : '漠';
@@ -503,7 +572,7 @@
       if (U.fbm(x / 9 + 11, y / 9 + 31, s + 29, 2) > 0.6) return '丘';
       return d < 0.03 ? '石' : d < 0.06 ? '礫' : d < 0.07 ? '木' : '漠';
     }
-    if (isl.kind === '火') {           // 火島：山頂一口熔岩，四周岩地與黑曜石脈，山腳火山灰、溫泉
+    if (kind === '火') {           // 火島：山頂一口熔岩，四周岩地與黑曜石脈，山腳火山灰、溫泉
       if (h < 0.415) return d < 0.5 ? '沙' : d < 0.8 ? '岩' : '礫';
       if (h > 0.8) return '熔';
       if (h > 0.6 && U.rand2(x, y, s + 67) < FLINT_ROCK) return '燧';   // 火島岩地裡的燧石（v0.8.6）
@@ -512,7 +581,7 @@
       if (U.fbm(x / 12 + 5, y / 12 - 5, s + 37, 2) > 0.75) return '湯';
       return d < 0.25 ? '灰' : d < 0.4 ? '岩' : m > 0.5 ? (d < 0.7 ? '木' : '草') : (d < 0.8 ? '草' : '石');
     }
-    if (isl.kind === '川') {           // 川島：河從山上蜿蜒到海、低處有湖，林木茂密，果棉麻多
+    if (kind === '川') {           // 川島：河從山上蜿蜒到海、低處有湖，林木茂密，果棉麻多
       if (h < 0.415) return d < 0.8 ? '沙' : '礫';
       if (h > 0.7) return d < 0.04 ? '鐵' : d < 0.09 ? '煤' : d < 0.8 ? '山' : '石';
       if (Math.abs(U.fbm(x / 42 + 13, y / 42 - 13, s + 43, 3) - 0.5) < 0.009 && h < 0.68) return '川';
@@ -521,7 +590,7 @@
       if (m < 0.58) return d < 0.06 ? '果' : d < 0.45 ? '木' : d < 0.75 ? '林' : d < 0.8 ? '棉' : '草';
       return d < 0.5 ? '竹' : d < 0.85 ? '林' : '森';
     }
-    if (isl.kind === '雪') {           // 雪島：雪原寒地，山腹裡有洞窟（窟裡的山壁煤鐵多），山腳偶有溫泉
+    if (kind === '雪') {           // 雪島：雪原寒地，山腹裡有洞窟（窟裡的山壁煤鐵多），山腳偶有溫泉
       if (h < 0.415) return d < 0.6 ? '石' : d < 0.85 ? '雪' : '礫';
       if (h > 0.6) {
         const cv = U.fbm(x / 11 + 3, y / 11 + 7, s + 53, 3);
@@ -540,13 +609,14 @@
   //   水（龍淵、洞庭）：在目標附近找一塊外島碰不到的海，方圓 r 格內保證是水；洞庭另種一圈礁，礁裡的水是淡的湖，留四個口子給船進出。
   //   陸（虎嶺、桑林、丹穴、青丘、玄洲）：在目標附近找一塊外島碰不到的海，種一座島，島心方圓 r 格保證是走得上去的陸地（不長山、不積水）。
   //   不周山：西北，方圓 r 格的大山地（r − PEAK_MARGIN 格內保證是陸地）；外島碰到了就併進來（外島的陸地照舊），中間一圈山圍著一塊盆地，東南缺一口。
-  // 位置寫成紙半徑 WORLD_R 的比例（fx、fy），jit 是沿著邊上下挪的幅度，ext 是這塊地界連周圍海面一共佔多大。
+  // 位置寫成紙半徑 WORLD_R 的比例（fx、fy），jit 是沿著邊上下挪的幅度，ext 是這塊地界連周圍海面一共佔多大；
+  // ground 是大魔王的戰場半徑（照抄 game.js 的 BOSSES[].r，冒煙測試對得上；v0.8.26 孤嶼要避開它）。
   // 本島（HOME_BOX 方框內）一格不碰；外島的陸地也不削——找地方時就避開（量過五百個種子，從沒找不到），找不到才壓上去（forced）。
   const ZONE_DEFS = [
-    { id: '共工', name: '不周山', fx: -0.68, fy: -0.68, jit: 0.02, r: 120, ext: 152, type: 'peak', s: 31 },   // v0.8.5 使用者定：150 → 120
-    { id: '修蛇', name: '洞庭', fx: 0.8, fy: 0, jit: 0.048, r: 49, ext: 72, type: 'lake', s: 37 },
-    { id: '封豨', name: '桑林', fx: -0.8, fy: 0, jit: 0.048, r: 38, ext: 72, type: 'land', theme: 'mulberry', s: 41 },
-    { id: '大風', name: '青丘', fx: 0, fy: 0.8, jit: 0.048, r: 38, ext: 72, type: 'land', theme: 'qingqiu', s: 43 },
+    { id: '共工', name: '不周山', fx: -0.68, fy: -0.68, jit: 0.02, r: 120, ext: 152, ground: 150, type: 'peak', s: 31 },   // v0.8.5 使用者定：150 → 120
+    { id: '修蛇', name: '洞庭', fx: 0.8, fy: 0, jit: 0.048, r: 49, ext: 72, ground: 120, type: 'lake', s: 37 },
+    { id: '封豨', name: '桑林', fx: -0.8, fy: 0, jit: 0.048, r: 38, ext: 72, ground: 100, type: 'land', theme: 'mulberry', s: 41 },
+    { id: '大風', name: '青丘', fx: 0, fy: 0.8, jit: 0.048, r: 38, ext: 72, ground: 100, type: 'land', theme: 'qingqiu', s: 43 },
     { id: '青龍', name: '龍淵', fx: 0.48, fy: 0, jit: 0.064, r: 49, ext: 49, type: 'deep', s: 47 },
     { id: '白虎', name: '虎嶺', fx: -0.48, fy: 0, jit: 0.064, r: 38, ext: 72, type: 'land', theme: 'tiger', s: 53 },
     { id: '朱雀', name: '丹穴', fx: 0, fy: 0.48, jit: 0.064, r: 38, ext: 72, type: 'land', theme: 'cinnabar', s: 59 },
@@ -569,7 +639,7 @@
       if (z.type === 'peak') { tx += along; ty += out0; } else if (uy === 0) { tx += ux * out0; ty += along; } else { tx += along; ty += uy * out0; }
       const fits = (x, y) => Math.abs(x) + z.ext <= WORLD_R - ZONE_EDGE && Math.abs(y) + z.ext <= WORLD_R - ZONE_EDGE && Math.max(Math.abs(x), Math.abs(y)) - z.ext > HOME_BOX + 30 && out.every(o => Math.hypot(x - o.x, y - o.y) > z.ext + o.ext + ZONE_GAP);
       let spot = null, forced = false;
-      if (z.type === 'peak') spot = [Math.round(tx), Math.round(ty)];   // 不周山大，外島碰到就併進來，不用另外找
+      if (z.type === 'peak' || GEN >= 3) spot = [Math.round(tx), Math.round(ty)];   // 不周山大，外島碰到就併進來，不用另外找；v0.8.27 第三版沒有外島，大陸在地界四周讓出海來
       else {
         let first = null;
         for (let r = 0; r <= ZONE_SEARCH && !spot; r += 4) {
@@ -584,7 +654,7 @@
         if (!spot) { spot = first || [Math.round(tx), Math.round(ty)]; forced = true; }
       }
       const rot = U.rand2(i, 13, seed + 905) * Math.PI * 2;   // 洞庭四個口子轉多少；不周山缺口在東南，再偏一點
-      out.push({ id: z.id, name: z.name, type: z.type, theme: z.theme, x: spot[0], y: spot[1], r: z.r, solid: z.type === 'peak' ? z.r - PEAK_MARGIN : z.r, ext: z.ext, forced, rot, ns: seed + 960 + z.s * 7,
+      out.push({ id: z.id, name: z.name, type: z.type, theme: z.theme, x: spot[0], y: spot[1], r: z.r, solid: z.type === 'peak' ? z.r - PEAK_MARGIN : z.r, ext: z.ext, ground: z.ground || 0, forced, rot, ns: seed + 960 + z.s * 7,
         notch: Math.PI / 4 + (U.rand2(i, 17, seed + 907) - 0.5) * 0.35 });
     });
     return (zoneCache[seed] = out);
@@ -695,11 +765,238 @@
   }
   // v0.8 東海青龍；v0.8.4 起就是「龍淵」的中心：本島往東約 0.48 紙半徑，方圓四十九格內沒有一塊地
   function azureAt(seed) { const z = zones(seed).find(o => o.id === '青龍'); return { x: z.x, y: z.y }; }
-  function baseTile(x, y, seed) {
+  function baseTile(x, y, seed) {   // v0.8.27 第三版另有生成時就擺好的傳送點（陸上的樹）
+    if (GEN >= 3) { const g = gateNet(seed).tiles.get(x + ',' + y); if (g) return g; }
+    return natTile(x, y, seed);
+  }
+  function natTile(x, y, seed) {
     if (x < -WORLD_R || y < -WORLD_R || x >= WORLD_R || y >= WORLD_R) return '淼';
     if (Math.abs(x) <= HOME_BOX && Math.abs(y) <= HOME_BOX) return homeTile(x, y, seed);
-    const nat = isleTile(x, y, seed), z = zoneAt(x, y, seed);
+    const nat = GEN >= 3 ? contTile(x, y, seed) : isleTile(x, y, seed), z = zoneAt(x, y, seed);
     return z ? zoneTile(x, y, seed, z, nat) : nat;
+  }
+
+  // ---------- v0.8.27 第三版：大陸與島（使用者定：整張紙陸地約三成五到四成五，有島有大片陸地） ----------
+  // 大陸場 contRaw：大尺度（大陸）、中尺度（島）、小尺度（海岸曲折）三層噪聲；本島四周 HOME_SEA、紙邊 CONT_EDGE、
+  //   地界與大魔王的戰場（ext、ground 取大）外 CONT_MOAT 格內往下壓（contMask），所以那些地方照舊是海。
+  //   門檻 contTheta 照每個種子取分位數：整張紙取樣，大陸場高過門檻的剛好佔 CONT_LAND——陸地比例每個種子都一樣穩。
+  // 地域：每 250 格見方一個地域中心（siteAt），陸上的格子照（扭過的）最近中心分漠、火、川、雪、青五種，地貌照外島的規則（kindTile）。
+  // 陸塊：粗格（MASS_CELL 見方）上把連著的陸地（湖池川湯算陸）標成一塊（masses），面積超過 MASS_MIN 才有名字、膽氣、傳送點。
+  const CONT_LAND = 0.385, CONT_STEP = 10, CONT_SHOAL = 0.025, CONT_RISE = 0.11, CONT_OPEN = 0.06;
+  const CONT_IRON = 0.3;   // 大陸上的鐵只留三成（其餘成石）：陸地是第一版的十倍，鐵照外島的比例長會多十五到二十倍，鎢鋼就不值錢了（v0.8.27 先試兩成、v0.8.28 五成，v0.8.29 使用者定三成）
+  const HOME_SEA = [240, 380], CONT_EDGE = [40, 120], CONT_MOAT = 22;
+  const REGION_NAMES = { '漠': '大漠', '火': '火山', '川': '川原', '雪': '雪原', '青': '青野' };
+  const zoneTerr = (z) => Math.max(z.ext, z.ground || 0);   // 地界（大魔王是戰場）的半徑
+  function contRaw(x, y, seed) {
+    return U.fbm(x / 560, y / 560, seed + 1301, 3) * 0.6 + U.fbm(x / 170, y / 170, seed + 1303, 3) * 0.3 + U.fbm(x / 45, y / 45, seed + 1305, 2) * 0.1;
+  }
+  function contMask(x, y, seed) {   // 1：不受限；0：一定是海
+    let k = Math.min(U.smoothstep(HOME_SEA[0], HOME_SEA[1], Math.hypot(x, y)), U.smoothstep(CONT_EDGE[0], CONT_EDGE[1], WORLD_R - Math.max(Math.abs(x), Math.abs(y))));
+    if (k <= 0) return 0;
+    for (const z of zones(seed)) { const T = zoneTerr(z), d = Math.hypot(x - z.x, y - z.y); if (d < T + CONT_MOAT) k = Math.min(k, U.smoothstep(T + 2, T + CONT_MOAT, d)); }
+    return k;
+  }
+  function contVal(x, y, seed) { const m = contMask(x, y, seed); return m <= 0 ? -1 : contRaw(x, y, seed) - (1 - m) * 0.5; }
+  const thetaCache = {};
+  function contTheta(seed) {
+    if (thetaCache[seed] !== undefined) return thetaCache[seed];
+    const v = []; for (let y = -WORLD_R + CONT_STEP / 2; y < WORLD_R; y += CONT_STEP) for (let x = -WORLD_R + CONT_STEP / 2; x < WORLD_R; x += CONT_STEP) v.push(contVal(x, y, seed));
+    v.sort((a, b) => a - b);
+    return (thetaCache[seed] = v[Math.floor(v.length * (1 - CONT_LAND))]);
+  }
+  function contLand(x, y, seed) {   // 這格是不是大陸（不看本島、地界、孤嶼）
+    if (Math.abs(x) <= HOME_BOX && Math.abs(y) <= HOME_BOX) return false;
+    return contVal(x, y, seed) >= contTheta(seed);
+  }
+  const siteCache = new Map(), siteFixCache = {};
+  function siteBase(ci, cj, seed) {   // 第 (ci, cj) 塊的地域中心與種類（照隨機數，還沒補齊五種）
+    const ox = ci * ISLE_CELL, oy = cj * ISLE_CELL, mg = 40;
+    const cx = Math.round(ox + mg + U.rand2(ci, cj, seed + 607) * (ISLE_CELL - 2 * mg)), cy = Math.round(oy + mg + U.rand2(ci, cj, seed + 613) * (ISLE_CELL - 2 * mg));
+    let r = U.rand2(ci, cj, seed + 631) * 100, kind = '青';
+    for (const [kk, wgt] of ISLE_KINDS) { if (r < wgt) { kind = kk; break; } r -= wgt; }
+    return { cx, cy, kind, onLand: contLand(cx, cy, seed) && !zoneAt(cx, cy, seed) };
+  }
+  function siteFix(seed) {   // 陸上的地域五種要都有（畢方要火山、鑿齒要西邊的陸地）：缺哪種，就把數量最多的那種挑一個改過來（照種子固定）
+    if (siteFixCache[seed]) return siteFixCache[seed];
+    const on = [], cnt = {}, fix = {};
+    for (let cj = -ISLE_N; cj < ISLE_N; cj++) for (let ci = -ISLE_N; ci < ISLE_N; ci++) { const b = siteBase(ci, cj, seed); if (b.onLand) { on.push({ ci, cj, kind: b.kind }); cnt[b.kind] = (cnt[b.kind] || 0) + 1; } }
+    for (const [kind] of ISLE_KINDS) {
+      if (cnt[kind]) continue;
+      const most = Object.keys(cnt).filter(k => cnt[k] > 1).sort((a, b) => cnt[b] - cnt[a])[0]; if (!most) break;
+      const pick = on.filter(o => o.kind === most).sort((a, b) => U.rand2(a.ci, a.cj, seed + 1501) - U.rand2(b.ci, b.cj, seed + 1501))[0];
+      pick.kind = kind; fix[pick.ci + ',' + pick.cj] = kind; cnt[most]--; cnt[kind] = 1;
+    }
+    return (siteFixCache[seed] = fix);
+  }
+  function siteAt(ci, cj, seed) {   // 第 (ci, cj) 塊的地域中心（每塊都有）
+    const k = seed + ':' + ci + ',' + cj;
+    if (siteCache.has(k)) return siteCache.get(k);
+    const b = siteBase(ci, cj, seed), kind = siteFix(seed)[ci + ',' + cj] || b.kind;
+    const st = { id: 's' + ci + ',' + cj, ci, cj, cx: b.cx, cy: b.cy, R: 60, kind, name: REGION_NAMES[kind], key: U.hash2(ci, cj, seed + 641) & 0xffff, region: true, onLand: b.onLand };
+    siteCache.set(k, st); return st;
+  }
+  function regionAt(x, y, seed) {   // 這格屬於哪個地域：最近的中心（座標先扭一扭，界線才不會是直的）
+    const wx = x + (U.fbm(x / 90, y / 90, seed + 1311, 2) - 0.5) * 120, wy = y + (U.fbm(x / 90 + 50, y / 90 - 50, seed + 1313, 2) - 0.5) * 120;
+    const ci = Math.floor(wx / ISLE_CELL), cj = Math.floor(wy / ISLE_CELL); let best = null, bd = Infinity;
+    for (let j = cj - 1; j <= cj + 1; j++) for (let i = ci - 1; i <= ci + 1; i++) { const st = siteAt(i, j, seed), d = (wx - st.cx) ** 2 + (wy - st.cy) ** 2; if (d < bd) { bd = d; best = st; } }
+    return best;
+  }
+  function contTile(x, y, seed) {
+    const e = contVal(x, y, seed) - contTheta(seed);
+    if (e < 0) { if (e < -CONT_OPEN) { const t = skerryTile(x, y, seed); if (t !== '淼') return t; } return e < -CONT_SHOAL ? '淼' : '水'; }
+    const rg = regionAt(x, y, seed), s = seed + 701 + rg.key, q = Math.hypot(x - rg.cx, y - rg.cy) / 90;
+    let h = 0.415 + Math.min(1, e / CONT_RISE) * 0.4 + (U.fbm(x / 34, y / 34, s, 4) - 0.5) * 0.24;   // 岸邊低、往內陸高
+    if (rg.kind === '火') h += (1 - U.smoothstep(0, 0.45, q)) * 0.14;   // 火山的地域，中心附近一座火山錐
+    else if (rg.kind === '青') h -= 0.05;
+    const well = rg.kind === '漠' || rg.kind === '雪' ? isleWell(rg, seed) : null;
+    if (well && Math.hypot(x - well.x, y - well.y) <= 4) h = Math.max(h, 0.42);   // 綠洲、溫泉那一小塊不在岸上（每個漠、雪地域的中心附近保證有一處，那裡是陸地的話）
+    const t = kindTile(rg.kind, x, y, s, Math.max(h, 0.396), well);   // 大陸上的格子不會是海（最低是岸）
+    return t === '鐵' && U.rand2(x, y, s + 1601) >= CONT_IRON ? '石' : t;
+  }
+  // 陸塊：粗格上連著的陸地
+  const MASS_CELL = 8, MASS_MIN = 1200, FRESH = '湖池川湯';
+  const massCache = {};
+  function masses(seed) {
+    if (massCache[seed]) return massCache[seed];
+    const C = MASS_CELL, n0 = Math.floor(-WORLD_R / C), W = Math.ceil(WORLD_R / C) - n0, land = new Uint8Array(W * W), lab = new Int32Array(W * W), list = [], q = new Int32Array(W * W);
+    const dry = (t) => DB[t].kind !== 'water' || FRESH.indexOf(t) >= 0;
+    const isLand = (x, y) => {   // 跟 natTile 一樣的結果，只是大陸上不必寫出是哪個字（大陸上的格子一定是陸或湖池川湯）
+      if (Math.abs(x) <= HOME_BOX && Math.abs(y) <= HOME_BOX) return dry(homeTile(x, y, seed));
+      if (zoneAt(x, y, seed)) return dry(natTile(x, y, seed));
+      if (contLand(x, y, seed)) return true;
+      return !!skerryOf(x, y, seed) && dry(skerryTile(x, y, seed));
+    };
+    for (let j = 0; j < W; j++) for (let i = 0; i < W; i++) land[j * W + i] = isLand((n0 + i) * C + C / 2, (n0 + j) * C + C / 2) ? 1 : 0;
+    for (let k0 = 0; k0 < W * W; k0++) {
+      if (!land[k0] || lab[k0]) continue;
+      const id = list.length + 1; let qh = 0, qt = 0, n = 0, sx = 0, sy = 0; lab[k0] = id; q[qt++] = k0;
+      while (qh < qt) { const k = q[qh++], i = k % W, j = (k - i) / W; n++; sx += i; sy += j;
+        for (const nk of [i > 0 ? k - 1 : -1, i < W - 1 ? k + 1 : -1, j > 0 ? k - W : -1, j < W - 1 ? k + W : -1]) if (nk >= 0 && land[nk] && !lab[nk]) { lab[nk] = id; q[qt++] = nk; } }
+      const cx = Math.round((n0 + sx / n) * C + C / 2), cy = Math.round((n0 + sy / n) * C + C / 2);
+      const home = lab[(-n0) * W + (-n0)] === id, z = zones(seed).find(o => Math.hypot(cx - o.x, cy - o.y) < zoneTerr(o));
+      list.push({ id: id - 1, area: n * C * C, cx, cy, home, zone: z ? z.id : null });
+    }
+    return (massCache[seed] = { n0, W, lab, list });
+  }
+  function massAt(x, y, seed) {   // 這格在哪一塊陸地上（粗格；海上是 null）
+    const M = masses(seed), i = Math.floor(x / MASS_CELL) - M.n0, j = Math.floor(y / MASS_CELL) - M.n0;
+    if (i < 0 || j < 0 || i >= M.W || j >= M.W) return null;
+    let l = M.lab[j * M.W + i];
+    if (!l) for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) { const ii = i + di, jj = j + dj; if (ii >= 0 && jj >= 0 && ii < M.W && jj < M.W && M.lab[jj * M.W + ii]) { l = M.lab[jj * M.W + ii]; break; } }
+    return l ? M.list[l - 1] : null;
+  }
+  // ---------- v0.8.27 傳送點網（使用者定） ----------
+  // 陸上（面積超過 MASS_MIN 的陸塊）兩兩至少 GATE_LAND_MIN 格、最近的一個不超過 GATE_LAND_MAX；海上兩兩至少 GATE_SEA_MIN、最近的不超過 GATE_SEA_MAX；
+  //   一陸一海也至少 GATE_LAND_MIN。每處地界（大魔王是戰場）外圍 GATE_RING 格寬的一圈有一到兩個（GATE_RING_MAX）。原點附近一個（本島）。
+  //   擺法：原點 → 每圈一個（陸上優先，離已擺的越遠越好）→ 陸上、海上照固定次序能擺就擺 → 最近的太遠就在它旁邊補一個（補不上的拿掉，不是原點與地界外圈的）。
+  //   陸上的是樹（東邊地界外的扶桑「桑」、西邊的若木「若」、其餘建木「建」），海上的不改字、畫一個「津」，傳過去要選一艘船。
+  const GATE_LAND_MIN = 260, GATE_LAND_MAX = 350, GATE_SEA_MIN = 350, GATE_SEA_MAX = 500, GATE_RING = 15, GATE_RING_MAX = 2, GATE_EDGE = 60;
+  const GATE_EAST = ['修蛇', '青龍'], GATE_WEST = ['封豨', '白虎'];
+  const gateCache = {};
+  function gateNet(seed) {
+    if (gateCache[seed]) return gateCache[seed];
+    const M = masses(seed), Z = zones(seed), C = MASS_CELL, gates = [];
+    const minD = (a, b) => a.type === 'sea' && b.type === 'sea' ? GATE_SEA_MIN : GATE_LAND_MIN, maxN = (g) => g.type === 'sea' ? GATE_SEA_MAX : GATE_LAND_MAX;
+    const okWith = (c, skip) => gates.every(g => g === skip || Math.hypot(g.x - c.x, g.y - c.y) >= minD(g, c));
+    const ringOf = (x, y) => { for (const z of Z) { const d = Math.hypot(x - z.x, y - z.y), T = zoneTerr(z); if (d >= T && d <= T + GATE_RING) return z.id; } return null; };
+    const inTerr = (x, y) => Z.some(z => Math.hypot(x - z.x, y - z.y) < zoneTerr(z));
+    const ringFull = (c) => c.ring && gates.filter(g => g.ring === c.ring).length >= GATE_RING_MAX;
+    const walk = (x, y) => { const t = natTile(x, y, seed), d = DB[t]; return d.walk > 0 && d.kind !== 'water' && d.kind !== 'object' && d.kind !== 'place' && !d.bog; };
+    const sea = (x, y) => { const t = natTile(x, y, seed); return t === '淼' || t === '水'; };
+    const landSpot = (x0, y0, R, keep) => { for (let r = 0; r <= R; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; const x = x0 + dx, y = y0 + dy; if (!walk(x, y) || (keep && !keep(x, y))) continue; let ok = true; for (let j = -1; j <= 1 && ok; j++) for (let i = -1; i <= 1 && ok; i++) if (!walk(x + i, y + j)) ok = false; if (ok) return [x, y]; } return null; };
+    const seaSpot = (x, y) => { for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) if (!sea(x + i, y + j)) return null; return [x, y]; };
+    // 粗格上的候選：陸上（大陸塊）與海上
+    const cands = [];
+    for (let j = 0; j < M.W; j++) for (let i = 0; i < M.W; i++) {
+      const x = (M.n0 + i) * C + C / 2, y = (M.n0 + j) * C + C / 2;
+      if (Math.max(Math.abs(x), Math.abs(y)) > WORLD_R - GATE_EDGE || inTerr(x, y)) continue;
+      const l = M.lab[j * M.W + i], m = l ? M.list[l - 1] : null;
+      if (m && (m.area <= MASS_MIN || m.zone || m.home)) continue;
+      cands.push({ x, y, type: m ? 'land' : 'sea', mass: m ? m.id : null, ring: ringOf(x, y), rank: U.rand2(i, j, seed + 1401) });
+    }
+    const settle = (c) => { if (c.done) return c.spot; c.done = true; c.spot = c.type === 'land' ? landSpot(c.x, c.y, 4) : sea(c.x, c.y) ? seaSpot(c.x, c.y) : null; return c.spot; };
+    const add = (c, extra) => { const sp = settle(c); if (!sp) return null; const g = Object.assign({ x: sp[0], y: sp[1], type: c.type, mass: c.mass, ring: c.ring }, extra || {}); if (!okWith(g)) return null; gates.push(g); return g; };
+    const near = (g) => { let d = Infinity; for (const o of gates) if (o !== g) d = Math.min(d, Math.hypot(o.x - g.x, o.y - g.y)); return d; };
+    const companion = (v) => {   // v 最近的一個太遠：在它旁邊（照最小間距與它的上限之間）找一個擺得下的候選；越靠中間越好
+      if (near(v) <= maxN(v)) return true;
+      let pick = null, ps = Infinity;
+      for (const c of cands) {
+        if (ringFull(c)) continue; const d = Math.hypot(c.x - v.x, c.y - v.y), lim = Math.min(maxN(v), c.type === 'sea' ? GATE_SEA_MAX : GATE_LAND_MAX) - 6, lo = minD(v, c) + 6;
+        if (d > lim || d < lo) continue; const sc = Math.abs(d - (lo + lim) / 2) + c.rank * 10; if (sc >= ps) continue;
+        if (!gates.every(g => Math.hypot(g.x - c.x, g.y - c.y) >= minD(g, c))) continue;
+        const sp = settle(c); if (!sp) continue; const g = { x: sp[0], y: sp[1], type: c.type }, dd = Math.hypot(g.x - v.x, g.y - v.y);
+        if (dd > lim || !okWith(g)) continue; pick = c; ps = sc;
+      }
+      return !!(pick && add(pick));
+    };
+    // 一、原點
+    { const st = stelePlan(seed), pls = placePlan(seed, new Set(st.map(o => o.x + ',' + o.y)));   // 原點那一棵避開碑與地標（各留兩格）
+      const keep = (x, y) => st.every(o => Math.max(Math.abs(o.x - x), Math.abs(o.y - y)) > 2) && pls.every(o => x < o.x - 2 || x > o.x + o.w + 1 || y < o.y - 2 || y > o.y + o.h + 1);
+      const sp = landSpot(0, 0, 60, keep); if (sp) gates.push({ x: sp[0], y: sp[1], type: 'land', mass: null, ring: null, home: true }); }
+    // 二、每處地界外一圈先擺一個：陸上優先，離已擺的越遠越好（八圈都擺好了，再替原點與它們各擺一個伴）
+    for (const z of Z) {
+      const T = zoneTerr(z), pool = [];
+      for (let a = 0; a < 360; a += 3) for (const rr of [T + 3, T + 7.5, T + 12]) {
+        const x = Math.round(z.x + Math.cos(a * Math.PI / 180) * rr), y = Math.round(z.y + Math.sin(a * Math.PI / 180) * rr);
+        if (Math.max(Math.abs(x), Math.abs(y)) > WORLD_R - GATE_EDGE) continue;
+        const m = massAt(x, y, seed), land = walk(x, y) && m && m.area > MASS_MIN && !m.zone && !m.home;
+        if (!land && !sea(x, y)) continue;
+        const far = gates.length ? Math.min(...gates.map(o => Math.hypot(o.x - x, o.y - y))) : 1e9;
+        pool.push({ x, y, type: land ? 'land' : 'sea', mass: land ? m.id : null, ring: z.id, sc: (land ? 1e6 : 0) + far });
+      }
+      pool.sort((a, b) => b.sc - a.sc);
+      for (const c of pool) {
+        const sp = c.type === 'land' ? landSpot(c.x, c.y, 2) : seaSpot(c.x, c.y); if (!sp) continue;
+        const g = { x: sp[0], y: sp[1], type: c.type, mass: c.mass, ring: z.id }; if (ringOf(g.x, g.y) !== z.id || !okWith(g)) continue;
+        gates.push(g); break;
+      }
+    }
+    for (const g of gates.slice()) companion(g);
+    // 三、陸上、海上照固定次序能擺就擺
+    const order = cands.slice().sort((a, b) => a.rank - b.rank);
+    for (const type of ['land', 'sea']) for (const c of order) { if (c.type !== type || ringFull(c)) continue; if (!gates.every(g => Math.hypot(g.x - c.x, g.y - c.y) >= minD(g, c) - 12)) continue; add(c); }
+    // 四、最近的太遠：在它旁邊補一個；補不上就拿掉（原點與地界外圈的不拿）
+    for (let pass = 0; pass < 40; pass++) {
+      const bad = gates.filter(g => near(g) > maxN(g)); if (!bad.length) break;
+      let changed = false;
+      for (const v of bad) { if (near(v) <= maxN(v)) continue; if (companion(v)) changed = true; else if (!v.home && !v.ring) { gates.splice(gates.indexOf(v), 1); changed = true; } }
+      if (!changed) break;
+    }
+    const tiles = new Map();
+    gates.forEach((g, i) => { g.id = 'n' + i; if (g.type === 'land') { g.glyph = g.ring && GATE_EAST.indexOf(g.ring) >= 0 ? '桑' : g.ring && GATE_WEST.indexOf(g.ring) >= 0 ? '若' : '建'; tiles.set(g.x + ',' + g.y, g.glyph); } else g.glyph = '津'; });
+    return (gateCache[seed] = { list: gates, tiles });
+  }
+  // ---------- 地名池（v0.8.28 使用者定：不讓玩家自己打字，免得有敏感詞；系統給地名讓玩家挑） ----------
+  // v0.8.29 使用者定：選擇多一些、少用字頭配字尾的搭配（太像）——改成古籍裡的地名。
+  // v0.8.30 使用者定：不要現實的地名（現在還在用的山名、城縣區名、湖海河名，像太華山、王屋山、崑崙、蓬萊、合浦、雲夢都拿掉），陸上海上分開建庫：
+  //   陸上的傳送點取《山海經》五藏山經裡只見於典籍的山名（去掉「之」）與大荒經、《楚辭》的丘野圃澤；海上的取歸墟、湯谷、虞淵、北冥、
+  //   天漢這類神話裡的海、淵、谷與天河；陸塊取《海內十洲記》的十洲三島（玄洲是玄武的地界，不放）、《列子》五山、《淮南子》九州、《山海經》海外諸國。
+  //   每張紙照種子打亂次序；用過、跟地界地域外島本島原點孤嶼同名的不出。八十個種子量過：陸上傳送點最多 46、海上 26、要取名的陸塊 32，
+  //   三池（189、46、57）都多出十二個以上；萬一不夠才拿字頭配字尾補（NAME_HEAD／NAME_TAIL）。
+  const NAME_LIST = {
+    land: ['招搖山', '堂庭山', '杻陽山', '亶爰山', '箕尾山', '堯光山', '天虞山', '令丘山', '南禺山', '洵山', '柢山', '柜山', '長右山', '瞿父山', '區吳山', '鹿吳山', '漆吳山', '禱過山', '發爽山', '陽夾山', '灌湘山', '侖者山', '禺稿山', '錢來山', '松果山', '符禺山', '皋塗山', '女床山', '鹿臺山', '鳥危山', '薰吳山', '崇吾山', '泰器山', '槐江山', '樂游山', '長留山', '章莪山', '翼望山', '大時山', '數歷山', '小次山', '大次山', '眾獸山', '皇人山', '中皇山', '西皇山', '泰冒山', '嬴母山', '符惕山', '單狐山', '求如山', '譙明山', '涿光山', '丹熏山', '邊春山', '蔓聯山', '灌題山', '大咸山', '少咸山', '渾夕山', '諸餘山', '鉤吾山', '梁渠山', '馬成山', '虢山', '石者山', '單張山', '潘侯山', '小咸山', '北單山', '羆差山', '北鮮山', '爾是山', '敦頭山', '北囂山', '姑灌山', '湖灌山', '龍侯山', '賁聞山', '蟲尾山', '彭毗山', '小侯山', '泰頭山', '謁戾山', '沮洳山', '神囷山', '高是山', '番條山', '姑兒山', '空桑山', '曹夕山', '嶧皋山', '餘峨山', '杜父山', '鳧麗山', '跂踵山', '東始山', '子桐山', '栒狀山', '高氏山', '盧其山', '姑逢山', '諸鉤山', '中父山', '胡射山', '踇隅山', '無皋山', '北號山', '女烝山', '甘棗山', '歷兒山', '吳林山', '鼓鐙山', '昆吾山', '獨蘇山', '敖岸山', '宜蘇山', '平逢山', '瞻諸山', '陽華山', '休與山', '鼓鍾山', '姑媱山', '放皋山', '師每山', '琴鼓山', '勇石山', '瑤碧山', '支離山', '樂馬山', '倚帝山', '夫夫山', '江浮山', '真陵山', '榮余山', '蔥聾山', '脫扈山', '泰威山', '橿谷山', '煇諸山', '發視山', '蔓渠山', '扶豬山', '釐山', '白邊山', '讙舉山', '縞羝山', '婁涿山', '橐山', '常烝山', '大苦山', '半石山', '嬰梁山', '少陘山', '驕山', '宜諸山', '大堯山', '彘山', '仁舉山', '隅陽山', '風雨山', '賈超山', '繁繢山', '又原山', '帝囷山', '免床山', '堇理山', '即谷山', '高前山', '嬰侯山', '虎首山', '大孰山', '鯢山', '聲匈山', '踵臼山', '歷石山', '丑陽山', '篇遇山', '陽帝山', '即公山', '都廣野', '諸夭野', '歐絲野', '懸圃', '閬風', '群玉山', '范林', '稷澤', '衛丘'],
+    sea: ['歸墟', '湯谷', '暘谷', '蒙谷', '昧谷', '虞淵', '蒙汜', '咸池', '甘淵', '大壑', '尾閭', '沃焦', '北冥', '南冥', '東溟', '裨海', '大瀛', '瀛海', '銀潢', '天漢', '河漢', '星漢', '雲漢', '天潢', '天淵', '九淵', '珠淵', '重淵', '驪龍淵', '鼇背', '鮫室', '貝闕', '朱宮', '龍堂', '海市', '鯨波', '碧海', '溟渤', '滄溟', '冥海', '玄冥', '洞冥', '流波', '度朔', '溟涬', '鴻濛'],
+    mass: ['祖洲', '瀛洲', '炎洲', '元洲', '流洲', '生洲', '鳳麟洲', '聚窟洲', '方丈', '蓬丘', '岱輿', '員嶠', '方壺', '蓬壺', '方諸', '員丘', '滄海島', '次州', '弇州', '薄州', '陽州', '終北', '列姑射', '君子國', '白民國', '黑齒國', '玄股國', '毛民國', '勞民國', '羽民國', '讙頭國', '厭火國', '三身國', '一臂國', '奇肱國', '長股國', '深目國', '聶耳國', '周饒國', '長臂國', '交脛國', '歧舌國', '三首國', '女子國', '丈夫國', '軒轅國', '沃民國', '柔利國', '一目國', '無腸國', '大人國', '結匈國', '貫匈國', '壽麻國', '淑士國', '中容國', '季釐國'] };
+  const NAME_HEAD = ['丹', '青', '蒼', '翠', '素', '赤', '白', '金', '玉', '雲', '霞', '風', '霜', '月', '星', '朝', '暮', '松', '柏', '桂', '蘭', '竹', '梅', '桃', '柳', '杏', '鶴', '鹿', '鷺', '燕', '石', '泉', '溪', '長', '遠', '幽', '寒', '清', '碧', '靈', '棲', '落', '孤', '雙', '九', '千', '古'];
+  const NAME_TAIL = { land: ['山', '嶺', '峰', '岡', '丘', '原', '谷', '坡', '臺', '林', '野', '陵', '崖', '麓', '坪', '岩', '嶂', '坂'], sea: ['灣', '渚', '浦', '津', '汀', '渡', '澳', '磯', '淵', '潭', '洋', '汐', '溟', '礁', '灘'], mass: ['洲', '島', '嶼'] };
+  const nameCache = {};
+  function namePools(seed) {
+    if (nameCache[seed]) return nameCache[seed];
+    const net = gateNet(seed).list, big = masses(seed).list.filter(m => m.area > MASS_MIN && !m.home && !m.zone);
+    const counts = { land: net.filter(g => g.type === 'land' && !g.home).length, sea: net.filter(g => g.type === 'sea').length, mass: big.length };
+    const taken = new Set(ZONE_DEFS.map(z => z.name).concat(Object.values(REGION_NAMES), Object.values(ISLE_NAMES), ['本島', '原點', '孤嶼']));
+    const out = { counts };
+    for (const [kind, salt] of [['mass', 1701], ['land', 1703], ['sea', 1705]]) {
+      const want = Math.max(counts[kind] + 12, Math.ceil(counts[kind] * 1.5));
+      const list = NAME_LIST[kind].map((n, i) => ({ n, r: U.rand2(i, 0, seed + salt) })).sort((a, b) => a.r - b.r).map(o => o.n).filter(n => !taken.has(n));
+      if (list.length < want) {   // 古籍地名不夠（八十個種子量過不會）才拿字頭配字尾補
+        const combos = []; NAME_HEAD.forEach((h, i) => NAME_TAIL[kind].forEach((t, j) => combos.push({ n: h + t, r: U.rand2(i, j, seed + salt) })));
+        combos.sort((a, b) => a.r - b.r);
+        for (const c of combos) { if (list.length >= want) break; if (!taken.has(c.n) && list.indexOf(c.n) < 0) list.push(c.n); }
+      }
+      list.forEach(n => taken.add(n)); out[kind] = list;
+    }
+    return (nameCache[seed] = out);
   }
 
   // 五塊碑，由近到遠各講一個活下去的法子；讀碑力氣上限 +10
@@ -857,5 +1154,5 @@
   }
 
   RECIPES.forEach(r => { r.cat = '材料'; for (const c in CAT_OF) if (CAT_OF[c].indexOf(r.id) >= 0) r.cat = c; });
-  root.G = { reefs, REEF_RING, REEF_AREA, REEF_MIN, REEF_MAX, REEF_GAP, stelePaths, isleWell, INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, WORLD_R, HOME_R, HOME_K, isleAt, isleOf, isles, ISLE_CELL, ISLE_NAMES, azureAt, zones, zoneAt, ZONE_DEFS };
+  root.G = { natTile, contTheta, contLand, CONT_IRON, namePools, NAME_LIST, regionAt, siteAt, masses, massAt, gateNet, REGION_NAMES, CONT_LAND, MASS_CELL, MASS_MIN, HOME_SEA, GATE_LAND_MIN, GATE_LAND_MAX, GATE_SEA_MIN, GATE_SEA_MAX, GATE_RING, GATE_RING_MAX, zoneTerr, setGen, get GEN() { return GEN; }, GEN_NEW, ISLE_R2, skerryAt, skerryOf, skerries, SKERRY_CELL, SKERRY_R, SKERRY_SHOAL, SKERRY_GAP, SKERRY_EDGE, SKERRY_KINDS, reefs, REEF_RING, REEF_AREA, REEF_MIN, REEF_MAX, REEF_GAP, stelePaths, isleWell, INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, WORLD_R, HOME_R, HOME_K, isleAt, isleOf, isles, ISLE_CELL, ISLE_NAMES, azureAt, zones, zoneAt, ZONE_DEFS };
 })();
