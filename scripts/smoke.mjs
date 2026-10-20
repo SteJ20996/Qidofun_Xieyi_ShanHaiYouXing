@@ -48,6 +48,7 @@ const result = await page.evaluate(async () => {
 
   try {
   g.ents.seaP = 0;   // 蜃也是：專門的海上測試自己開
+  if (G.GEN >= 3) { g.player.masses = {}; for (const m of G.masses(g.seed).list) g.player.masses[m.id] = 1; }   // v0.8.27：陸塊都記成登過，別的測試踩上去不跳取名框（取名的測試自己清掉）
   g.ents.toothP = 0; g.ents.harpyP = 0; g.ents.birdP = 0;   // 鑿齒（v0.8.5）、蠱雕（v0.8.6）、畢方（v0.8.25）也是：專門的測試自己開
   w.fogP = 0;   // 霧障是真隨機的，測試途中跳出彈窗會把遊戲停住；專門的霧障測試自己開
   g.warnEnabled = false; w.fogStep = 1e9;   // 數值提醒的彈窗與霧障的挪動也先關掉，各自的測試再開
@@ -404,7 +405,7 @@ const result = await page.evaluate(async () => {
   ok('a lucky fish tames it', eg.tame && g.count('魚') === 1 && g.tameCount() === 1);
   eg.sta = 30; g.pressPlace();
   ok('feeding a tamed eagle restores 40 stamina', eg.sta === 70 && g.count('魚') === 0, eg.sta);
-  await sleep(80);
+  await until(() => document.querySelectorAll('#companions .comp').length === 1, 2000);   // v0.8.26：等面板畫出來（原本固定等 80 毫秒，偶爾來不及）
   ok('companion panel shows the eagle with two vertical bars', document.querySelectorAll('#companions .comp').length === 1 && document.querySelectorAll('#companions .vbars i').length === 2);
   eg.x = p.x + 3; eg.y = p.y + 3; eg.moveT = 0; eg.atk = 0; w.set(p.x + 5, p.y, '草'); const prey = g.ents.add('虎', p.x + 5, p.y, { moveT: 99, calm: 99, atk: 0 });
   await until(() => prey.hp < 300, 6000);
@@ -695,11 +696,11 @@ const result = await page.evaluate(async () => {
     for (let i = 0; i < 5; i++) { const c0 = g.count('鐵'); sw.dur = 3; p.sta = 50; g.craft('regrind'); sc.push(c0 - g.count('鐵')); }
     ok('v0.6.3: a steel tool is mended with 鐵 1, 2, 4, 8, 8 — no pebbles', sc.join(',') === '1,2,4,8,8' && sw.dur === 56 && g.count('石子') === peb0, sc);
     g.removeItem('鐵', 99); }
-  ok('v0.6.3: iron veins hide tungsten one time in eighteen, by true randomness', Math.abs(G.DB['鐵'].bonus['鎢礦'] - 1 / 18) < 1e-9 && G.DB['鐵'].trueBonus === true);
+  ok('v0.6.3: iron veins hide tungsten, by true randomness (v0.8.29: one time in twenty-five, was eighteen)', Math.abs(G.DB['鐵'].bonus['鎢礦'] - 1 / 25) < 1e-9 && G.DB['鐵'].trueBonus === true);
   const rndT = U.trueRand; U.trueRand = () => 0.9; face(0, 1); w.set(T().x, T().y, '鐵'); hold('石鎬'); g.action = null; g.pressGather(); await until(() => !g.action, 12000);
   const noLuck = g.count('鎢礦') === 0;
-  U.trueRand = () => 0.05; w.set(T().x, T().y, '鐵'); g.action = null; g.pressGather(); await until(() => !g.action, 12000); U.trueRand = rndT;
-  ok('a lucky swing (true random under 1/18) on an iron vein yields 鎢礦; an unlucky one does not', noLuck && g.count('鎢礦') === 1 && g.count('鐵礦') >= 4, bag());
+  U.trueRand = () => 0.03; w.set(T().x, T().y, '鐵'); g.action = null; g.pressGather(); await until(() => !g.action, 12000); U.trueRand = rndT;
+  ok('a lucky swing (true random under 1/25) on an iron vein yields 鎢礦; an unlucky one does not', noLuck && g.count('鎢礦') === 1 && g.count('鐵礦') >= 4, bag());
   g.addItem('煤', 8); p.sta = 100; g.craft('coke');
   ok('eight coal make one refined coal', g.count('精煤') === 1 && g.count('煤') === 0);
   w.set(T().x, T().y, '灶'); w.addFuel(T().x, T().y, 100); g.removeItem('鎢礦', 9); g.removeItem('鐵礦', 9); g.addItem('鎢礦', 1); g.addItem('鐵礦', 2); g.pressPlace(); g.stoveCook('鎢礦'); g.closeStove();
@@ -746,8 +747,9 @@ const result = await page.evaluate(async () => {
   ok('hp regenerates when food, warmth, sanity and stamina are at 75 or more', p.hp > 50.3, p.hp);
   // 瓶與酒
   calm();   // 真時間裡夜裡的魄會把人吸到神志不清，手腳不聽使喚就取不了水
-  g.addItem('沙', 3); face(0, 1); w.set(T().x, T().y, '灶'); w.addFuel(T().x, T().y, 300); g.pressPlace(); g.stoveCook('沙'); g.closeStove();
-  ok('three sand on a lit stove make two bottles', g.count('玻璃瓶') === 2 && g.count('沙') === 0, bag());
+  g.addItem('沙', 3); face(0, 1); w.set(T().x, T().y, '灶'); w.addFuel(T().x, T().y, 300); g.pressPlace(); const stoveUp = !!g.stoveAt, tStove = w.time; await sleep(300); const frozen = w.time === tStove;
+  document.querySelector('#stove-cook button[data-cook="沙"]').click(); g.closeStove(); await sleep(150); const goes = w.time > tStove;
+  ok('three sand on a lit stove make two bottles (clicked in the stove panel; v0.8.30: the game stands still while the panel is open, and goes on when it closes)', stoveUp && frozen && goes && g.count('玻璃瓶') === 2 && g.count('沙') === 0, [stoveUp, frozen, goes, bag()]);
   face(1, 0); w.set(T().x, T().y, '水'); g.ents.list = g.ents.list.filter(e => !(e.x === T().x && e.y === T().y)); hold('玻璃瓶'); g.pressGather();   // 隨機刷出來的生靈若剛好站在面前，先挪開
   ok('empty bottle takes seawater', g.count('海水瓶') === 1 && g.count('玻璃瓶') === 1, [g.count('海水瓶'), g.count('玻璃瓶'), g.msgText, !!g.action, g.canAct(), (g.ents.at(T().x, T().y) || {}).type, w.get(T().x, T().y), g.held() && g.held().n]);
   face(0, 1); g.pressPlace(); g.stoveCook('海水瓶'); g.closeStove();
@@ -787,8 +789,8 @@ const result = await page.evaluate(async () => {
   p.x = p.rx = g.spawn.x; p.y = p.ry = g.spawn.y; g.closeRead();
   face(1, 0); for (let dy = -1; dy <= 2; dy++) for (let dx = 0; dx <= 2; dx++) w.set(T().x + dx, T().y + dy, '水'); hold('孤帆'); g.pressPlace();
   ok('a 孤帆 placed facing east is one by two lying east–west, starting at the tile in front (v0.8.21)', w.get(T().x, T().y) === '舟' && w.get(T().x + 1, T().y) === '舟' && w.get(T().x + 1, T().y + 1) !== '舟' && w.shipAt(T().x, T().y).cells.length === 2 && w.shipAt(T().x + 1, T().y) === w.shipAt(T().x, T().y) && w.shipAt(T().x, T().y).kind === '孤帆' && w.shipAt(T().x, T().y).dir === 'h');
-  p.cour = g.levelAt(31); g.pressGather(); await sleep(300);
-  ok('boarded the ship: both tiles are water again and you stand on the tile you faced', p.sailing && w.get(p.x, p.y) === '水' && w.get(p.x + 1, p.y) === '水' && w.ships.size === 0 && p.ship && p.ship.kind === '孤帆' && g.onDeck(p.x, p.y) && g.onDeck(p.x + 1, p.y) && !g.onDeck(p.x + 1, p.y + 1) && g.shipCells().length === 2);
+  p.cour = g.levelAt(31); const bdg = [g.paused, !!g.naming, g.stoveAt, g.purseAt, !!g.talking, w.get(T().x, T().y), g.canAct(), !!g.action, (g.ents.at(T().x, T().y) || {}).type]; g.pressGather(); await sleep(300); bdg.push(g.msgText, p.sailing);
+  ok('boarded the ship: both tiles are water again and you stand on the tile you faced', p.sailing && w.get(p.x, p.y) === '水' && w.get(p.x + 1, p.y) === '水' && w.ships.size === 0 && p.ship && p.ship.kind === '孤帆' && g.onDeck(p.x, p.y) && g.onDeck(p.x + 1, p.y) && !g.onDeck(p.x + 1, p.y + 1) && g.shipCells().length === 2, bdg);
   { const bx = p.ship.x0 + 2, deep = w.get(bx, p.y); w.set(bx, p.y, '淼'); p.moveT = 0; const ok1 = g.shipStep(1, 0); p.moveT = 0;
     ok('sailing passes deep water (the ship moves one tile with you aboard)', ok1 && g.onDeck(bx, p.y)); g.shipStep(-1, 0); p.moveT = 0; w.set(bx, p.y, deep); }
   g.jumpTo(0, G.SEA_EDGE + 1); await sleep(200);
@@ -800,9 +802,9 @@ const result = await page.evaluate(async () => {
   let coastY = G.SEA_EDGE; while (coastY > 0 && G.DB[w.base(0, coastY)].kind === 'water') coastY--;   // 沿 +y 找到海岸，在岸外八格死
   const seaY = coastY + 8;
   p.x = p.rx = 0; p.y = p.ry = seaY; p.sailing = true; p.ship = { kind: '孤帆', hp: 120, skulls: [], repairs: 0 }; p.crossed = false; g.addItem('木', 1); p.hp = 0; await until(() => p.dead, 3000);
-  const landBag = [...w.bags.keys()].some(k => { const [x, y] = k.split(',').map(Number); const b = w.base(x, y); return w.get(x, y) === '包' && U.dist(x, y, 0, seaY) < 30 && G.DB[b === '灘' ? '沙' : b].walk > 0 && G.DB[b].kind !== 'water'; });
+  const landBag = [...w.bags.keys()].some(k => { const [x, y] = k.split(',').map(Number); const b = w.base(x, y); return w.get(x, y) === '包' && w.purses.has(k) && U.dist(x, y, 0, 0) < 40 && G.DB[b === '灘' ? '沙' : b].walk > 0 && G.DB[b].kind !== 'water'; });   // v0.8.27：荷包一律落在原點附近
   const shipLeft = [...w.diff.entries()].some(([k, v]) => v === '舟' && (() => { const [x, y] = k.split(',').map(Number); return U.dist(x, y, 0, seaY) < 30 && w.base(x, y) === '水'; })());
-  ok('dying at sea drops the 荷包 on the nearest land and leaves the ship on shallow water', p.dead && landBag && shipLeft, [landBag, shipLeft]);
+  ok('dying at sea: the 荷包 goes to land near the origin (v0.8.27) and the ship is left on shallow water', p.dead && landBag && shipLeft, [landBag, shipLeft]);
   await press('Enter', 20); await until(() => !p.dead, 2000); await sleep(80);
   ok('respawn after a sea death is back on land', !p.dead && !p.sailing && w.info(p.x, p.y).walk > 0, [p.dead, p.sailing, p.x, p.y, w.get(p.x, p.y), JSON.stringify(p.home), JSON.stringify(g.spawn)]);
   // 漲潮困在灘上可以涉水走到別的灘
@@ -1713,7 +1715,7 @@ const result = await page.evaluate(async () => {
   // ============ v0.8.10：命照難度加、神兵傷害照難度加；大魔王的時限；經卷認一隻、取錯經卷；影子六成九成、不取人命；測試格 ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, DIFF = XIEYI.DIFF, dk = g.diff, z = G.zones(g.seed).find(o => o.id === '封豨'), put = (x, y) => { p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; };
     const keep = { cour: p.cour, bag: p.bag.slice(), tools: p.tools.slice(), tool: p.tool, azure: p.azure, bai: p.bai, zhu: p.zhu, pouches: p.pouches }, hog = () => E.list.find(o => o.type === '豨' && !o.shade);
-    const reset = () => { p.fight = null; p.bosses = {}; p.feats = []; p.inBoss = {}; p.jing = []; p.puppet = 0; p.bossBuff = 0; p.trialTries = {}; p.trophies = {}; p.jingFor = null; p.shade9 = {}; p.jingCour = {}; p.scrolls = []; p.trial = null; p.trialLockT = 0; p.lockT = 0; p.guardT = 0; E.list = E.list.filter(o => o.type !== '豨' && o.type !== '豬' && !o.shade); };
+    const reset = () => { p.fight = null; p.bosses = {}; p.feats = []; p.inBoss = {}; p.jing = []; p.puppet = 0; p.bossBuff = 0; p.trialTries = {}; p.trophies = {}; p.jingFor = null; p.shade9 = {}; p.jingCour = {}; p.scrolls = []; p.xuanjia = {}; p.trial = null; p.trialLockT = 0; p.lockT = 0; p.guardT = 0; E.list = E.list.filter(o => o.type !== '豨' && o.type !== '豬' && !o.shade); };
     const enter = () => { p.sailing = true; p.ship = World.newShip('孤帆'); put(z.x + 103, z.y); g.updateStats(0.05); put(z.x + 99, z.y); g.updateStats(0.05); };
     const out = () => { put(z.x + 120, z.y); g.updateStats(0.05); };
     // 命照難度加、四捨五入到百；神兵照難度加三到五分
@@ -1822,7 +1824,7 @@ const result = await page.evaluate(async () => {
     reset();
     // 測試格（這裡把這一局暫時當成測試格；第六到八格開出來的在起始頁那段測）
     { const kb = p.bag, kt = p.tools, ktool = p.tool, kk = p.testKit; p.bag = []; p.tools = []; p.tool = -1; p.testKit = false; g.test = true; g.testKit();
-      ok('v0.8.10 測試格: the pouches are full (32 + v0.8.14 的 30 = 62 in the bag, 14 tools), the god weapons are given (v0.8.25: all three), courage is ∞', g.slots() === 62 && g.toolSlots() === 14 && p.tools.some(s => s.n === '九閽鳴雷') && p.tools.some(s => s.n === '燭龍焚溟') && p.tools.some(s => s.n === '彤弓素矰') && p.testKit === 2 && g.level() === 99 && !!document.getElementById('testtag'));
+      ok('v0.8.10 測試格: the pouches are full (32 + v0.8.14 的 30 = 62 in the bag, 14 tools), the god weapons are given (v0.8.25: all three), courage is ∞', g.slots() === 62 && g.toolSlots() === 14 && p.tools.some(s => s.n === '九閽鳴雷') && p.tools.some(s => s.n === '燭龍焚溟') && p.tools.some(s => s.n === '青冥落羽') && p.testKit === 2 && g.level() === 99 && !!document.getElementById('testtag'));
       g.addItem('木', 3); g.addItem('木', 2); const wd = p.bag.filter(s => s.n === '木'); g.removeItem('木', 5);
       ok('v0.8.10 測試格: what you gather is ∞ (one stack) and using it takes none', g.count('木') === Infinity && wd.length === 1 && wd[0].inf && g.canAdd('木', 999));
       g.barSig = ''; g.buildBag(); ok('v0.8.10 測試格: the bag shows ∞', /∞/.test(document.getElementById('bagbar').textContent));
@@ -1876,6 +1878,7 @@ const result = await page.evaluate(async () => {
     // 沒拿經斃了（v0.8.21 使用者定）：照樣得戰利品與魂環；珠打黑叉、這一層永久留著、玄武偶多一重、成就寫明加成
     reset(); enter(); g.bossYes(); g.bossYes(); g.kill(hog());
     ok('v0.8.21: slain without the scroll — 豨牙 and 虎魄 all the same; the bead a black cross; the layer stays for good (+20%); the 玄武偶 grows; the feat writes +20% and 無經', !!p.bosses['封豨'] && p.bosses['封豨'].jing === false && g.beadOf('封豨') === 'miss' && p.bossBuff === 1 && g.buffLayers() === 1 && !p.fight && p.puppet === 1 && /\+20%/.test(p.feats[0].text) && /無經/.test(p.feats[0].text) && !!p.trophies['封豨'] && /黑叉/.test(toasts()), p.feats[0] && p.feats[0].text);
+    ok('v0.8.33: …and the banner no longer promises a separate 玄武偶 (the 玄武偶 is the shadow) — it says the shadows grow', !/玄武偶/.test(toasts()) && /影子 \+25%/.test(toasts()), toasts().slice(0, 160));
     p.fight = { id: '修蛇', penal: true }; const k2 = g.buffK(); p.fight = null;
     ok('v0.8.21: layers add on the base, not multiply — one cross plus a fight without the scroll is ×1.4, not ×1.44', g.buffK() === 1.2 && Math.abs(k2 - 1.4) < 1e-9, k2);
     // 護駕：只有同一屬性的（封豨是白虎）
@@ -1977,14 +1980,14 @@ const result = await page.evaluate(async () => {
       ok('v0.8.9: a tame eagle pecking a 鑿齒 from the front does a tenth (2)', hp0 - th.hp === 2, hp0 - th.hp); E.remove(th);
       const hr = E.add('雕', p.x + 4, p.y, { mode: 'circle', moveT: 99, cryT: 99, diveT: 99 }); ok('v0.8.9: a 蠱雕 circling high is not a target for the eagle', E.hostileNear(p, 6) !== hr); E.remove(hr); E.remove(eg); }
     // 生成：碑的路、綠洲、溫泉
-    { const wl = G.isles(g.seed).filter(i => (i.kind === '漠' || i.kind === '雪') && !G.zoneAt(i.cx, i.cy, g.seed)).map(i => [i.kind, G.baseTile(G.isleWell(i, g.seed).x, G.isleWell(i, g.seed).y, g.seed)]);
+    { const wl = G.isles(g.seed).filter(i => (i.kind === '漠' || i.kind === '雪') && !G.zoneAt(i.cx, i.cy, g.seed)).filter(i => { const q = G.isleWell(i, g.seed); return G.GEN < 3 || (G.contLand(q.x, q.y, g.seed) && G.regionAt(q.x, q.y, g.seed) === i); }).map(i => [i.kind, G.baseTile(G.isleWell(i, g.seed).x, G.isleWell(i, g.seed).y, g.seed)]);   // v0.8.27 第三版：中心附近那一處在同一個地域的陸上才保證
       ok('v0.8.9: every desert isle has an oasis pool and every snow isle a hot spring at its well', wl.length > 0 && wl.every(([k, t]) => t === (k === '漠' ? '池' : '湯')), wl.filter(([k, t]) => t !== (k === '漠' ? '池' : '湯')));
       ok('v0.8.9: the world knows the paths opened to out-of-reach steles (stamped like the steles)', Array.isArray(w.stelePaths)); }
     p.cour = keep.cour; p.bag = keep.bag; p.tools = keep.tools; p.tool = keep.tool; p.azure = keep.azure; p.bai = keep.bai; p.zhu = keep.zhu; p.hp = 100; p.sailing = false; p.ship = null; reset(); g.barSig = ''; g.courSig = ''; put(p0.x, p0.y); }
   // ============ v0.8.8：自查修掉的錯；玄武取經（第一卷、豨影的試煉）、惜字亭與許願 ============
   { const E = g.ents, p0 = { x: p.x, y: p.y }, DB = G.DB, put = (x, y) => { p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; };
     const keep = { cour: p.cour, bag: p.bag.slice(), tools: p.tools.slice(), tool: p.tool, hp: p.hp, deaths: p.deaths, home: p.home, bed: p.bed };
-    p.fight = null; p.bosses = {}; p.feats = []; p.inBoss = {}; p.jing = []; p.puppet = 0; p.scrolls = []; p.xuan = undefined; p.wish = undefined; p.trial = null;
+    p.fight = null; p.bosses = {}; p.feats = []; p.inBoss = {}; p.jing = []; p.puppet = 0; p.scrolls = []; p.xuanjia = {}; p.xuan = undefined; p.wish = undefined; p.trial = null;
     // 封豨的豕突：蓄力時定下冷卻、揚塵，這一步就停（先前註解吃掉了半行，一直衝）
     { const X = p.x, Y = p.y; for (let dy = -3; dy <= 3; dy++) for (let dx = -2; dx <= 9; dx++) w.set(X + dx, Y + dy, '草');
       const h = E.add('豨', X + 6, Y, { den: { x: X + 7, y: Y + 1 }, state: 'chase', chargeCD: 0, quakeCD: 99, eatCD: 99, callCD: 99, moveT: 0, atk: 9 }); const fx0 = g.fx.length, hx = h.x;
@@ -2042,13 +2045,44 @@ const result = await page.evaluate(async () => {
       put(z.x + 99, z.y); p.inBoss = {}; p.bossOut = null; g.updateStats(0.05); g.bossNo(); g.updateStats(0.05);
       ok('v0.8.8: an old save inside the ground: 先不 stops the asking until you walk out (no trap)', hidden('bossask') && p.inBoss['封豨'] === true && /不再問/.test(g.msgText), g.msgText);
       p.inBoss = {}; p.sailing = false; p.ship = null; put(p0.x, p0.y); }
-    // 遠海上死了：荷包落在出生點附近的空地，不蓋掉那裡原有的荷包
-    { const ships0 = new Set(w.ships.keys()), sp = g.spawn, keepS = w.get(sp.x, sp.y), land = (x, y) => DB[w.get(x, y)].kind !== 'water';
-      let z = null; for (const [ax, ay] of [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) for (let k = 0.3; k < 0.98 && !z; k += 0.04) { const x = Math.round(ax * k * G.WORLD_R), y = Math.round(ay * k * G.WORLD_R); if (!g.nearestTile(x, y, land, 82)) z = { x, y }; } w.set(sp.x, sp.y, '包'); w.bags.set(U.key(sp.x, sp.y), [{ n: '木', c: 20 }]);
+    // v0.8.27 使用者定：不管死在哪裡，荷包一律落在原點附近的空地，不蓋掉那裡原有的荷包；重生後十八日內（不算死的那一天）沒取就沒了
+    { const ships0 = new Set(w.ships.keys()), o = g.nearestTile(0, 0, (x, y) => w.walkable(x, y) && DB[w.get(x, y)].kind !== 'water' && !w.stele(x, y), 30), ok0 = U.key(o[0], o[1]), keepS = w.get(o[0], o[1]);
+      let z = null; for (let k = 0.3; k < 0.98 && !z; k += 0.01) { const x = Math.round(k * G.WORLD_R), y = Math.round(0.37 * G.WORLD_R); if (w.get(x, y) === '淼' && !G.zoneAt(x, y, g.seed)) z = { x, y }; }
+      w.purses.delete(ok0); w.set(o[0], o[1], '包'); w.bags.set(ok0, [{ n: '木', c: 20 }]); const d0 = Math.floor(w.time / XIEYI.DAY) + 1;   // 前面的測試可能在這一格留過期限紀錄（那時的荷包已經改回白紙）
       p.bag = [{ n: '果', c: 2, ds: [1, 1] }]; p.tools = []; p.tool = -1; put(z.x, z.y); p.sailing = true; p.ship = World.newShip('孤帆'); p.lastHit = null; p.hp = 0; g.die('溺');
-      const old = w.bags.get(U.key(sp.x, sp.y)); let fresh = null; for (const [k, v] of w.bags) if (v.some(s => s.n === '果') && w.get(...U.unkey(k)) === '包') fresh = k;
-      ok('v0.8.8: dying out at sea drops the purse on free land near your birthplace — the purse already there keeps its things', old && old.some(s => s.n === '木' && s.c === 20) && !!fresh && fresh !== U.key(sp.x, sp.y) && /出生的地方附近/.test(document.getElementById('dead-text').textContent), [fresh]);
-      g.respawn(); if (fresh) { w.bags.delete(fresh); w.set(...U.unkey(fresh), '草'); } w.bags.delete(U.key(sp.x, sp.y)); w.set(sp.x, sp.y, keepS); for (const sh of [...w.ships.keys()]) if (!ships0.has(sh)) w.removeShip(sh); p.sailing = false; p.ship = null; put(p0.x, p0.y); }
+      const old = w.bags.get(ok0); let fresh = null; for (const [k, v] of w.bags) if (v.some(s => s.n === '果') && w.get(...U.unkey(k)) === '包') fresh = k;
+      const fr = fresh ? U.unkey(fresh) : [9e9, 9e9], pr = fresh ? w.purses.get(fresh) : null, dtx = document.getElementById('dead-text').textContent;
+      ok('v0.8.27: dying far out at sea, the purse lands on free land near the origin — the purse already there keeps its things', old && old.some(s => s.n === '木' && s.c === 20) && !!fresh && fresh !== ok0 && Math.hypot(fr[0], fr[1]) < 40 && /原點附近/.test(dtx), [fresh, dtx.slice(0, 90)]);
+      ok('v0.8.27: it lasts eighteen days after the day you died (gone when day death + 18 is over); the death note says by which day', !!pr && pr.until === (d0 + 18) * XIEYI.DAY && new RegExp('第 ' + (d0 + 18) + ' 日').test(dtx) && !w.purses.has(ok0), [pr, d0]);
+      g.respawn(); const tKeep = w.time; w.time = pr.until - 1; g.purseTick(); const still = w.get(fr[0], fr[1]) === '包'; w.time = pr.until; g.purseTick();
+      const gone = w.get(fr[0], fr[1]) !== '包' && !w.bags.has(fresh) && !w.purses.has(fresh), oldStays = w.get(o[0], o[1]) === '包' && w.bags.has(ok0); w.time = tKeep;
+      ok('v0.8.27: on the last day it is still there; when that day is over it is gone with its things (an old purse with no deadline stays)', still && gone && oldStays, [still, gone, oldStays]);
+      w.bags.delete(ok0); w.set(o[0], o[1], keepS); for (const sh of [...w.ships.keys()]) if (!ships0.has(sh)) w.removeShip(sh); p.sailing = false; p.ship = null; put(p0.x, p0.y); }
+    // v0.8.28 使用者定：五日內又死一回，這回的東西併進上一回的荷包；一個荷包最多三回的遺物，第四回併進來擠掉最早那回；每回的遺物各自十八日
+    { g.save(); const snap = localStorage.getItem(XIEYI.Game.slotKey(g.slot)), D = XIEYI.DAY, T0 = Math.floor(w.time / D) * D + D * 0.4;
+      for (const [k, r] of [...w.purses]) { const [x, y] = U.unkey(k); w.bags.delete(k); w.set(x, y, r.was && r.was !== '包' ? r.was : '草'); w.purses.delete(k); }
+      const die = (t, c) => { w.time = t; p.bag = [{ n: '木', c }]; p.tools = []; p.tool = -1; p.hold = []; for (const k in p.worn) p.worn[k] = null; p.lastHit = null; p.hp = 0; g.die('餓'); const tx = document.getElementById('dead-text').textContent; g.respawn(); return tx; };
+      const woods = (k) => (w.bags.get(k) || []).filter(s => s.n === '木').map(s => s.c).sort((a, b) => a - b).join(',');
+      die(T0, 11); const k1 = [...w.purses.keys()][0];
+      const t2 = die(T0 + 4.9 * D, 12);
+      ok('v0.8.28: died again within five days, the purse still lying there — this time\'s things go into that purse, not a new one', w.purses.size === 1 && woods(k1) === '11,12' && w.purses.get(k1).deaths.length === 2 && /併了進去/.test(t2), [w.purses.size, woods(k1), t2.slice(0, 80)]);
+      die(T0 + 9.5 * D, 13); const t4 = die(T0 + 13 * D, 14);
+      ok('v0.8.28: one purse holds three deaths\' things — the fourth pushes out the first', w.purses.size === 1 && woods(k1) === '12,13,14' && w.purses.get(k1).deaths.length === 3 && /擠出去/.test(t4), [woods(k1), t4.slice(0, 120)]);
+      die(T0 + 19 * D, 15); const k2 = [...w.purses.keys()].find(k => k !== k1);
+      ok('v0.8.28: more than five days after the last death, the things fall as a new purse', w.purses.size === 2 && !!k2 && woods(k2) === '15' && woods(k1) === '12,13,14', [w.purses.size, woods(k2)]);
+      const d12 = w.purses.get(k1).deaths[0].until; w.time = d12 - 1; g.purseTick(); const keep = woods(k1); w.time = d12; g.purseTick(); const tst = document.getElementById('toasts').textContent;
+      ok('v0.8.28: each death\'s things keep their own eighteen days — the earliest goes when its day is over, the rest stay', keep === '12,13,14' && woods(k1) === '13,14' && w.get(...U.unkey(k1)) === '包' && w.purses.get(k1).deaths.length === 2 && /荷包裡少了一份/.test(tst), [keep, woods(k1), tst.slice(-60)]);
+      // v0.8.29 使用者定：五日照死的日期比（不看時辰）；荷包打開分檔，每回死亡一檔
+      for (const [k, r] of [...w.purses]) { const [x, y] = U.unkey(k); w.bags.delete(k); w.set(x, y, r.was && r.was !== '包' ? r.was : '草'); w.purses.delete(k); }
+      const Ta = Math.floor(w.time / D) * D + D * 0.1, dA = Math.floor(Ta / D) + 1; die(Ta, 21); const ka = [...w.purses.keys()][0]; die(Ta + 5.8 * D, 22);
+      ok('v0.8.29: five days go by the dates, not the hours — day d at dawn and day d + 5 at night still share a purse (5.8 days apart)', w.purses.size === 1 && woods(ka) === '21,22', [w.purses.size, woods(ka)]);
+      const kp = (code) => window.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true })), at = U.unkey(ka);
+      g.openPurse({ x: at[0], y: at[1] }); const tabs = [...document.querySelectorAll('#purse-tabs button')].map(b => b.textContent), it1 = document.getElementById('purse-items').textContent, nt1 = document.getElementById('purse-note').textContent;
+      ok('v0.8.29: E on a purse opens it — one tab for each death, by its date; the first holds that day\'s things and says by which day they go', !hidden('purse') && g.paused && tabs.length === 2 && tabs[0].indexOf('第 ' + dA + ' 日') >= 0 && tabs[1].indexOf('第 ' + (dA + 5) + ' 日') >= 0 && /木 ×21/.test(it1) && !/×22/.test(it1) && nt1.indexOf('第 ' + (dA + 18) + ' 日過完') >= 0, [tabs, it1, nt1]);
+      p.bag = []; kp('Digit2'); const it2 = document.getElementById('purse-items').textContent; kp('Enter');
+      ok('v0.8.29: 2 shows the second death\'s things; Enter takes that share only — the rest stay in the purse', /木 ×22/.test(it2) && g.count('木') === 22 && woods(ka) === '21' && w.purses.get(ka).deaths.length === 1 && !hidden('purse'), [it2, g.count('木'), woods(ka)]);
+      kp('KeyA'); ok('v0.8.29: A takes back everything; the purse is gone and the panel closes', g.count('木') === 43 && w.get(at[0], at[1]) !== '包' && hidden('purse') && !g.paused, [g.count('木'), w.get(at[0], at[1])]);
+      g.load(JSON.parse(snap)); }
     // 舊存檔櫃裡的散油、疊著的船，讀進來也照規矩改
     { g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot))); const ck = U.key(p.x + 2, p.y + 2); sv.world.chests = Object.assign(sv.world.chests || {}, { [ck]: [{ n: '油脂', c: 3 }, { n: '孤帆', c: 2 }] }); g.load(sv);
       const box = w.chests.get(ck) || [];
@@ -2081,9 +2115,11 @@ const result = await page.evaluate(async () => {
     ok('v0.8.8: walking out of 玄洲 ends the trial — the shade and its boars melt, no penalty', !p.trial && !sh() && !E.list.some(o => o.shade) && /經未取成/.test(toasts()) && p.cour === c0);
     put(xz.x + 2, xz.y); g.jingTalk(); g.talkPick(0); g.talkPick(0); const s2 = sh(); g.kill(s2);
     ok('v0.8.8: slay the shade and the scroll is yours — the 封豨 bead a red ring (v0.8.21), courage up (v0.8.10: the scroll is 封豨\'s, and it says the 九成 one is still untried)', g.beadOf('封豨') === 'held' && p.jingFor === '封豨' && p.scrolls.length === 1 && p.scrolls[0].id === '封豨' && !p.trial && p.cour > c0 && /取得封豨卷/.test(toasts()) && /九成的還沒試過/.test(toasts()), [g.beadOf('封豨'), p.cour - c0]);
+    ok('v0.8.34: …and 玄武 drapes one layer of 玄甲 — 震窒心溺灼 each cut 5%, 力 untouched; the banner says so', g.xuanLayers() === 1 && !!p.xuanjia['封豨'] && /玄甲/.test(toasts()) && Math.abs(g.kindMult('灼') - 0.95) < 1e-9 && Math.abs(g.kindMult('溺') - g.baseTaken() * (p.azure ? 0.75 : 1) * 0.95) < 1e-6 && Math.abs(g.kindMult('力') - g.takenMult()) < 1e-9, [g.xuanLayers(), g.kindMult('灼'), g.kindMult('溺')]);
     g.courSig = ''; g.hudSig = ''; await sleep(150);
     ok('v0.8.8: …the bead shows it', document.querySelectorAll('#jingbeads i')[0].className === 'held', document.querySelectorAll('#jingbeads i')[0].className);
     g.jingTalk(); ok('v0.8.10: asking again, 玄武 says which scroll you hold (only the 六成 shade so far) and offers another', /你手上是封豨卷/.test(document.getElementById('talk-text').textContent) && /只斃過六成/.test(document.getElementById('talk-text').textContent) && /封豨卷/.test(document.getElementById('talk-row').textContent)); g.talkPick('last');
+    g.jingTalk(); ok('v0.8.34: 玄武 tells of 玄甲 (one layer a boss, three at most) and that you already wear one', /玄甲/.test(document.getElementById('talk-text').textContent) && /你身上已有 1 層/.test(document.getElementById('talk-text').textContent)); g.talkPick('last');
     g.journalTab = 'see'; g.toggleJournal(); const jn = document.getElementById('journal-body').textContent; g.toggleJournal();
     ok('v0.8.8: the journal keeps the scroll (經卷) and the wish line', /經卷/.test(jn) && /封豨卷/.test(jn) && /豕突/.test(jn) && /願/.test(jn), jn.slice(-160));
     // 進地界：取過就不提醒；沒取就提醒會錯過；斃了沒取的就打叉
@@ -2110,7 +2146,7 @@ const result = await page.evaluate(async () => {
       ok('v0.8.8: an older save where 封豨 fell before 玄武 existed: that scroll is not counted as missed', p.bosses['封豨'].jing === true && g.beadOf('封豨') === 'won' && p.jingOld === true, g.beadOf('封豨')); }
     // 收拾
     w.set(pv.x, pv.y, '草'); E.list = E.list.filter(o => o.type !== '玄武' && !o.shade && o.type !== '豨' && o.type !== '豬');
-    p.bosses = {}; p.feats = []; p.inBoss = {}; p.jing = []; p.puppet = 0; p.scrolls = []; p.xuan = undefined; p.wish = undefined; p.pavilion = undefined; p.trial = null; p.jingOld = undefined; p.fight = null; p.bossBuff = 0; p.trialTries = {}; p.trophies = {}; p.jingFor = null; p.shade9 = {}; p.jingCour = {}; p.trialLockT = 0;
+    p.bosses = {}; p.feats = []; p.inBoss = {}; p.jing = []; p.puppet = 0; p.scrolls = []; p.xuanjia = {}; p.xuan = undefined; p.wish = undefined; p.pavilion = undefined; p.trial = null; p.jingOld = undefined; p.fight = null; p.bossBuff = 0; p.trialTries = {}; p.trophies = {}; p.jingFor = null; p.shade9 = {}; p.jingCour = {}; p.trialLockT = 0;
     p.creatures = p.creatures.filter(c => c !== '豨' && c !== '玄武'); if (p.codex) { delete p.codex['封豨']; delete p.codex['玄武']; }
     p.cour = keep.cour; p.bag = keep.bag; p.tools = keep.tools; p.tool = keep.tool; p.hp = 100; p.home = keep.home; p.bed = keep.bed; g.barSig = ''; g.courSig = ''; g.hudSig = ''; put(p0.x, p0.y); }
   // ============ v0.8.7：封豨（大魔王）與戰鬥的規矩：進地界先問、鎖難度、逃跑、鎖血與神獸護駕、存讀檔接著打、獨力記成就 ============
@@ -2202,7 +2238,7 @@ const result = await page.evaluate(async () => {
     g.updateStats(1.1); p.atkT = 0; g.attack(dummy); ok('v0.8.6: …and once it passes you can', dummy.hp < h0); E.remove(dummy);
     // 燧石：海邊與火島岩地上偶爾一格「燧」，本島原本的地不長；取之得燧石；鑿石頭五十分之一
     let flint = null; for (const isl of G.isles(g.seed).filter(i => i.kind === '火')) { const R = Math.ceil(isl.R); for (let dy = -R; dy <= R && !flint; dy++) for (let dx = -R; dx <= R && !flint; dx++) if (G.baseTile(isl.cx + dx, isl.cy + dy, g.seed) === '燧') flint = [isl.cx + dx, isl.cy + dy]; if (flint) break; }
-    let oldFlint = 0; for (let y = -100; y <= 100; y += 2) for (let x = -100; x <= 100; x += 2) if (G.oldTile(x, y, g.seed) !== G.baseTile(x, y, g.seed) && DB[G.oldTile(x, y, g.seed)].kind !== 'water') oldFlint++;
+    let oldFlint = 0; for (let y = -100; y <= 100; y += 2) for (let x = -100; x <= 100; x += 2) if (G.oldTile(x, y, g.seed) !== G.natTile(x, y, g.seed) && DB[G.oldTile(x, y, g.seed)].kind !== 'water') oldFlint++;
     ok('v0.8.6: flint (燧) shows on a 火島, while the home island\'s original land is unchanged', !!flint && oldFlint === 0, [flint, oldFlint]);
     g.removeItem('燧石', 99); put(flint[0] - 1, flint[1]); w.set(p.x, p.y, '草'); face(1, 0); p.sta = 100; g.action = null; g.pressGather(); await until(() => !g.action, 6000);
     ok('v0.8.6: taking a 燧 gives a 燧石 and leaves gravel', g.count('燧石') === 1 && w.get(flint[0], flint[1]) === '礫', [g.count('燧石'), w.get(flint[0], flint[1])]);
@@ -2352,11 +2388,11 @@ const result = await page.evaluate(async () => {
     ok('v0.8.3: four beads (v0.8.21: 封豨、大風、修蛇、共工), all small grey dots until challenged', beads.length === 4 && [...beads].every(b => /^none$|^last none$|^none last$/.test(b.className) || b.className === 'none') && /封豨（還沒挑戰）、大風（還沒挑戰）、修蛇（還沒挑戰）、共工（還沒挑戰）/.test(document.getElementById('jingbeads').title), [...beads].map(b => b.className));
     { const st = document.getElementById('status').getBoundingClientRect(), br = document.getElementById('jingbeads').getBoundingClientRect(), r = [...beads].map(b => b.getBoundingClientRect());
       ok('v0.8.22: the beads sit in a row of their own — below the status line, above the ring, apart from both; the fourth stands off from the first three', br.top >= st.bottom + 6 && rr.top >= br.bottom + 6 && Math.abs(r[0].top - r[3].top) < 1 && (r[3].left - r[2].right) > (r[1].left - r[0].right) + 12 && document.getElementById('jingbeads').parentElement.id === 'topright', [br.top - st.bottom, rr.top - br.bottom, r[3].left - r[2].right, r[1].left - r[0].right]); }
-    { const bs0 = p.bosses; p.bosses = { '封豨': { jing: true, day: 1 }, '修蛇': { jing: false, day: 2 } }; g.courSig = ''; await sleep(80);
+    { const bs0 = p.bosses; p.bosses = { '封豨': { jing: true, day: 1 }, '修蛇': { jing: false, day: 2 } }; g.courSig = ''; await until(() => beads[0].className === 'won', 2000);   // 等到真的跑過一幀（v0.8.32：原本固定等 80 毫秒，慢的時候一幀都沒跑到）
       ok('v0.8.21: beads by boss — 封豨 slain with its scroll a vermilion dot, 修蛇 slain without one a black cross, 大風 still grey; both thirds of the ring in full colour', beads[0].className === 'won' && beads[1].className === 'none' && beads[2].className === 'miss' && beads[3].className === 'none' && /封豨（拿著經斃了）/.test(document.getElementById('jingbeads').title) && ring.classList.contains('b') && ring.classList.contains('q') && !ring.classList.contains('z'), [...beads].map(b => b.className));
-      p.bosses = { '封豨': { jing: true, day: 1 }, '修蛇': { jing: false, day: 2 }, '大風': { jing: true, day: 3 } }; g.courSig = ''; await sleep(80);
+      p.bosses = { '封豨': { jing: true, day: 1 }, '修蛇': { jing: false, day: 2 }, '大風': { jing: true, day: 3 } }; g.courSig = ''; await until(() => beads[3].classList.contains('ask'), 2000);
       ok('v0.8.22: all three rings won — the fourth bead (共工) turns to a grey question mark', g.beadOf('共工') === 'ask' && beads[3].classList.contains('ask') && /共工（三個魂環集齊了/.test(document.getElementById('jingbeads').title), beads[3].className);
-      p.jingFor = '共工'; g.courSig = ''; await sleep(80); const got = beads[3].classList.contains('got'); p.jingFor = null;
+      p.jingFor = '共工'; g.courSig = ''; await until(() => beads[3].classList.contains('got'), 2000); const got = beads[3].classList.contains('got'); p.jingFor = null;
       p.fight = { id: '共工', jing: false }; const bk = g.beadOf('共工'); p.fight = null;   // 共工還沒寫成（沒有地界），不能真的掛著戰事跑一幀
       beads[3].className = bk; const bl = bk === 'fightNo blink' && /bead-blink/.test(getComputedStyle(beads[3]).animationName); g.courSig = '';
       ok('v0.8.22: …holding 共工\'s scroll a red dot; fighting 共工 without it a blinking black question mark (共工 is not written yet; only the rule)', got && bl, beads[3].className);
@@ -2420,7 +2456,7 @@ const result = await page.evaluate(async () => {
       ok('v0.8.19: F on a parked ship first asks 收船？', !hidden('takeask') && /收船/.test(document.querySelector('#takeask h2').textContent) && !!w.shipAt(X, Y - 1));
       takeYes();
       const stowed = p.hold.find(x => x.n === '孤帆');
-      ok('v0.8.18: facing the parked ship, F takes it back (into the hold, v0.8.19) with its hp and skulls; the water is water again', !w.shipAt(X, Y - 1) && w.get(X, Y - 1) === '淼' && !!stowed && stowed.ship && stowed.ship.hp === 77 && stowed.ship.skulls.length === 1 && /收回/.test(g.msgText), [stowed && JSON.stringify(stowed.ship), g.msgText]);
+      ok('v0.8.18: facing the parked ship, F takes it back (into the hold, v0.8.19) with its hp and skulls; the water is water again', !w.shipAt(X, Y - 1) && w.get(X, Y - 1) === w.base(X, Y - 1) && G.DB[w.get(X, Y - 1)].kind === 'water' && !!stowed && stowed.ship && stowed.ship.hp === 77 && stowed.ship.skulls.length === 1 && /收回/.test(g.msgText), [stowed && JSON.stringify(stowed.ship), g.msgText]);
       g.barSig = ''; g.buildBag(); g.holdSig = ''; g.buildHold();
       ok('v0.8.19: the hold shows the ship\'s own hp (77/120) and skulls; the bag cells carry no number keys', /命 77\/120/.test(document.getElementById('hold').textContent) && /骨 狼/.test(document.getElementById('hold').textContent) && !document.querySelector('#bagbar .slot .num'), document.getElementById('bagbar').textContent.slice(0, 80));
       hold('孤帆'); g.pressPlace(); const r4 = w.shipAt(X, Y - 1);
@@ -2487,9 +2523,9 @@ const result = await page.evaluate(async () => {
       // 7、8、9：各拿一件神兵
       const tk = p.tools; p.tools = [{ n: '石刀', c: 1, dur: 30 }]; p.tool = 0; g.addItem('九閽鳴雷', 1); g.addItem('燭龍焚溟', 1);
       await press('Digit7', 20); const k7 = g.activeTool() && g.activeTool().n; await press('Digit8', 20); const k8 = g.activeTool() && g.activeTool().n; await press('Digit9', 20); const m9 = g.msgText;
-      g.addItem('彤弓素矰', 1); await press('Digit9', 20); const k9 = g.activeTool() && g.activeTool().n;
-      ok('v0.8.19: 7 takes out 九閽鳴雷, 8 燭龍焚溟; v0.8.25: 9 takes out 彤弓素矰 (and says so when you have none)', k7 === '九閽鳴雷' && k8 === '燭龍焚溟' && /沒有「彤弓素矰」/.test(m9) && k9 === '彤弓素矰', [k7, k8, m9, k9]);
-      p.tools = tk; p.tool = -1; g.removeItem('九閽鳴雷', 9); g.removeItem('燭龍焚溟', 9); g.removeItem('彤弓素矰', 9);
+      g.addItem('青冥落羽', 1); await press('Digit9', 20); const k9 = g.activeTool() && g.activeTool().n;
+      ok('v0.8.19: 7 takes out 九閽鳴雷, 8 燭龍焚溟; v0.8.25: 9 takes out 青冥落羽 (and says so when you have none)', k7 === '九閽鳴雷' && k8 === '燭龍焚溟' && /沒有「青冥落羽」/.test(m9) && k9 === '青冥落羽', [k7, k8, m9, k9]);
+      p.tools = tk; p.tool = -1; g.removeItem('九閽鳴雷', 9); g.removeItem('燭龍焚溟', 9); g.removeItem('青冥落羽', 9);
       // 走位：打完一下，退開或橫挪
       const rnd0 = Math.random; Math.random = () => 0.1;
       const sh = g.ents.add('蜃', p.x, p.y - 4, { moveT: 0, atk: 1, fogT: 999 }); const shipC = g.shipCells(); sh.y = sh.ry = Math.min(...shipC.map(c => c[1])) - 1; sh.x = sh.rx = shipC[0][0];
@@ -2612,14 +2648,14 @@ const result = await page.evaluate(async () => {
       ok('v0.8.21: 符紙 — 竹二、麻布一、煤一、花一 make two', g.count('符紙') === 2, g.count('符紙'));
       p.x = p.rx = g.spawn.x; p.y = p.ry = g.spawn.y; p.sta = 100; p.food = 100;
       g.openTele('home'); const tl = document.getElementById('tele-list').textContent, shut = [...document.querySelectorAll('#tele-list button')].find(b => /桑林/.test(b.textContent));
-      ok('v0.8.21: the list shows the places been to; 桑林 is shut while 封豨 lives', /玄洲的建木/.test(tl) && /龍淵（水上/.test(tl) && !!shut && shut.disabled && /還沒斃封豨/.test(shut.textContent), tl.slice(0, 160));
+      ok('v0.8.21: the list shows the places been to; 桑林 is shut while 封豨 lives', /玄洲的建木/.test(tl) && /龍淵（海上，要撐船/.test(tl) && !!shut && shut.disabled && /還沒斃封豨/.test(shut.textContent), tl.slice(0, 160));
       [...document.querySelectorAll('#tele-list button')].find(b => /玄洲的建木/.test(b.textContent)).click();
       ok('v0.8.21: writing 玄洲 takes you next to its 建木 for one 符紙, 10 力 and 8 飽', U.cheb(p.x, p.y, gx.x, gx.y) <= 1 && g.count('符紙') === 1 && p.sta === 90 && p.food === 92 && hidden('tele'), [p.x - gx.x, p.y - gx.y, g.count('符紙'), p.sta, p.food]);
       document.getElementById('toasts').innerHTML = ''; g.openTele(g.gateKeyAt(gx.x, gx.y)); [...document.querySelectorAll('#tele-list button')].find(b => /龍淵/.test(b.textContent)).click();
-      ok('v0.8.21: a water place with no ship in the hold — told to bring one, no 符紙 spent', /要帶船/.test(toasts()) && g.count('符紙') === 1 && !p.sailing, toasts().slice(0, 80));
+      ok('v0.8.21: a water place with no ship in the hold — told to bring one, no 符紙 spent (v0.8.28: a banner, 沒帶船)', /沒帶船，傳不到海上/.test(toasts()) && g.count('符紙') === 1 && !p.sailing, toasts().slice(0, 80));
       g.addItem('孤帆', 1); g.openTele(g.gateKeyAt(gx.x, gx.y)); [...document.querySelectorAll('#tele-list button')].find(b => /龍淵/.test(b.textContent)).click();
       const tt = document.getElementById('talk-text').textContent; g.talkPick(0);
-      ok('v0.8.21: …with a ship: choose it, and you arrive aboard in the middle of 龍淵', /選一艘/.test(tt) && p.sailing && !!p.ship && p.ship.kind === '孤帆' && Math.hypot(p.x - zl.x, p.y - zl.y) < 10 && g.count('符紙') === 0 && g.count('孤帆') === 0, [p.x - zl.x, p.y - zl.y]);
+      ok('v0.8.21: …with a ship: choose it, and you arrive aboard in the middle of 龍淵', /撐一艘船/.test(tt) && p.sailing && !!p.ship && p.ship.kind === '孤帆' && Math.hypot(p.x - zl.x, p.y - zl.y) < 10 && g.count('符紙') === 0 && g.count('孤帆') === 0, [p.x - zl.x, p.y - zl.y]);
       ok('v0.8.21: on board you cannot write a place', g.gateBlock() === '在船上傳不了，先上岸。', g.gateBlock());
       g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot))); ok('v0.8.21: the places are saved', sv.player.gates && sv.player.gates['z:玄武'] && sv.player.gates['z:青龍'].water);
       p.sailing = false; p.ship = null; p.bosses = pb; p.hold = hold0; p.gates = gk || {}; w.set(gx.x, gx.y, w.base(gx.x, gx.y)); w.set(gh.x, gh.y, w.base(gh.x, gh.y)); p.x = p.rx = pos0.x; p.y = p.ry = pos0.y; g.ents.px = p.x; g.ents.py = p.y; trim([]);
@@ -2815,32 +2851,37 @@ const result = await page.evaluate(async () => {
   { const sd = w.seed, home0 = { x: p.x, y: p.y }, il = G.islet(sd);
     let same = true, oldLand = 0, newLand = 0, inner = true, isletSame = true;
     for (let y = -125; y <= 125; y++) for (let x = -125; x <= 125; x++) {
-      const a = G.oldTile(x, y, sd), b = G.baseTile(x, y, sd), la = G.DB[a].kind !== 'water';
+      const a = G.oldTile(x, y, sd), b = G.natTile(x, y, sd), la = G.DB[a].kind !== 'water';   // v0.8.27：第三版原點附近那一棵傳送的樹另外驗
       if (la) { oldLand++; if (a !== b) same = false; }
       if (G.DB[b].kind !== 'water') newLand++;
       if (!la && Math.hypot(x, y) < 0.55 * 85 && a !== b) inner = false;
       if (Math.hypot(x - il.cx, y - il.cy) <= 14 && a !== b) isletSame = false;
     }
     ok('v0.7: every tile of the old island stays exactly as it was (old saves keep their land)', same, oldLand);
+    if (G.GEN >= 3) { let gates = 0, other = 0; for (let y = -125; y <= 125; y++) for (let x = -125; x <= 125; x++) if (G.baseTile(x, y, sd) !== G.natTile(x, y, sd)) { if (G.baseTile(x, y, sd) === '建') gates++; else other++; } ok('v0.8.27: on the home island only one tile differs — the origin\'s 建木', gates === 1 && other === 0, [gates, other]); }
     ok('v0.7: the island grows outward (seed 7: ' + oldLand + ' → ' + newLand + ' land tiles)', newLand / oldLand > 1.2 && newLand / oldLand < 1.9, newLand / oldLand);
     ok('v0.7: ponds deep inside the island and the lighthouse islet with its causeway are untouched', inner && isletSame);
     const pls = w.places.map(q => q.id + '@' + q.x + ',' + q.y).join(' ');
     ok('v0.7: landmarks, steles and the spawn sit exactly where they were before', pls === 'ta@-12,14 si@-31,-17 cun@-26,-21 chuan@-53,-27 quan@18,23 mu@-29,-2 dong@20,33 deng@-93,-27' && [...w.steles.keys()].join(' ') === '21,0 -7,35 -43,20 -33,-49 47,-12' && g.spawn.x === 3 && g.spawn.y === -1, [pls, g.spawn]);
     const all = G.isles(sd), kinds = {}; for (const i of all) kinds[i.kind] = (kinds[i.kind] || 0) + 1;
-    ok('v0.7: about seventy outer islands of five kinds dot the 2500×2500 sea, none near home', all.length >= 50 && all.length <= 95 && Object.keys(kinds).length === 5 && all.every(i => G.isleOf(i.cx, i.cy, sd) === i && Math.hypot(i.cx, i.cy) >= 330), [all.length, kinds]);
+    const g3 = G.GEN >= 3;   // v0.8.27 第三版：外島換成大陸上的地域（中心在陸上的才算），五種一定都有
+    ok('v0.7: about seventy outer islands of five kinds dot the 2500×2500 sea, none near home (v0.8.27 third generation: the regions on land, all five kinds)', g3 ? all.length >= 15 && Object.keys(kinds).length === 5 && all.every(i => i.onLand && Math.hypot(i.cx, i.cy) >= 240) : all.length >= 50 && all.length <= 95 && Object.keys(kinds).length === 5 && all.every(i => G.isleOf(i.cx, i.cy, sd) === i && Math.hypot(i.cx, i.cy) >= 330), [all.length, kinds]);
     const sig = { '漠': '漠丘池棗', '火': '熔岩曜', '川': '川湖', '雪': '窟湯', '青': '草木' }, found = {};
-    for (const k in sig) { const i = all.filter(q => q.kind === k).sort((a, b) => b.R - a.R)[0]; const got = new Set(); for (let y = Math.floor(i.cy - i.R); y <= i.cy + i.R; y++) for (let x = Math.floor(i.cx - i.R); x <= i.cx + i.R; x++) got.add(G.baseTile(x, y, sd)); found[k] = [...sig[k]].filter(c => got.has(c)).join(''); }
-    ok('v0.7: each kind of island has its own terrain (漠丘池棗 / 熔岩曜 / 川湖 / 窟 / 草木)', found['漠'].length >= 3 && found['火'] === '熔岩曜' && found['川'] === '川湖' && found['雪'].indexOf('窟') >= 0 && found['青'] === '草木', found);
+    for (const k in sig) { const got = new Set(); for (const i of (g3 ? all.filter(q => q.kind === k) : [all.filter(q => q.kind === k).sort((a, b) => b.R - a.R)[0]])) for (let y = Math.floor(i.cy - i.R); y <= i.cy + i.R; y += g3 ? 2 : 1) for (let x = Math.floor(i.cx - i.R); x <= i.cx + i.R; x += g3 ? 2 : 1) got.add(G.baseTile(x, y, sd)); found[k] = [...sig[k]].filter(c => got.has(c)).join(''); }
+    ok('v0.7: each kind of island has its own terrain (漠丘池棗 / 熔岩曜 / 川湖 / 窟 / 草木)', g3 ? found['漠'].length >= 2 && found['火'].indexOf('岩') >= 0 && found['火'].length >= 2 && found['川'].length >= 1 && found['雪'].length >= 1 && found['青'] === '草木' : found['漠'].length >= 3 && found['火'] === '熔岩曜' && found['川'] === '川湖' && found['雪'].indexOf('窟') >= 0 && found['青'] === '草木', found);
     // 登上一座外島
     const ri = all.filter(q => q.kind === '火').sort((a, b) => b.R - a.R)[0]; let spot = null;
     for (let r = 0; r < ri.R && !spot; r++) for (let a = 0; a < 360 && !spot; a += 10) { const x = Math.round(ri.cx + Math.cos(a * Math.PI / 180) * r), y = Math.round(ri.cy + Math.sin(a * Math.PI / 180) * r), d = G.DB[w.get(x, y)]; if (d.walk > 0 && d.kind !== 'water' && !w.nearChar(x, y, '熔', 2)) spot = [x, y]; }
-    const c0 = p.cour, n0 = Object.keys(p.isles || {}).length;
+    const c0 = p.cour, n0 = Object.keys(p.isles || {}).length, ms = g3 ? G.massAt(spot[0], spot[1], sd) : null, gl0 = Object.keys(p.gates || {}).length; if (ms) delete p.masses[ms.id];
     p.x = p.rx = spot[0]; p.y = p.ry = spot[1]; p.sailing = false; p.swimming = false; g.updateStats(0.01);
-    ok('v0.7: stepping onto an outer island for the first time names it and gives courage', (p.isles || {})[ri.id] === 1 && Object.keys(p.isles).length === n0 + 1 && p.cour > c0 && toasts().indexOf('登上火島') >= 0, [p.cour - c0, spot]);
-    g.hudSig = ''; g.updateHUD(); ok('v0.7: the status bar says which island you are on', document.getElementById('status').textContent.indexOf('火島 · ') >= 0, document.getElementById('status').textContent.slice(0, 80));
+    if (g3) { const asked = !!g.naming && g.naming.kind === 'mass', lit = Object.keys(p.gates || {}).length - gl0; while (g.naming) g.nameOk(0);   // 第三版：踏上一千二百格以上的陸地先請你取名；v0.8.29 起登上陸地不長膽氣（剛好點亮了傳送點的才 +6）
+      ok('v0.7: stepping onto an outer island for the first time names it and gives courage (v0.8.27: a land over 1,200 tiles, and you are asked for its name; v0.8.29: no courage for the land)', asked && p.masses[ms.id] === 1 && Math.abs(U.r4(p.cour - c0) - lit * 6) < 1e-3 && ms.area > G.MASS_MIN, [asked, p.cour - c0, lit, spot, ms && ms.area]);
+      g.hudSig = ''; g.updateHUD(); ok('v0.7: the status bar says which island you are on (v0.8.27: the land\'s name, then the region)', document.getElementById('status').textContent.indexOf(g.massName(ms.id) + ' · 火山 · ') >= 0, document.getElementById('status').textContent.slice(0, 80)); }
+    else { ok('v0.7: stepping onto an outer island for the first time names it and gives courage', (p.isles || {})[ri.id] === 1 && Object.keys(p.isles).length === n0 + 1 && p.cour > c0 && toasts().indexOf('登上火島') >= 0, [p.cour - c0, spot]);
+      g.hudSig = ''; g.updateHUD(); ok('v0.7: the status bar says which island you are on', document.getElementById('status').textContent.indexOf('火島 · ') >= 0, document.getElementById('status').textContent.slice(0, 80)); }
     w.markSeen(p.x, p.y, 9); const tb = performance.now(); g.renderer.drawBigMap(g, document.getElementById('bigmap')); const mapMs = performance.now() - tb, mv = g.renderer.mapView;
     ok('v0.7: the big map widens to take in the far island and the home island, and draws quickly', mv.N > 400 && mv.ox <= -G.HOME_R && mv.ox + mv.N >= p.x && mapMs < 400, [mv, Math.round(mapMs)]);
-    p.cour = c0; delete p.isles[ri.id]; p.x = p.rx = home0.x; p.y = p.ry = home0.y; g.renderer.drawBigMap(g, document.getElementById('bigmap'));
+    p.cour = c0; if (p.isles) delete p.isles[ri.id]; p.x = p.rx = home0.x; p.y = p.ry = home0.y; g.renderer.drawBigMap(g, document.getElementById('bigmap'));
     w.revealAll(0, 0); ok('v0.7: from the tower you see the whole grown island', w.isSeen(G.HOME_R - 3, 0) && w.isSeen(0, -(G.HOME_R - 3)));
     // 新地形：在家附近鋪一小塊試
     const X = home0.x + 34, Y = home0.y + 4, patch = (ch) => { for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) w.set(X + dx, Y + dy, ch); };
@@ -2987,13 +3028,13 @@ const result = await page.evaluate(async () => {
     ok('v0.8.22: an older save on hard counts as hard so far (we cannot know); read on another difficulty, it is lost', oldHard === true && offHard === false, [oldHard, offHard]);
     p.hardOnly = keepH; }
   // ============ v0.8.23：共工的加成＝公式＋獨力（相加不相乘）；成就頁列「服了？服了！」的條件；第四顆珠輸了的樣子；困難存檔換難度時的暗示 ============
-  { const keep = { bosses: p.bosses, azure: p.azure, bai: p.bai, zhu: p.zhu, hardOnly: p.hardOnly, jingFor: p.jingFor, gongLost: p.gongLost };
+  { const keep = { bosses: p.bosses, azure: p.azure, bai: p.bai, zhu: p.zhu, hardOnly: p.hardOnly, jingFor: p.jingFor, gongLost: p.gongLost, xuanjia: p.xuanjia }; p.xuanjia = {};
     p.bosses = { '封豨': { jing: false, solo: true }, '大風': { jing: false, solo: true }, '修蛇': { jing: false, solo: true } };
     ok('v0.8.23: 共工 after three crosses, all three slain alone: with its scroll 1.6 + 0.3 = 1.9; without, 1.6 × 1.2⁴ + 0.3 ≈ 3.6178 (added, not multiplied)', g.gongK(true) === 1.9 && Math.abs(g.gongK(false) - (1.6 * Math.pow(1.2, 4) + 0.3)) < 1e-4, [g.gongK(true), g.gongK(false)]);
     p.bosses = { '封豨': { jing: true, solo: false } }; ok('v0.8.23: …no cross, one slain with a guard: with the scroll ×1, without ×1.2', g.gongK(true) === 1 && g.gongK(false) === 1.2, [g.gongK(true), g.gongK(false)]);
     p.hardOnly = true; p.azure = false; p.bai = false; p.zhu = false; p.bosses = { '修蛇': { jing: false } }; p.jingFor = null; p.gongLost = undefined;
     const t = document.createElement('div'); t.innerHTML = g.teaseHtml(); const li = [...t.querySelectorAll('li')];
-    ok('v0.8.23: the achievements list the conditions — hard all the way, no cross-star, the three slain without scrolls (1／3), no 共工 scroll, slay 共工 — and leave it a riddle', li.length === 5 && li.every(x => x.className === 'ok') && /1／3/.test(li[2].textContent) && /是不是最後藏著的那一件/.test(t.textContent), li.map(x => x.className + ':' + x.textContent));
+    ok('v0.8.23: the achievements list the conditions — hard all the way, no cross-star, the three slain without scrolls (1／3), (v0.8.34) no 玄甲, no 共工 scroll, slay 共工 — and leave it a riddle', li.length === 6 && li.every(x => x.className === 'ok') && /1／3/.test(li[2].textContent) && /是不是最後藏著的那一件/.test(t.textContent), li.map(x => x.className + ':' + x.textContent));
     p.hardOnly = false; p.bai = true; p.bosses = { '修蛇': { jing: true } }; t.innerHTML = g.teaseHtml(); const li2 = [...t.querySelectorAll('li')];
     ok('v0.8.23: …the ones already broken are struck out (difficulty changed, a star taken, one slain with its scroll)', li2[0].className === 'no' && li2[1].className === 'no' && li2[2].className === 'no' && li2[3].className === 'ok', li2.map(x => x.className));
     p.bosses = { '封豨': { jing: false }, '大風': { jing: false }, '修蛇': { jing: false } }; p.gongLost = 'none'; const b1 = g.beadOf('共工'); p.jingFor = '共工'; p.gongLost = 'jing'; const b2 = g.beadOf('共工'); p.gongLost = undefined; const b3 = g.beadOf('共工'); p.jingFor = null; const b4 = g.beadOf('共工');
@@ -3034,7 +3075,7 @@ const result = await page.evaluate(async () => {
     const r3 = g.save();
     ok('v0.8.25: when the browser will not take the save, a note says so once (space full: delete unused slots), not on every autosave; the next good save clears it', r1 === false && r2 === false && n1 - n0 === 1 && /空間滿了/.test(body) && r3 === true && g.saveBad === 0, [r1, r2, n1 - n0, body.slice(0, 40), r3, g.saveBad]); }
 
-  // ============ v0.8.25：畢方、對空神兵彤弓素矰、大風（大魔王）與大風卷、窒與亂 ============
+  // ============ v0.8.25：畢方、對空神兵青冥落羽、大風（大魔王）與大風卷、窒與亂 ============
   { const E = g.ents, DB = G.DB, keep = { x: p.x, y: p.y, fx: p.fx, fy: p.fy }, cour0 = p.cour, tk = p.tools, tl = p.tool, hpm = p.hpMax;
     const put = (x, y) => { p.sailing = false; p.ship = null; p.swimming = false; p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; p.moveT = 0; };
     const clear = (cx, cy, r) => { for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) w.set(cx + i, cy + j, '土'); };
@@ -3057,13 +3098,13 @@ const result = await page.evaluate(async () => {
     p.hp = p.hpMax; g.removeItem('畢方羽', 99); g.kill(bd); const fe = g.count('畢方羽');
     ok('v0.8.25: slain, it leaves one or two 畢方羽 and its fires go out', (fe === 1 || fe === 2) && g.fires.length === 0 && p.codex['畢方'] >= 1, [fe, g.fires.length]);
     g.removeItem('畢方羽', 99);
-    // —— 彤弓素矰
-    const rc = G.RECIPES.find(r => r.out === '彤弓素矰');
-    ok('v0.8.25: the sky god weapon 彤弓素矰 is a 神兵 recipe — 畢方羽 6, 鎢鋼 3, 竹 6, 麻布 3, at 卅一重', !!rc && rc.cat === '神兵' && rc.need['畢方羽'] === 6 && rc.need['鎢鋼'] === 3 && rc.need['竹'] === 6 && rc.need['麻布'] === 3 && rc.level === 31, rc && rc.need);
-    p.cour = 99999; g.courSig = ''; p.tools = [{ n: '彤弓素矰', c: 1, dur: 199 }]; p.tool = 0; p.fx = 1; p.fy = 0;
-    const full = U.r4(g.godDmg('彤弓素矰') * g.dmgMult());
+    // —— 青冥落羽
+    const rc = G.RECIPES.find(r => r.out === '青冥落羽');
+    ok('v0.8.25: the sky god weapon 青冥落羽 is a 神兵 recipe — 畢方羽 6, 鎢鋼 3, 竹 6, 麻布 3, at 卅一重', !!rc && rc.cat === '神兵' && rc.need['畢方羽'] === 6 && rc.need['鎢鋼'] === 3 && rc.need['竹'] === 6 && rc.need['麻布'] === 3 && rc.level === 31, rc && rc.need);
+    p.cour = 99999; g.courSig = ''; p.tools = [{ n: '青冥落羽', c: 1, dur: 199 }]; p.tool = 0; p.fx = 1; p.fy = 0;
+    const full = U.r4(g.godDmg('青冥落羽') * g.dmgMult());
     const hp1 = E.add('雕', p.x + 6, p.y, { mode: 'circle', moveT: 99, diveT: 99, cryT: 99 }); p.atkT = 0; const tg = g.skyTarget(), h0 = hp1.hp; g.pressGather(); const dSky = U.r4(h0 - hp1.hp);
-    ok('v0.8.25: E with 彤弓素矰 shoots the 蠱雕 circling six away — full 120 (by difficulty) — and the silk ties it down (繳)', tg === hp1 && Math.abs(dSky - full) < 0.01 && hp1.mode === 'tied' && hp1.tiedT === 2.5 && !!E.at(hp1.x, hp1.y), [dSky, full, hp1.mode]);
+    ok('v0.8.25: E with 青冥落羽 shoots the 蠱雕 circling six away — full 120 (by difficulty) — and the silk ties it down (繳)', tg === hp1 && Math.abs(dSky - full) < 0.01 && hp1.mode === 'tied' && hp1.tiedT === 2.5 && !!E.at(hp1.x, hp1.y), [dSky, full, hp1.mode]);
     hp1.mode = 'circle'; hp1.tiedT = 0; p.atkT = 0; g.pressGather();
     ok('v0.8.25: the same one cannot be tied again for ten breaths', hp1.mode === 'circle' && hp1.tieCD > 0, [hp1.mode, hp1.tieCD]);
     E.remove(hp1); const tg2 = E.add('虎', p.x + 4, p.y, { moveT: 99, calm: 99 }); p.atkT = 0; const t0 = tg2.hp; g.pressGather(); const dGround = U.r4(t0 - tg2.hp);
@@ -3079,8 +3120,8 @@ const result = await page.evaluate(async () => {
     ok('v0.8.25: in 青丘 the fight with 大風 starts; it is up in the sky; its life is 1600 by difficulty × 加成 × 陸海比', !!wd && wd.type === '大風' && wd.state === 'sky' && Math.abs(wd.max - U.r4(g.bigHp(1600) * g.buffK() * kW)) < 0.01, [wd && wd.max, kW]);
     Object.assign(wd, { x: p.x + 1, y: p.y, rx: p.x + 1, ry: p.y, moveT: 99, diveCD: 99, whirlCD: 99, galeCD: 99, sandCD: 99 });
     ok('v0.8.25: up in the sky it cannot be struck by hand nor by the 3-cell god weapons, even right overhead', !E.at(p.x + 1, p.y) && E.rectDist(wd, p.x, p.y) === Infinity && !E.beastAt(p.x + 1, p.y));
-    p.tools = [{ n: '彤弓素矰', c: 1, dur: 199 }]; p.tool = 0; wd.x = wd.rx = p.x + 6; p.atkT = 0; const w0 = wd.hp; g.pressGather();
-    ok('v0.8.25: 彤弓素矰 hits it in the sky in full and ties it down (繳) — then it can be struck by hand', Math.abs(w0 - wd.hp - full) < 0.01 && wd.state === 'tied' && E.at(wd.x, wd.y) === wd, [w0 - wd.hp, wd.state]);
+    p.tools = [{ n: '青冥落羽', c: 1, dur: 199 }]; p.tool = 0; wd.x = wd.rx = p.x + 6; p.atkT = 0; const w0 = wd.hp; g.pressGather();
+    ok('v0.8.25: 青冥落羽 hits it in the sky in full and ties it down (繳) — then it can be struck by hand', Math.abs(w0 - wd.hp - full) < 0.01 && wd.state === 'tied' && E.at(wd.x, wd.y) === wd, [w0 - wd.hp, wd.state]);
     wd.state = 'perch'; wd.claws = 0; wd.x = wd.rx = p.x + 1; p.hp = p.hpMax; p.fearT = 0; p.chokeT = 0;
     g.windClaw(wd); const c1 = p.chokeT, f1 = p.fearT; g.windClaw(wd); const f2 = p.fearT; g.windClaw(wd); const f3 = p.fearT;
     ok('v0.8.25: 入木三分 — each claw chokes you (窒, 4 breaths); the second adds 懼 1.5, the third deep 懼 3', c1 === 4 && !f1 && f2 === 1.5 && f3 === 3 && wd.claws === 3, [c1, f1, f2, f3]);
@@ -3111,6 +3152,223 @@ const result = await page.evaluate(async () => {
     g.paused = false; p.tools = tk; p.tool = tl; p.cour = cour0; g.courSig = ''; p.hpMax = hpm; p.hp = p.hpMax; p.chokeT = 0; p.confuseT = 0; p.fearT = 0; g.fires = []; g.fireMarks = [];
     put(keep.x, keep.y); p.fx = keep.fx; p.fy = keep.fy; E.list = E.list.filter(e => e.tame); }
 
+  // ============ v0.8.26：海上多陸——新開的島是第二版：外島大一些、海上散著孤嶼；孤嶼避開大魔王的戰場（ZONE_DEFS 的 ground 照抄 BOSSES 的 r） ============
+  { const sd = g.seed, sk = G.skerries(sd), near = sk.filter(s => s.kind !== '泉').sort((a, b) => Math.hypot(a.cx, a.cy) - Math.hypot(b.cx, b.cy))[0];
+    g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot)));
+    ok('v0.8.26: a new island is made with the newest generation (v0.8.27: the third, saved as world.gen 3), with 孤嶼 out on the open sea', G.GEN === 3 && sv.world.gen === 3 && sk.length >= 100, [G.GEN, sv.world.gen, sk.length]);
+    const far = Math.ceil(near.r) + G.SKERRY_SHOAL + 1, T = (x, y) => G.baseTile(x, y, sd);
+    ok('v0.8.26: a 孤嶼 is land at its heart and open deep sea beyond its shallows', G.DB[T(near.cx, near.cy)].kind !== 'water' && [[far, 0], [-far, 0], [0, far], [0, -far]].every(([dx, dy]) => T(near.cx + dx, near.cy + dy) === '淼'), [near, T(near.cx, near.cy)]);
+    const keep = { x: p.x, y: p.y }; p.x = near.cx; p.y = near.cy; const pn = g.placeName(); p.x = keep.x; p.y = keep.y;
+    ok('v0.8.26: standing on one, the status bar says 孤嶼', /^孤嶼 · /.test(pn), pn);
+    const pb = p.bosses; p.bosses = {}; const gr = ['修蛇', '封豨', '大風'].map(id => { const z = g.bossZone(id); return { id, g: z.ground, inside: g.inBossLand(z.x + z.ground - 1, z.y), outside: !g.inBossLand(z.x + z.ground + 2, z.y), clear: sk.every(s => Math.hypot(s.cx - z.x, s.cy - z.y) >= z.ground + s.r + G.SKERRY_SHOAL) }; }); p.bosses = pb;
+    ok('v0.8.26: each boss ground in ZONE_DEFS is the one the fight uses (修蛇 120, 封豨 100, 大風 100), and no 孤嶼 lies inside it', gr.every(o => o.inside && o.outside && o.clear) && gr.map(o => o.g).join() === '120,100,100', gr); }
+
+  // ============ v0.8.27：第三版——陸地約四成；一千二百格以上的陸塊才長膽氣、請你取名；傳送點網走近點亮 ============
+  { const sd = g.seed, net = G.gateNet(sd).list, home = net.find(o => o.home), keep = { x: p.x, y: p.y, fx: p.fx, fy: p.fy };
+    const put2 = (x, y) => { p.sailing = false; p.ship = null; p.swimming = false; p.x = p.rx = x; p.y = p.ry = y; g.ents.px = x; g.ents.py = y; p.moveT = 0; };
+    let n = 0, l = 0; for (let y = -1240; y < 1250; y += 25) for (let x = -1240; x < 1250; x += 25) { n++; if (G.DB[G.natTile(x, y, sd)].kind !== 'water') l++; }
+    g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot)));
+    ok('v0.8.27: a new island is the third generation (saved so) — about four tenths of the paper is land', G.GEN === 3 && sv.world.gen === 3 && l / n > 0.33 && l / n < 0.47, [G.GEN, sv.world.gen, (l / n).toFixed(3)]);
+    ok('v0.8.27: a 建木 stands near the origin from the start, already lit', !!home && Math.hypot(home.x, home.y) < 60 && w.get(home.x, home.y) === '建' && !!(p.gates || {})['n:' + home.id], home);
+    const inBand = (o) => G.zones(sd).some(z => { const d = Math.hypot(o.x - z.x, o.y - z.y), T = G.zoneTerr(z); return d >= T && d <= T + G.GATE_RING; });
+    const lg = net.find(o => o.type === 'land' && !o.home && !inBand(o)), m1 = G.massAt(lg.x, lg.y, sd);
+    const standOn = (tx, ty, m) => g.nearestTile(tx, ty, (x, y) => (x !== tx || y !== ty) && w.walkable(x, y) && G.DB[w.get(x, y)].kind !== 'water' && !g.ents.at(x, y) && (!m || G.massAt(x, y, sd) === m), 60);
+    const st1 = standOn(lg.x, lg.y, m1); p.masses = {}; p.massOrder = []; p.massNames = {}; const c0 = p.cour, lit0 = !!p.gates['n:' + lg.id];
+    put2(st1[0], st1[1]); g.updateStats(0.05);
+    ok('v0.8.27: setting foot on a land over 1,200 tiles: the game waits for you to name it; the 建木 three tiles off lights up', !!g.naming && g.naming.kind === 'mass' && !hidden('namebox') && g.paused && m1.area > G.MASS_MIN && !lit0 && !!p.gates['n:' + lg.id], [!!g.naming, p.cour - c0, m1.area, lit0]);
+    // v0.8.28 使用者定：不打字取名（敏感詞），從系統生成的地名挑；地名池比這張紙上的陸塊、陸上與海上傳送點都多
+    const NP = G.namePools(sd), opts = () => [...document.querySelectorAll('#name-opts button')].map(b => b.textContent.replace(/^[0-9=-]\s*/, '')), o1 = opts(), key = (code) => window.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true }));
+    const nl = NP.counts, allN = NP.mass.concat(NP.land, NP.sea);
+    ok('v0.8.28: no typing — the box offers names from the pool; each pool holds more names than this paper has lands, land gates, sea gates (v0.8.29: twelve at a time, old place names from the classics, shuffled per paper)', !document.getElementById('name-input') && o1.length === 12 && o1[0] === NP.mass[0] && o1.every(n => NP.mass.indexOf(n) >= 0) && ['mass', 'land', 'sea'].every(k => NP[k].every(n => G.NAME_LIST[k].indexOf(n) >= 0)) && NP.mass.slice(0, 12).join() !== G.NAME_LIST.mass.slice(0, 12).join() && NP.mass.length >= nl.mass + 12 && NP.land.length >= nl.land + 12 && NP.sea.length >= nl.sea + 12 && new Set(allN).size === allN.length && nl.land === net.filter(o => o.type === 'land' && !o.home).length && nl.sea === net.filter(o => o.type === 'sea').length, [o1, nl, NP.mass.length, NP.land.length, NP.sea.length]);
+    ok('v0.8.30: no real-world place names in the pools (太華山, 王屋山, 崑崙, 蓬萊, 合浦, 雲夢, 天池, 龍門…) — land and sea have their own lists', !allN.some(n => ['太華山', '王屋山', '太行山', '崑崙', '蓬萊', '長洲', '合浦', '雲夢', '天池', '龍門', '碣石', '華胥', '瑤池', '青要山'].indexOf(n) >= 0) && !G.NAME_LIST.land.some(n => G.NAME_LIST.sea.indexOf(n) >= 0) && NP.sea.every(n => G.NAME_LIST.sea.indexOf(n) >= 0), allN.filter(n => ['太華山', '崑崙', '蓬萊', '天池'].indexOf(n) >= 0));
+    ok('v0.8.28: no place name in the pools is a lair\'s, a region\'s, or 原點', !allN.some(n => G.zones(sd).some(z => z.name === n) || Object.values(G.REGION_NAMES).indexOf(n) >= 0 || n === '原點' || n === '本島'), allN.slice(0, 12));
+    key('Space'); const o2 = opts(); key('Minus');
+    ok('v0.8.29: the space bar shows the next twelve; the top row 1–9, 0, −, = picks — − takes the eleventh, on the status bar', o2.length === 12 && o2.every(n => o1.indexOf(n) < 0) && p.massNames[m1.id] === o2[10] && g.placeName().indexOf(o2[10] + ' · ') === 0, [o2, p.massNames[m1.id], g.placeName()]);
+    o2[2] = o2[10];   // 下面照舊用 o2[2] 指這塊陸地的名字
+    const gk = 'n:' + lg.id, gain2 = 6;
+    ok('v0.8.28: the 建木 lit on the same step is asked next, one at a time (v0.8.29: the land gives no courage; the gate +6 — v0.8.30: a flat 6, whatever the difficulty)', !!g.naming && g.naming.kind === 'land' && g.naming.key === gk && !hidden('namebox') && Math.abs(U.r4(p.cour - c0) - gain2) < 1e-3 && opts().every(n => NP.land.indexOf(n) >= 0), [g.naming && g.naming.kind, U.r4(p.cour - c0), gain2]);
+    key('Enter');
+    ok('v0.8.28: Enter takes the first name; the tree goes by it in the teleport list', !g.naming && hidden('namebox') && !g.paused && p.gates[gk].nm === NP.land[0] && g.gateLabel(p.gates[gk]).indexOf(NP.land[0] + '的建木（' + o2[2] + '上）') === 0, [p.gates[gk].nm, g.gateLabel(p.gates[gk])]);
+    const m2 = G.masses(sd).list.filter(o => o.area > G.MASS_MIN && !o.home && !o.zone && o.id !== m1.id).sort((u, v) => v.area - u.area)[0], st2 = standOn(m2.cx, m2.cy, m2);
+    const first2 = NP.mass.find(n => !g.namesUsed().has(n)); put2(st2[0], st2[1]); g.updateStats(0.05); const asked2 = !!g.naming && g.naming.kind === 'mass'; key('Escape'); while (g.naming) g.nameOk(0);
+    ok('v0.8.28: Esc takes the first name offered — the first not taken yet; a name once taken is not offered again', asked2 && p.massNames[m2.id] === first2 && !g.namesUsed().has(undefined) && g.namesUsed().has(o2[2]), [asked2, p.massNames[m2.id], first2]);
+    g.save(); const sv2 = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot)));
+    ok('v0.8.28: the lands you have set foot on and their names are saved (v0.8.27 left them out)', sv2.player.masses && sv2.player.masses[m1.id] === 1 && sv2.player.massNames[m1.id] === o2[2] && (sv2.player.massOrder || []).indexOf(m2.id) >= 0 && sv2.player.gates[gk].nm === NP.land[0], [sv2.player.massNames, sv2.player.massOrder]);
+    { const sv3 = JSON.parse(JSON.stringify(sv2)); delete sv3.player.massNames[m2.id]; g.load(sv3); const re = !!g.naming && g.naming.kind === 'mass' && g.naming.id === m2.id && !hidden('namebox'); while (g.naming) g.nameOk(0);
+      ok('v0.8.28: closed the game before picking a name — reading the save back asks again', re && !!p.massNames[m2.id] && p.massNames[m1.id] === o2[2], [re, p.massNames[m2.id]]); }
+    put2(st1[0], st1[1]); p.fx = Math.sign(lg.x - st1[0]); p.fy = Math.sign(lg.y - st1[1]);
+    if (U.cheb(st1[0], st1[1], lg.x, lg.y) === 1) { g.pressGather(); const tl = document.getElementById('tele-list').textContent;
+      ok('v0.8.27: E before the tree opens the teleport list, places by their names (原點的建木)', !hidden('tele') && /原點的建木/.test(tl), tl.slice(0, 80)); g.closeTele(); }
+    g.addItem('符紙', 1); g.teleTo('n:' + home.id);
+    ok('v0.8.27: write 原點 and you are by the origin\'s 建木', Math.hypot(p.x - home.x, p.y - home.y) <= 6, [p.x, p.y, home.x, home.y]);
+    const sg = net.find(o => o.type === 'sea' && !inBand(o)); put2(sg.x + 2, sg.y); g.netGates(); const seaAsk = !!g.naming && g.naming.kind === 'sea' && opts().every(n => NP.sea.indexOf(n) >= 0), sgk = 'n:' + sg.id; key('Digit2'); const snm = p.gates[sgk] && p.gates[sgk].nm;
+    g.openTele('n:' + home.id); const tl2 = document.getElementById('tele-list').textContent; g.closeTele();
+    ok('v0.8.27: sail within three tiles of a 海津 and it lights; in the list it is a place on the water, a ship to be chosen (v0.8.28: named from the sea pool, 要撐船)', !!p.gates[sgk] && seaAsk && !!snm && NP.sea.indexOf(snm) >= 0 && tl2.indexOf(snm + '（海上') >= 0 && /要撐船/.test(tl2), [seaAsk, snm, tl2.slice(0, 160)]);
+    // v0.8.28 使用者定：傳到海上先問撐不撐船；船艙裡沒有船，直接橫幅說傳不了
+    { put2(st1[0], st1[1]); const hold0 = p.hold; p.hold = []; p.holdSel = -1; g.addItem('符紙', 2); const f0 = g.count('符紙'), at0 = [p.x, p.y]; p.sta = p.staMax; p.food = 100;
+      g.teleTo(sgk); const tst = document.getElementById('toasts').textContent;
+      ok('v0.8.28: no ship in the hold — a banner says you cannot be sent to sea; nothing is spent, you stay', /沒帶船，傳不到海上/.test(tst) && !g.talking && g.count('符紙') === f0 && p.x === at0[0] && p.y === at0[1], [tst.slice(-60), !!g.talking, g.count('符紙') - f0]);
+      g.addItem('孤帆', 1); g.teleTo(sgk); const row = document.getElementById('talk-row').textContent, asked = !!g.talking && /撐不撐船/.test(document.getElementById('talk-title').textContent);
+      g.talkPick('last'); const stay = p.x === at0[0] && p.y === at0[1] && g.count('符紙') === f0 && p.hold.length === 1;
+      g.teleTo(sgk); g.talkPick(0);
+      ok('v0.8.28: with a ship it asks 撐不撐船 — 不撐 sends nothing; 撐孤帆 lands you on it at the 海津', asked && /撐孤帆/.test(row) && /不撐，不傳/.test(row) && stay && p.sailing && !!p.ship && Math.hypot(p.x - sg.x, p.y - sg.y) <= 8 && p.hold.length === 0 && g.count('符紙') === f0 - 1, [asked, row, stay, p.sailing, p.x - sg.x, p.y - sg.y]);
+      put2(st1[0], st1[1]); p.hold = hold0; }
+    const zr = G.zones(sd).map(z => { const T = G.zoneTerr(z); return net.filter(o => { const d = Math.hypot(o.x - z.x, o.y - z.y); return d >= T && d <= T + G.GATE_RING; }).length; });
+    ok('v0.8.27: every lair has one or two gates in the fifteen-tile ring just outside it', zr.every(k => k >= 1 && k <= 2), zr);
+    // v0.8.29 使用者定：地界外那一圈第一個點亮的傳送點就叫那處地界的名字，第二個才挑；點亮傳送點膽氣 +6，廿二重以後也給
+    { const z = G.zones(sd)[0], T = G.zoneTerr(z), rg1 = net.find(o => { const d = Math.hypot(o.x - z.x, o.y - z.y); return d >= T && d <= T + G.GATE_RING; });
+      for (const k of Object.keys(p.gates)) if (p.gates[k].ring === z.id) delete p.gates[k];
+      document.getElementById('toasts').innerHTML = ''; g.lightGate(rg1, true); const t1 = p.gates['n:' + rg1.id];
+      ok('v0.8.29: the first gate lit in the ring outside a lair takes the lair\'s name — no picking', !!t1 && t1.nm === z.name && !g.naming && g.gateLabel(t1).indexOf(z.name) === 0 && g.gateLabel(t1).indexOf('（地界外') >= 0 && toasts().indexOf(z.name) >= 0, [t1 && t1.nm, z.name, !!g.naming, t1 && g.gateLabel(t1)]);
+      const ang = Math.atan2(rg1.y - z.y, rg1.x - z.x) + Math.PI, fake = { id: 'test2', x: Math.round(z.x + Math.cos(ang) * (T + 7)), y: Math.round(z.y + Math.sin(ang) * (T + 7)), type: rg1.type, mass: null };
+      g.lightGate(fake, true); const asked = !!g.naming && g.naming.key === 'n:test2' && document.getElementById('name-text').textContent.indexOf(z.name + '外') >= 0; while (g.naming) g.nameOk(0);
+      ok('v0.8.29: a second gate in that ring is yours to name', asked && !!p.gates['n:test2'].nm && p.gates['n:test2'].nm !== z.name, [asked, p.gates['n:test2'] && p.gates['n:test2'].nm]);
+      const c1 = p.cour; while (g.level() < 22) p.cour = U.r4(p.cour * 1.5 + 100); const c22 = p.cour, isle = g.addCourage(10, 'isle');
+      g.lightGate(Object.assign({}, fake, { id: 'test3', x: fake.x + 3 }), true); while (g.naming) g.nameOk(0);
+      ok('v0.8.29: from the twenty-second level on, a new gate still gives courage (+6), while other non-kill sources give none', isle === 0 && Math.abs(U.r4(p.cour - c22) - 6) < 1e-3, [isle, U.r4(p.cour - c22), g.level()]);
+      delete p.gates['n:test2']; delete p.gates['n:test3']; p.cour = c1; g.courSig = ''; }
+    put2(keep.x, keep.y); p.fx = keep.fx; p.fy = keep.fy; }
+  // ============ v0.8.31 使用者定：對空神兵改名青冥落羽；三件神兵各有招牌特效 ============
+  { const tools0 = p.tools, tool0 = p.tool, cour0 = p.cour, ents0 = g.ents.list; p.cour = g.levelAt(31); g.ents.list = [];
+    const D = (dx, dy, t) => { const e = g.ents.add(t, p.x + dx, p.y + dy); if (e) e.hp = 99999; return e; };
+    p.tools = [{ n: '九閽鳴雷', c: 1, dur: 199 }]; p.tool = 0; p.atkT = 0; g.fx = []; const a1 = D(2, 0, '狼'), a2 = D(-1, 2, '豹');
+    g.hammerStrike([a1, a2].filter(Boolean)); const th = g.fx.find(f => f.type === 'thunder');
+    ok('v0.8.31: 九閽鳴雷 leaves its mark — a big 雷, thunder rings spreading three tiles out, a bolt to every beast it hit', !!th && th.r === 3 && th.tg.length === [a1, a2].filter(Boolean).length && th.dur >= 1, th && { r: th.r, tg: th.tg.length });
+    const keepT = []; for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) { keepT.push([p.x + dx, p.y + dy, w.get(p.x + dx, p.y + dy)]); w.set(p.x + dx, p.y + dy, dx >= 1 ? '水' : '草'); }
+    p.tools = [{ n: '燭龍焚溟', c: 1, dur: 199 }]; p.tool = 0; p.atkT = 0; g.fx = []; g.ents.list = []; const b1 = D(2, 1, '蜃');
+    g.fireStrike([b1].filter(Boolean)); const sc = g.fx.find(f => f.type === 'scorch');
+    ok('v0.8.31: 燭龍焚溟 leaves molten scars running out three tiles; where they enter the water, they steam', !!sc && sc.marks.length === 8 && sc.marks.some(m => m.wet.some(Boolean)) && sc.marks.some(m => m.wet.slice(1).some(x => !x)) && sc.marks.every(m => Math.hypot(...m.pts[m.pts.length - 1]) <= 3.4), sc && sc.marks.map(m => m.wet.map(Number).join('')).join(' '));
+    p.tools = [{ n: '青冥落羽', c: 1, dur: 199 }]; p.tool = 0; p.atkT = 0; g.fx = []; g.ents.list = []; const c1 = D(4, 0, '鷹');
+    g.bowShot(c1); const fe = g.fx.find(f => f.type === 'feather'), ar = g.fx.find(f => f.type === 'shot' && f.arrow);
+    ok('v0.8.31: 青冥落羽 (renamed from 彤弓素矰) — a 青 arrow; once it lands, a ring of 青 light and feathers (羽) drifting down', g.heldTool() === '弋' && !!G.ITEMS['青冥落羽'] && !G.ITEMS['彤弓素矰'] && !!ar && !!fe && fe.n === 5 && fe.t < 0 && /青冥落羽射中/.test(g.msgText), [!!ar, fe && fe.n, fe && fe.t, g.msgText.slice(0, 30)]);
+    // v0.8.32 使用者定：青冥落羽的字改「弋」（射出去的仍是矰），射出時在朝牠那一格寫「弋」；羽由左往右散開；燭龍焚溟落在水上的熔痕淬黑、帶墨邊的白汽、水紋
+    const yi = g.fx.find(f => f.type === 'write' && f.ch === '弋');
+    ok('v0.8.32: 青冥落羽 is held as 弋 (the shaft it looses is still a 矰), and each shot writes 弋 on the tile toward the target', G.ITEMS['青冥落羽'].tool === '弋' && G.TOOL_NAMES['弋'] === '青冥落羽' && !G.TOOL_NAMES['矰'] && !!yi && yi.x === p.x + 1 && yi.y === p.y && !!ar, yi && [yi.x - p.x, yi.y - p.y]);
+    { const R = g.renderer, real = R.ctx, rec = (fx) => { const log = { st: [], el: 0 }; R.ctx = new Proxy(real, { get(t, k) { if (k === 'ellipse') log.el++; const v = t[k]; return typeof v === 'function' ? v.bind(t) : v; }, set(t, k, v) { if (k === 'strokeStyle') log.st.push(String(v)); t[k] = v; return true; } });
+        try { R.drawScorch(fx, 100, 100, 0.3, 40, 0); } finally { R.ctx = real; } return log; };
+      const pts = [[0, 0], [0.8, 0], [1.6, 0.1], [2.4, 0], [3, 0.2]];
+      const wetL = rec({ marks: [{ pts, wet: [false, true, true, true, true] }] }), dryL = rec({ marks: [{ pts, wet: [false, false, false, false, false] }] });
+      ok('v0.8.32: 燭龍焚溟 on water — the scar quenches black fast, ink-edged steam rises and ripples spread; on land none of that yet', wetL.st.some(c => c.startsWith('rgba(28,30,36,')) && wetL.st.some(c => c.startsWith('rgba(62,70,82,')) && wetL.el > 0 && !dryL.st.some(c => c.startsWith('rgba(28,30,36,') || c.startsWith('rgba(62,70,82,')) && dryL.el === 0, { wet: wetL.el, dry: dryL.el }); }
+    { const R = g.renderer, xs = []; const real = R.drawGlyph; R.drawGlyph = function (ch, col, x) { if (ch === '羽') xs.push(x); return real.apply(this, arguments); };
+      try { R.drawFeather({ x: 0, y: 0, n: 5, sd: 3.7 }, 400, 300, 0.8, 40, 0, 0); } finally { R.drawGlyph = real; }
+      const u = [...new Set(xs.map(v => Math.round(v)))].sort((a, b) => a - b), gap = Math.min(...u.slice(1).map((v, i) => v - u[i]));
+      ok('v0.8.32: the falling feathers fan out left to right instead of piling on one tile', u.length === 5 && u[4] - u[0] > 40 * 2 && gap > 40 * 0.3, u); }
+    for (const [x, y, t] of keepT) w.set(x, y, t);
+    g.fx = []; g.ents.list = ents0; p.tools = tools0; p.tool = tool0; p.cour = cour0; g.courSig = ''; }
+  { g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot))), t0 = p.tools;
+    sv.player.tools = (sv.player.tools || []).concat([{ n: '彤弓素矰', c: 1, dur: 150 }]); sv.player.bag = (sv.player.bag || []).concat([{ n: '彤弓素矰', c: 1, dur: 80 }]); g.load(sv);
+    const tl = p.tools.find(s2 => s2.n === '青冥落羽'), bg = p.bag.find(s2 => s2.n === '青冥落羽');
+    ok('v0.8.31: an old save\'s 彤弓素矰 — in the tool bar or the bag — reads back as 青冥落羽, wear kept', !!tl && tl.dur === 150 && !!bg && bg.dur === 80 && !p.tools.concat(p.bag).some(s2 => s2.n === '彤弓素矰'), [!!tl, tl && tl.dur, !!bg]);
+    p.tools = p.tools.filter(s2 => s2.n !== '青冥落羽'); p.bag = p.bag.filter(s2 => s2.n !== '青冥落羽'); }
+  // ============ v0.8.34 使用者定：玄甲跟著斃大魔王的影子分次給，每層震窒心溺灼各減 5%；拿了玄甲就沒有「服了？服了！」；第四卷叫立極 ============
+  { g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot))), sc0 = p.scrolls, xj0 = p.xuanjia, jf0 = p.jingFor;
+    sv.player.scrolls = [{ id: '封豨', slot: 0, day: 3, k: 0.6 }, { id: '大風', slot: 1, day: 9, k: 0.9, lost: 12 }]; delete sv.player.xuanjia; g.load(sv);
+    ok('v0.8.34: an old save gets its 玄甲 back from the scrolls it took — one layer a boss, a swapped-away scroll counts too', g.xuanLayers() === 2 && p.xuanjia['封豨'] === 3 && p.xuanjia['大風'] === 9 && Math.abs(g.kindMult('灼') - 0.9) < 1e-9, [g.xuanLayers(), JSON.stringify(p.xuanjia)]);
+    const th = g.teaseHtml();
+    ok('v0.8.34: the achievements page lists the 玄甲 as a condition already broken (✕ 披了 2 層); the fourth scroll is called 立極', /class="no"><b>✕<\/b>玄甲，一層也不披<i>披了 2 層/.test(th) && /共工那一卷（立極）/.test(th), th.slice(0, 120));
+    g.save(); const sv2 = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot)));
+    ok('v0.8.34: the layers are saved with the game', !!sv2.player.xuanjia && Object.keys(sv2.player.xuanjia).length === 2, sv2.player.xuanjia);
+    p.scrolls = sc0; p.xuanjia = xj0; p.jingFor = jf0; g.save(); }
+  // ============ v0.8.30 使用者定：面板一打開遊戲就停（製作、地圖、見聞錄……），關上才接著走 ============
+  { const res = []; for (const [open, close] of [[() => g.toggleCraft(), () => g.toggleCraft()], [() => g.toggleMap(), () => g.toggleMap()], [() => g.toggleJournal(), () => g.toggleJournal()]]) {
+      open(); const t0 = w.time, up = g.panelOpen(); await sleep(250); const still = w.time === t0; close(); await sleep(120); res.push(up && still && w.time > t0 && !g.panelOpen()); }
+    ok('v0.8.30: with the craft panel, the big map or the journal open the game stands still; closed, it goes on', res.every(Boolean), res); }
+  // ============ v0.8.27：神兵一樣一把——世上還有一把（身上、囊裡、櫃裡、荷包裡）就不能再鑄 ============
+  { const r = G.RECIPES.find(x => x.out === '九閽鳴雷'), bag0 = p.bag, cour0 = p.cour; p.cour = 1e6; p.bag = [{ n: '九閽鳴雷', c: 1, dur: 199 }]; g.msgText = '';
+    g.craft(r.id); const m1 = g.msgText; g.buildCraft(); const row = [...document.querySelectorAll('#craft-list .recipe')].find(e => /九閽鳴雷/.test(e.textContent));
+    ok('v0.8.27: one of each god weapon — with 九閽鳴雷 in the bag, casting another is refused, and its row says so', /天下只此一把/.test(m1) && /囊裡/.test(m1) && !!row && /已有一把/.test(row.textContent), [m1, row && row.textContent.slice(0, 40)]);
+    p.bag = []; const ck = U.key(p.x + 3, p.y + 3); w.chests.set(ck, [{ n: '櫃', c: 1, store: [{ n: '九閽鳴雷', c: 1, dur: 50 }] }]); const inChest = g.godWhere('九閽鳴雷'); w.chests.delete(ck);
+    ok('v0.8.27: …even one shut in a chest inside a chest counts; with none left anywhere, you may cast again', inChest === '櫃裡' && g.godWhere('九閽鳴雷') === '', [inChest, g.godWhere('九閽鳴雷')]);
+    p.bag = bag0; p.cour = cour0; g.courSig = ''; g.barSig = ''; }
+
+  // ============ v0.9：共工本體與不周山之戰（設計稿〈七〉〈十四〉，v0.8.34 使用者確認） ============
+  { const E = g.ents, GG = E.constructor.GONG, keep = { x: p.x, y: p.y, fx: p.fx, fy: p.fy }, cour0 = p.cour, tk = p.tools, tl = p.tool, bs0 = p.bosses, tro0 = p.trophies, feats0 = (p.feats || []).slice();
+    const gold0 = p.gold, ho0 = p.hardOnly, st0 = [p.azure, p.bai, p.zhu], xj0 = p.xuanjia, diff0 = g.diff, ents0 = E.list.slice(), cdx0 = Object.assign({}, p.codex || {}), lost0 = p.gongLost, jf0 = p.jingFor, sc0 = p.scrolls;
+    const put = (x, y) => { p.sailing = false; p.ship = null; p.swimming = false; p.x = p.rx = x; p.y = p.ry = y; E.px = x; E.py = y; p.moveT = 0; };
+    const clear = (cx, cy, r) => { for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) w.set(cx + i, cy + j, '土'); };
+    const three = { '修蛇': { diff: 'normal', solo: true, day: 1, jing: false }, '封豨': { diff: 'normal', solo: true, day: 2, jing: false }, '大風': { diff: 'normal', solo: true, day: 3, jing: false } };
+    const z = g.bossZone('共工'); p.cour = 1e6; g.courSig = ''; p.fight = null; p.trial = null; p.jingFor = null; p.scrolls = []; p.xuanjia = {};
+    // —— 沒集齊三魂環：不周山的風把人推回去
+    p.bosses = { '修蛇': three['修蛇'], '封豨': three['封豨'] }; p.inBoss = {}; put(z.x + 40, z.y); clear(z.x + 40, z.y, 2); g.bossAsk = null; g.updateStats(0.05);
+    ok('v0.9: with only two soul rings, the wind of 不周山 pushes you back outside its ground — no fight, no question', !p.fight && hidden('bossask') && Math.hypot(p.x - z.x, p.y - z.y) > 150, [Math.round(Math.hypot(p.x - z.x, p.y - z.y)), !!p.fight]);
+    // —— 三魂環集齊：問一聲，沒拿立極卷要按兩次
+    p.bosses = Object.assign({}, three); p.inBoss = {}; put(z.x + 40, z.y); clear(z.x + 40, z.y, 2); g.updateStats(0.05);
+    const askT = document.getElementById('bossask-text').textContent, asked = !hidden('bossask');
+    g.bossYes(); const armedOnly = !p.fight; g.bossYes(); const e = g.bossEnt();
+    ok('v0.9: with all three rings 共工 asks first (modes, weapons, 朱髮); without the 立極 scroll it takes two presses', asked && /海/.test(askT) && /陸/.test(askT) && /空/.test(askT) && /朱髮/.test(askT) && armedOnly && !!p.fight && p.fight.id === '共工' && !p.fight.jing && !p.fight.penal, askT.slice(0, 80));
+    ok('v0.9: 共工 is 7200 by difficulty × gongK (no-scroll), and every time limit is 1.25× the big bosses\'', !!e && e.max === U.r4(g.bigHp(7200) * g.gongK(false)) && g.bossT('共工').cap === Math.round(g.diff.bossT.cap * 1.25) && g.bossT('共工').away === Math.round(g.diff.bossT.away * 1.25), [e && e.max, g.bossT('共工')]);
+    const freeze = () => { e.moveT = 99; e.modeT = 99; e.digCD = 99; e.buttCD = 99; e.meteorCD = 99; e.pressCD = 99; e.starCD = 99; e.pullT = 99; e.dig = null; e.meteor = null; e.press = null; };
+    const setMode = (m, shift, next) => { e.mode = m; e.shiftT = shift || 0; e.next = next || null; e.under = m === 'sea' && !shift; freeze(); };
+    // —— 兵器的成數
+    setMode('land'); const kL = [g.gongTake(e, '鎚'), g.gongTake(e, '焚'), g.gongTake(e, '弋'), g.gongTake(e, '劍')];
+    setMode('land', 5, 'sea'); const kS = [g.gongTake(e, '焚'), g.gongTake(e, '鎚'), g.gongTake(e, '劍')];
+    ok('v0.9: weapon matrix — right god weapon 100%, wrong 30%, plain 1/3; in 本相 the weapon for the coming mode 150%, others 30%, plain 10%', kL[0] === 1 && kL[1] === 0.3 && kL[2] === 0.3 && Math.abs(kL[3] - 1 / 3) < 1e-9 && kS[0] === 1.5 && kS[1] === 0.3 && kS[2] === 0.1, [kL, kS]);
+    ok('v0.9: the guardian follows his mode — 海 青龍, 陸 白虎, 空 朱雀', (setMode('sea'), g.guardKey('共工')) === 'azure' && (setMode('land'), g.guardKey('共工')) === 'bai' && (setMode('sky'), g.guardKey('共工')) === 'zhu');
+    // 近身：凡兵三分之一
+    setMode('land'); clear(p.x, p.y, 4); e.x = e.rx = p.x + 1; e.y = e.ry = p.y; p.fx = 1; p.fy = 0; p.tools = [{ n: '鎢鋼劍', c: 1, dur: 112 }]; p.tool = 0; p.atkT = 0; p.sta = p.staMax; p.lockT = 0; p.guardT = 0;
+    const base = U.r4(g.heldDmg() * g.dmgMult()), h0 = e.hp; g.pressGather(); const dIron = U.r4(h0 - e.hp);
+    ok('v0.9: a plain sword on 共工 takes a third', Math.abs(dIron - U.r4(base / 3)) < 0.01, [dIron, base]);
+    // 九閽鳴雷：陸全傷、七息拖不動
+    p.tools = [{ n: '九閽鳴雷', c: 1, dur: 199 }]; p.tool = 0; p.atkT = 0; const full = U.r4(g.godDmg('九閽鳴雷') * g.dmgMult()), h1 = e.hp; g.pressGather(); const dHam = U.r4(h1 - e.hp);
+    ok('v0.9: 九閽鳴雷 on 共工 in 陸 hits in full and stops his pull for 7 s', Math.abs(dHam - full) < 0.01 && e.noPullAt > w.time + 6.9, [dHam, full]);
+    e.x = e.rx = p.x + 5; const px0 = p.x; g.gongPull(e); const held = p.x === px0; e.noPullAt = 0; g.gongPull(e); const pulled = p.x === px0 + 1;
+    ok('v0.9: 陸 — within nine he drags you a tile toward him; not while 九閽鳴雷 holds him', held && pulled, [held, pulled, p.x - px0]);
+    put(px0, p.y); e.x = e.rx = p.x + 2;
+    // 燭龍焚溟：海裡潛著也全傷，近身打不到
+    setMode('sea'); e.x = e.rx = p.x + 2; p.tools = [{ n: '燭龍焚溟', c: 1, dur: 199 }]; p.tool = 0; p.atkT = 0; const fullF = U.r4(g.godDmg('燭龍焚溟') * g.dmgMult()), h2 = e.hp; g.pressGather(); const dFire = U.r4(h2 - e.hp);
+    ok('v0.9: 海 — underground he cannot be touched by hand, but 燭龍焚溟 burns him in full', !E.at(e.x, e.y) && Math.abs(dFire - fullF) < 0.01, [dFire, fullF]);
+    // 青冥落羽：空全傷
+    setMode('sky'); e.x = e.rx = p.x + 4; e.y = e.ry = p.y; p.tools = [{ n: '青冥落羽', c: 1, dur: 199 }]; p.tool = 0; p.atkT = 0; const fullB = U.r4(g.godDmg('青冥落羽') * g.dmgMult()), h3 = e.hp, tgt = g.skyTarget(); g.pressGather(); const dBow = U.r4(h3 - e.hp);
+    ok('v0.9: 空 — he floats out of reach, and 青冥落羽 shoots him in full', !E.at(e.x, e.y) && tgt === e && Math.abs(dBow - fullB) < 0.01, [dBow, fullB]);
+    // —— 換模式：本相八息、方框「？」、後四息提示、百分之一不換
+    setMode('land'); e.modeT = 0; E.gongTimers(e, g, p, 0.01); const nx = e.next; g.bossSig = null; g.bossBar(); const box1 = document.getElementById('bossbar-mode').textContent;
+    g.msgText = ''; E.gongTimers(e, g, p, 4.2); const hint = g.msgText; E.gongTimers(e, g, p, 4); g.bossSig = null; g.bossBar(); const box2 = document.getElementById('bossbar-mode').textContent;
+    ok('v0.9: every 40–60 s he shows his true form for 8 s (box ？), the last 4 s hint 氵土風, then he becomes another mode', box1 === '？' && nx !== 'land' && /氵|土|風/.test(hint) && e.mode === nx && !(e.shiftT > 0) && box2 === ({ sea: '海', land: '陸', sky: '空' })[nx], [box1, nx, hint, box2]);
+    { const mr = Math.random; Math.random = () => 0.001; try { e.modeT = 0; e.shiftT = 0; const m0 = e.mode; E.gongTimers(e, g, p, 0.01); g.msgText = ''; E.gongTimers(e, g, p, 8.1); ok('v0.9: one time in a hundred he stays as he was — "共工猶豫了一下，還是這副樣子。"', e.mode === m0 && /共工猶豫了一下，還是這副樣子/.test(g.msgText), g.msgText); } finally { Math.random = mr; } }
+    // —— 海：鑽出來溺、淖
+    setMode('sea'); p.hp = p.hpMax; p.lockT = 0; p.guardT = 0; e.x = e.rx = p.x + 3; g.mud = new Map(); g.gongDig(e, { x: p.x, y: p.y }); const drown = p.lastHit && p.lastHit.kind === '溺' && p.hp < p.hpMax;
+    ok('v0.9: 入地如入水 — he comes up under your feet: 溺, and that tile and the eight round it turn to 淖', drown && g.mudAt(p.x, p.y) === '淖' && g.mudAt(p.x + 1, p.y + 1) === '淖', [p.lastHit, g.mudAt(p.x, p.y)]);
+    const m1 = g.dmgMult(); g.mud = new Map(); const m0 = g.dmgMult(); g.mudSet(p.x, p.y); g.mudSet(p.x + 1, p.y); w.set(p.x + 1, p.y, '土'); g.mudSet(p.x + 1, p.y);
+    const stepped = g.tryStep(1, 0), slow = p.stepDur; put(p.x - 1, p.y); g.mud.delete(U.key(p.x + 1, p.y)); g.mud.delete(U.key(p.x, p.y)); g.tryStep(1, 0); const fast = p.stepDur; put(p.x - 1, p.y); g.mudSet(p.x, p.y);
+    ok('v0.9: on 淖 (liquefied ground) you walk 65% slower and your weapons hit for 75%', stepped && Math.abs(slow * 0.35 - fast) < 1e-6 && Math.abs(m1 / m0 - 0.75) < 1e-6, [slow, fast, m1 / m0]);
+    p.hp = p.hpMax; p.mudT = 0; const hA = p.hp; g.gongTick(1); const l1 = U.r4(hA - p.hp); g.gongTick(1); g.gongTick(1); const hB = p.hp; g.gongTick(1); const l4 = U.r4(hB - p.hp);
+    ok('v0.9: standing on 淖 bleeds more the longer you stay (−1, then −2 after three seconds)', l1 > 0 && Math.abs(l4 / l1 - 2) < 0.01, [l1, l4]);
+    g.gongTick(9); const ni = g.mudAt(p.x, p.y); g.gongTick(7); ok('v0.9: twelve seconds on, 淖 sets into 泥, then the tile is itself again', ni === '泥' && !g.mudAt(p.x, p.y), ni);
+    // —— 陸：隕石震、焦灼
+    setMode('land'); e.x = e.rx = p.x + 6; p.hp = p.hpMax; g.burns = []; g.gongMeteor(e, [[p.x, p.y], [p.x + 1, p.y]]); const quake = p.lastHit && p.lastHit.kind === '震';
+    p.hp = p.hpMax; g.gongTick(1); const burnt = p.lastHit && p.lastHit.kind === '灼' && p.hp < p.hpMax;
+    ok('v0.9: 隕石 — the stone falling on you is 震, and the ground it hits is 焦 for 20 s, burning whoever stands on it', quake && burnt && g.burns.length === 2 && g.burns[0].t > 18, [quake, burnt, g.burns.length]);
+    g.burns = []; g.mud = new Map();
+    // —— 空：力壓千鈞（窒）、星移斗轉（心＋亂）
+    setMode('sky'); p.chokeT = 0; g.gongPress(e, { x: p.x + 1, y: p.y }); const ch1 = p.chokeT; p.chokeT = 0; g.gongPress(e, { x: p.x + 5, y: p.y }); const ch2 = p.chokeT;
+    const san0 = p.san = p.sanMax || 100; p.confuseT = 0; g.gongStars(e); const dz = p.confuseT, sanL = p.san < san0;
+    ok('v0.9: 空 — 力壓千鈞 chokes you 4 s inside its ring (not outside), 星移斗轉 strikes the heart and spins you 3 s', ch1 === 4 && ch2 === 0 && dz === 3 && sanL, [ch1, ch2, dz, sanL]);
+    p.chokeT = 0; p.chokePer = 0; p.chokeBy = null; p.confuseT = 0; p.san = san0;
+    // —— 空：畫面斜三度，點的格子照轉回來的座標算
+    for (let i = 0; i < 40; i++) g.tiltTick(0.2); const cvT = document.getElementById('world').style.transform, deg = g.tiltDeg;
+    const R = g.renderer, L = { x: R.w * 0.3, y: R.h * 0.7 }, a = deg * Math.PI / 180, S = { x: R.w / 2 + g.tiltK * ((L.x - R.w / 2) * Math.cos(a) - (L.y - R.h / 2) * Math.sin(a)), y: R.h / 2 + g.tiltK * ((L.x - R.w / 2) * Math.sin(a) + (L.y - R.h / 2) * Math.cos(a)) }, back = g.unTilt(S.x, S.y);
+    setMode('land'); for (let i = 0; i < 40; i++) g.tiltTick(0.2); const cvT2 = document.getElementById('world').style.transform;
+    ok('v0.9: in 空 the whole view leans 3° to the north-west; a click is mapped back to the tile under it; out of 空 it rights itself', deg === -3 && /rotate\(-3/.test(cvT) && Math.abs(back.x - L.x) < 0.01 && Math.abs(back.y - L.y) < 0.01 && !g.tiltDeg && cvT2 === '', [deg, cvT, back, cvT2]);
+    // —— 存檔帶著模式
+    setMode('sky'); g.save(); const svF = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot))).player.fight;
+    ok('v0.9: a save mid-fight keeps 共工\'s mode with his life and place', !!svF && svF.id === '共工' && svF.mode === 'sky' && Math.abs(svF.hp - e.hp) < 0.001 && svF.x === e.x, svF);
+    // —— 認輸：第四顆珠退回小灰點
+    g.surrender(); ok('v0.9: beaten by 共工 without his scroll (surrender), the fourth bead falls back to the little grey dot', !p.fight && p.gongLost === 'none' && g.lastBead() === '', [p.gongLost, g.lastBead()]);
+    // —— 斃了：朱髮、四百膽氣、立四極；全程困難、一顆十字星都不拿、三隻都無經、沒披玄甲、沒拿立極卷才是「服了？服了！」
+    p.azure = true; p.bai = false; p.zhu = false; p.gold = false; p.hardOnly = true; p.gongLost = undefined; put(z.x + 20, z.y); clear(z.x + 20, z.y, 3);
+    g.startFight('共工', 'none'); const e2 = g.bossEnt(); e2.hp = 1; const c0 = p.cour, nf = (p.feats || []).length; g.kill(e2); g.gongTick(0.1);
+    ok('v0.9: slain, 共工 gives 朱髮 (not in the bag), courage and the feat 立四極; the fourth bead is a black cross; the ground he churned settles', !!(p.bosses || {})['共工'] && p.trophies['共工'].n === '朱髮' && p.cour > c0 && p.feats.length === nf + 1 && /立四極/.test(p.feats[nf].text) && /無經/.test(p.feats[nf].text) && g.lastBead() === 'miss' && !p.fight && !g.mud.size && !p.gold, [p.trophies['共工'], p.feats[nf] && p.feats[nf].text, g.lastBead()]);
+    delete p.bosses['共工']; p.feats.length = nf; p.azure = false; g.startFight('共工', 'none'); const e3 = g.bossEnt(); e3.hp = 1; g.kill(e3);
+    ok('v0.9: hard all the way, no cross-star, all three slain without scrolls, no 玄甲, no 立極 — 服了？服了！ and the golden 人', p.gold === true && p.feats.some(f2 => f2.id === '服了'), p.feats.map(f2 => f2.text));
+    p.bosses = bs0; p.trophies = tro0; p.feats = feats0; p.gold = gold0; p.hardOnly = ho0; [p.azure, p.bai, p.zhu] = st0; p.xuanjia = xj0; g.diff = diff0; p.codex = cdx0; p.gongLost = lost0; p.jingFor = jf0; p.scrolls = sc0;
+    p.fight = null; p.inBoss = {}; E.list = ents0; g.mud = new Map(); g.burns = []; p.mudT = 0; p.chokeT = 0; p.confuseT = 0; g.tiltDeg = 0; document.getElementById('world').style.transform = '';
+    put(keep.x, keep.y); p.fx = keep.fx; p.fy = keep.fy; p.tools = tk; p.tool = tl; p.cour = cour0; p.hp = p.hpMax; g.courSig = ''; g.bossSig = null; g.save(); }
+
+  // ============ v0.9.1 使用者定：共工本來就是朱紅，命剩三成起整個人變黑紫 ============
+  { const E = g.ents, R = g.renderer, e = E.add('共工', p.x + 3, p.y, Object.assign(E.gongFresh('land'), { moveT: 99, modeT: 99, meteorCD: 99, buttCD: 99, pullT: 99 }));
+    const cols = (k) => { e.hp = (e.max || G.DB['共工'].hp) * k; const got = [], real = R.drawGlyph; R.drawGlyph = function (ch, col) { if (ch === '工') got.push(col); return real.apply(this, arguments); }; try { R.draw(g, 0.016, performance.now() / 1000); } finally { R.drawGlyph = real; } return got; };
+    const hi = cols(1), lo = cols(0.25); E.remove(e); g.mud = new Map(); g.burns = [];
+    ok('v0.9.1: 共工 is vermilion; from three-tenths of his life down he turns black-purple', hi.length > 0 && lo.length > 0 && hi[0] === G.DB['共工'].ink && lo[0] === '#45204f', [hi[0], lo[0]]); }
   } catch (e) { checks.push('CRASH ' + e.message + ' @ ' + String(e.stack || '').split('\n').slice(1, 3).join(' | ')); }
 
   let frames = 0; const t0 = performance.now(); await new Promise((res) => { const tick = () => { frames++; if (performance.now() - t0 < 1500) requestAnimationFrame(tick); else res(); }; requestAnimationFrame(tick); });
@@ -3167,19 +3425,30 @@ try {
   await page.goto(base + '?autostart=1&seed=9&slot=2', { waitUntil: 'load' }); await started();
   const c2 = await page.evaluate(() => ({ slot: XIEYI.game.slot, cour: XIEYI.game.player.cour, carry: localStorage.getItem('xieyi.carry') }));
   ok2('courage carried over the sea waits for its own slot: slot 1 gets none, slot 2 gets 500 and the note is spent', c1.slot === 1 && c1.cour === 0 && c1.carry === '500@2' && c2.slot === 2 && c2.cour === 500 && c2.carry === null, { c1, c2 });
-  // v0.8.10 測試服：伺服器設定（src/server.js）列的格是測試格；正式服沒有
+  // v0.8.10 測試服：伺服器設定（src/server.js）列的格是測試格（測試服六七八，v0.9.2 起正式服第八格）；沒列就沒有
   { await page.goto(base, { waitUntil: 'load' });
     const tc = await page.evaluate(() => ({ server: window.XIEYI_SERVER || null, tests: [...document.querySelectorAll('.save-card.test')].map(c => c.dataset.slot).join('') }));
-    if (tc.server && tc.server.test && tc.server.test.length) {
-      ok2('v0.8.10 測試服: the start page marks slots 6–8 as 測試', tc.tests === '678' && /測試/.test(await page.$eval('.save-card[data-slot="6"]', c => c.textContent)), tc);
-      await page.click('.save-card[data-slot="6"] .save-no'); await page.fill('#seed', '66'); await page.click('#btn-new'); await started();
-      const t6 = await page.evaluate(() => { const g = XIEYI.game, p = g.player; g.addItem('木', 2); const r = { test: g.test, slot: g.slot, slots: g.slots(), tools: g.toolSlots(), gods: p.tools.map(s => s.n).join(','), lv: g.level(), inf: g.count('木') === Infinity, tag: !!document.getElementById('testtag') };
-        g.togglePause(); r.toNormal = document.querySelector('.saveas-slot[data-slot="1"]').disabled; r.toTest = document.querySelector('.saveas-slot[data-slot="7"]').disabled; g.togglePause(); g.save(); return r; });
-      ok2('v0.8.10 測試服: 落筆 in slot 6 starts a test game — 62 bag slots (v0.8.14: 32 + 30), 14 tools, both god weapons, courage ∞, gathered wood ∞, the corner tag', t6.test && t6.slot === 6 && t6.slots === 62 && t6.tools === 14 && /九閽鳴雷/.test(t6.gods) && /燭龍焚溟/.test(t6.gods) && t6.lv === 99 && t6.inf && t6.tag, t6);
-      ok2('v0.8.10 測試服: a test game cannot be saved into a normal slot (only into 6–8)', t6.toNormal === true && t6.toTest === false, t6);
+    const TS = (tc.server && tc.server.test) || [];
+    if (TS.length) {
+      const T = TS[0], T2 = TS[TS.length - 1], key = (n) => n === 1 ? 'xieyi.save.v5' : 'xieyi.save.v5.' + n;
+      ok2('v0.8.10 測試服: the start page marks the server\'s test slots (' + TS.join('、') + ') as 測試', tc.tests === TS.join('') && /測試/.test(await page.$eval('.save-card[data-slot="' + T + '"]', c => c.textContent)), tc);
+      await page.click('.save-card[data-slot="' + T + '"] .save-no'); await page.fill('#seed', '66'); await page.click('#btn-new'); await started();
+      const t6 = await page.evaluate((T2) => { const g = XIEYI.game, p = g.player; g.addItem('木', 2); const r = { test: g.test, slot: g.slot, slots: g.slots(), tools: g.toolSlots(), gods: p.tools.map(s => s.n).join(','), lv: g.level(), inf: g.count('木') === Infinity, tag: !!document.getElementById('testtag') };
+        g.togglePause(); r.toNormal = document.querySelector('.saveas-slot[data-slot="1"]').disabled; r.toTest = document.querySelector('.saveas-slot[data-slot="' + T2 + '"]').disabled; g.togglePause(); g.save(); return r; }, T2);
+      ok2('v0.8.10 測試服: 落筆 in a test slot starts a test game — 62 bag slots (v0.8.14: 32 + 30), 14 tools, the god weapons, courage ∞, gathered wood ∞, the corner tag', t6.test && t6.slot === T && t6.slots === 62 && t6.tools === 14 && /九閽鳴雷/.test(t6.gods) && /燭龍焚溟/.test(t6.gods) && t6.lv === 99 && t6.inf && t6.tag, t6);
+      ok2('v0.8.10 測試服: a test game cannot be saved into a normal slot (only into the test slots)', t6.toNormal === true && t6.toTest === false, t6);
       await page.goto(base, { waitUntil: 'load' });
-      ok2('v0.8.10 測試服: its card reads 膽氣第 ∞ 重', /膽氣第 ∞ 重/.test(await page.$eval('.save-card[data-slot="6"]', c => c.textContent)));
-      await page.evaluate(() => localStorage.removeItem('xieyi.save.v5.6'));
+      ok2('v0.8.10 測試服: its card reads 膽氣第 ∞ 重', /膽氣第 ∞ 重/.test(await page.$eval('.save-card[data-slot="' + T + '"]', c => c.textContent)));
+      // v0.9.2：正式服把第八格改成測試格時，玩家原本存在那一格的正式存檔（沒帶 test）照常玩；正式的一局「存到」測試格，那一份才是測試格
+      await page.evaluate(([k1, kT]) => { const sv = JSON.parse(localStorage.getItem(k1)); delete sv.test; sv.player.cour = 777; sv.player.pouches = 1; localStorage.setItem(kT, JSON.stringify(sv)); }, [key(1), key(T)]);
+      await page.goto(base, { waitUntil: 'load' });
+      const plain = await page.$eval('.save-card[data-slot="' + T + '"]', c => ({ test: c.classList.contains('test'), text: c.textContent }));
+      await page.click('.save-card[data-slot="' + T + '"] .save-go'); await started();
+      const kept = await page.evaluate(() => { const g = XIEYI.game, p = g.player; return { test: g.test, cour: p.cour, pouches: p.pouches, tag: !!document.getElementById('testtag'), slots: g.slots() }; });
+      ok2('v0.9.2: a normal save already sitting in a test slot stays a normal game — no 測試 mark, courage and pouches untouched, no corner tag', !plain.test && !/測試/.test(plain.text) && !kept.test && kept.cour === 777 && kept.pouches === 1 && !kept.tag && kept.slots === 18, { plain, kept });
+      const copy = await page.evaluate(([T, kT]) => { const g = XIEYI.game, s0 = g.slot; g.slot = 1; localStorage.removeItem(kT); g.save(T); g.slot = s0; const sv = JSON.parse(localStorage.getItem(kT) || '{}'); localStorage.removeItem(kT); g.save = () => true; return { test: sv.test === true }; }, [T, key(T)]);   // 當作是從第一格那一局抄過來
+      ok2('v0.9.2: …and a normal game saved into a test slot (存到) is marked a test save', copy.test, copy);
+      await page.evaluate((kT) => localStorage.removeItem(kT), key(T));
     } else ok2('正式服: no test slots on the start page', tc.tests === '', tc);
   }
   // v0.8.2：遊戲裡換難度——按兩次、存檔、重新讀進來，第幾日幾時照舊，只換一日多長
@@ -3190,6 +3459,15 @@ try {
     const b1 = await page.evaluate(() => { const g = XIEYI.game; return { slot: g.slot, seed: g.seed, diff: g.diff.key, DAY: XIEYI.DAY, day: g.day(), frac: g.dayT(), toast: document.getElementById('toasts').textContent, saved: JSON.parse(localStorage.getItem('xieyi.save.v5.4')).diff, resume: localStorage.getItem('xieyi.resume') }; });
     ok2('v0.8.2: the second click saves, reloads and goes straight back in — same slot and island, now easy with 420-s days', b1.slot === 4 && b1.seed === 31 && b1.diff === 'easy' && b1.DAY === 420 && b1.saved === 'easy' && b1.resume === null, b1);
     ok2('v0.8.2: …the day and the time of day stay as they were, and a toast says so', b1.day === b0.day && Math.abs(b1.frac - b0.frac) < 0.01 && /難度換成了簡單/.test(b1.toast), [b0.day, b0.frac, b1.day, b1.frac]); }
+  // v0.8.26：生成版本——新開的島是第二版（有孤嶼）；沒寫 gen 的舊存檔照第一版讀進來，存回去也還是第一版
+  { await page.goto(base + '?autostart=1&seed=31&slot=5', { waitUntil: 'load' }); await started();
+    const a = await page.evaluate(() => { const g = XIEYI.game, gt = G.gateNet(31).list.find(o => o.type === 'land' && !o.home); g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(5))), gen0 = sv.world.gen; delete sv.world.gen; localStorage.setItem(XIEYI.Game.slotKey(5), JSON.stringify(sv)); localStorage.setItem('xieyi.resume', '5'); g.save = () => true; /* 離開頁面時不要再存一次（會把拿掉 gen 的存檔蓋回去） */ return { gen: G.GEN, gen0, at: [gt.x, gt.y], t: G.baseTile(gt.x, gt.y, 31), n: G.skerries(31).length }; });
+    ok2('v0.8.26: a new island is the newest generation (v0.8.27: the third, saved so) — a gate tree stands out on its lands', a.gen === 3 && a.gen0 === 3 && '建桑若'.indexOf(a.t) >= 0 && a.n >= 100, [a.gen, a.gen0, a.t, a.n]);
+    await page.goto(base, { waitUntil: 'load' }); await started();
+    const b = await page.evaluate((at) => { const g = XIEYI.game; g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(5))); return { slot: g.slot, gen: G.GEN, saved: sv.world.gen, t: G.baseTile(at[0], at[1], 31), seen: g.world.get(at[0], at[1]), n: G.skerries(31).length, isles: G.isles(31).length }; }, a.at);
+    ok2('v0.8.26: an old save (no gen) reads back as the first generation — no 孤嶼, no gate network, the seventy-odd outer isles — and saves again as the first', b.slot === 5 && b.gen === 1 && b.saved === 1 && '建桑若'.indexOf(b.t) < 0 && b.seen === b.t && b.n === 0 && b.isles > 50, b);
+    await page.evaluate(() => localStorage.removeItem('xieyi.save.v5.5'));
+  }
   // 起始頁上的「生存之道」在起始頁上面（v0.5.6 前被起始頁蓋住）；起始頁沒有手柄設定
   await page.goto(base, { waitUntil: 'load' });
   const ptop = () => page.evaluate(() => { const e = document.elementFromPoint(innerWidth / 2, innerHeight / 2); return e && e.closest('.overlay') && e.closest('.overlay').id; });

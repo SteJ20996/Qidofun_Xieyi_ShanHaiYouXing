@@ -62,6 +62,7 @@
       this.shelves = new Map();  // "x,y" -> 灶、鼎（v0.8.15）的柴架：最多四格 [{ n, c }]，存著的燃料點一下就燒
       this.shelfSlots = SHELF_SLOTS; this.stoveCap = STOVE_CAP;
       this.bags = new Map();     // "x,y" -> 落在地上的囊（物品列表）
+      this.purses = new Map();   // "x,y" -> 死後的荷包 { until: 幾時沒了, was: 底下原本的字 }（v0.8.27：重生後十八日內）
       this.weirs = new Map();    // "x,y" -> 魚梁下一次有魚的時間
       this.steps = new Map();    // "x,y" -> 走過的次數（走多了就成路）
       this.explored = new Map(); // "cx,cy" -> 位圖：哪些格子被看見過
@@ -667,7 +668,7 @@
       const explored = {}; for (const [k, b] of this.explored) explored[k] = Array.from(b, v => v.toString(16).padStart(2, '0')).join('');
       const seen = this.places.filter(p => p.seen).map(p => p.id);
       const wallHp = {}; for (const [k, v] of this.wallHp) wallHp[k] = v;
-      return { seed: this.seed, dayLen: DAY, time: U.r4(this.time), wallHp, diff, burn, timers, stoves, shelves, bags, weirs, explored, seen, scarecrows, ores: Object.fromEntries([...this.ores].map(([k, v]) => [k, U.r4(v)])), chests, nets, rainUntil: U.r4(this.rainUntil), nextRainAt: U.r4(this.nextRainAt),
+      return { seed: this.seed, gen: G.GEN, purses: Object.fromEntries(this.purses), dayLen: DAY, time: U.r4(this.time), wallHp, diff, burn, timers, stoves, shelves, bags, weirs, explored, seen, scarecrows, ores: Object.fromEntries([...this.ores].map(([k, v]) => [k, U.r4(v)])), chests, nets, rainUntil: U.r4(this.rainUntil), nextRainAt: U.r4(this.nextRainAt),
         fogs: [...this.fogs.values()].map(f => [U.r4(f.until), [...f.cells].join(';'), f.sea ? 1 : 0, f.shape, [U.r4(f.x), U.r4(f.y), U.r4(f.age || 0), U.r4(f.ang || 0)]]), fogPlan: this.fogPlan.map(U.r4), fogDay: this.fogDay,
         ships: Object.fromEntries([...this.ships].map(([k, v]) => [k, { kind: v.kind, hp: U.r4(v.hp), skulls: (v.skulls || []).map(([n, e]) => [n, U.r4(e)]), repairs: v.repairs || 0, cells: v.cells, fid: v.fid, dir: v.dir, t: v.t }])) };   // t：下水的時刻（v0.8.21）   // fid：洞庭那一場用過這艘（v0.8.16）
     }
@@ -736,6 +737,7 @@
       for (const [k, v] of Object.entries(s.nets || {})) { const rec = { size: v[0], x: v[1], y: v[2], fish: v[3], t: sh(v[4]), under: v[5] ? Array.from(v[5]) : [], dur: v[6] === undefined ? NET_DUR[v[0]] : v[6], rf: v[7] || 0 }; rec.tidal = rec.under.indexOf('灘') >= 0; this.nets.set(k, rec); for (let j = 0; j < rec.size; j++) for (let i = 0; i < rec.size; i++) this.netCells.set(U.key(rec.x + i, rec.y + j), k); }
       this.stoves = new Map(Object.entries(s.stoves || {}));
       this.bags = new Map(Object.entries(s.bags || {}));
+      this.purses = new Map(Object.entries(s.purses || {}));   // v0.8.27 荷包的期限（舊存檔的荷包沒有期限）
       this.weirs = new Map(Object.entries(s.weirs || {}).map(([k, v]) => [k, sh(v)]));
       this.explored = new Map();
       for (const [k, hex] of Object.entries(s.explored || {})) { const b = new Uint8Array(32); for (let i = 0; i < 32; i++) b[i] = parseInt(hex.substr(i * 2, 2), 16) || 0; this.explored.set(k, b); }

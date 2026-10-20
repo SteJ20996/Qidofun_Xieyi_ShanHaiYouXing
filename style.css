@@ -105,6 +105,8 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 #bossbar { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(168px + env(safe-area-inset-bottom, 0px)); width: min(440px, calc(100vw - 32px)); padding: 6px 12px 8px; background: rgba(239,229,207,.94); border: 2px solid var(--ink); border-radius: 6px; font-family: var(--font); z-index: 3; pointer-events: none; }
 #bossbar .bb-head { display: flex; align-items: baseline; gap: 10px; color: var(--ink); font-size: 14px; }
 #bossbar .bb-head b { font-size: 20px; color: #5a3e2b; }
+#bossbar #bossbar-mode { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 2px solid var(--ink); border-radius: 3px; font-size: 18px; font-weight: bold; color: #b4392a; background: #f6eedb; }   /* v0.9 共工的模式：海陸空，換模式時「？」 */
+#bossbar #bossbar-mode.hidden { display: none; } #bossbar #bossbar-mode.shift { color: var(--ink); animation: low-flash 1s infinite; }
 #bossbar #bossbar-note { margin-left: auto; color: var(--ink-2); }
 #minibars { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(168px + 66px + env(safe-area-inset-bottom, 0px)); width: min(293px, calc((100vw - 32px) * 2 / 3)); display: flex; flex-direction: column-reverse; gap: 6px; pointer-events: none; z-index: 3; font-family: var(--font); }   /* v0.8.21 小魔王的命條：大魔王那條的三分之二長；大魔王的命條收著時往下挪到它的位置 */
 #bossbar.hidden ~ #minibars { bottom: calc(168px + env(safe-area-inset-bottom, 0px)); }
@@ -122,6 +124,7 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 #bossbar.away { opacity: .88; border-style: dotted; } #bossbar.away .bb-bar i { background: linear-gradient(90deg, #a89b80, #c2b496); }   /* v0.8.10 戰事掛著、人在地界外 */
 #bossbar.shade { border-style: dashed; background: rgba(224,220,212,.94); } #bossbar.shade .bb-head b { color: #3b3a40; } #bossbar.shade .bb-bar i { background: linear-gradient(90deg, #2b2a30, #55535c); }
 #talk-text { text-align: left; max-height: 52vh; overflow-y: auto; } #talk-text p { margin: 6px 0; line-height: 1.6; }
+#name-opts { flex-wrap: wrap; justify-content: center; max-width: 30em; margin: 6px auto 4px; } #name-opts button { margin: 4px; min-width: 6.5em; font-size: 17px; } #name-opts kbd { font-size: 12px; opacity: .6; }   /* v0.8.28 取名框：挑系統給的地名 */
 #talk-row { flex-wrap: wrap; justify-content: center; } #talk-row button { margin: 4px; } #talk-row button:disabled { opacity: .45; cursor: default; }
 #debuffs span { font-size: 16px; } #debuffs small { font-size: 12px; color: var(--ink-2); }
 #minimap { display: block; width: 150px; height: 150px; border-radius: 50%; border: 2px solid var(--ink); background: var(--paper); image-rendering: pixelated; }
@@ -322,6 +325,7 @@ kbd { display: inline-block; min-width: 1.3em; padding: 0 .3em; border: 1px soli
 .stoverow button { font: 18px var(--font); padding: 6px 14px; text-align: left; }
 .stoverow button small { font: 12px var(--ui); opacity: .75; margin-left: 4px; }
 .stoverow button:disabled { opacity: .45; cursor: default; transform: none; }
+#purse .maphead h2 { white-space: nowrap; } #purse-tabs { justify-content: flex-start; flex-wrap: wrap; } #purse-tabs button { margin: 2px 6px 2px 0; } #purse-tabs kbd { font-size: 11px; opacity: .6; }   /* v0.8.29 荷包：每回死亡一檔 */
 .stoverow button:disabled:hover { background: var(--ink); border-color: var(--ink); }
 .stoverow .fuelpair { display: inline-flex; gap: 4px; }
 .stoverow .shelfslot { min-width: 120px; }

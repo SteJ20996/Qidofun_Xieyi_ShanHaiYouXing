@@ -45,7 +45,7 @@
   // 畢方（v0.8.25，小魔王）：只在火島，一隻腳跳著走，一跳兩格（BIRD.hop 息一跳），落腳的地方起訛火（遊戲端 g.falseFire）；貼著啄一下（力），
   // 啄完一半機會跳開；BIRD.cryR 格內隔 BIRD.cryGap 息一聲鳴，你身邊三處先冒圈、一息後燒起來（遊戲端 g.birdCry）
   const BIRD = { hop: 0.75, sense: 14, peckGap: 1.6, cryGap: [10, 13], cryR: 7 };
-  // 大風（v0.8.25，大魔王）：在天上（sky）繞著人六到十格盤旋，只有彈弓與彤弓素矰打得到；隔 WIND.diveGap 息撲下來（dive）抓一下（力，入木三分），
+  // 大風（v0.8.25，大魔王）：在天上（sky）繞著人六到十格盤旋，只有彈弓與青冥落羽打得到；隔 WIND.diveGap 息撲下來（dive）抓一下（力，入木三分），
   // 貼著停 WIND.linger 息（perch，近身的時候），再飛回高處（rise）。扶搖：在人腳下捲起旋風，WIND.whirlT 息後拋人、轉暈（亂）；
   // 摧屋拔木：朝人吹一陣狂風，WIND.galeLen 格長、三格寬，吹垮人造的磚門窗墟、拔起樹，人在風裡挨一下、被推開；人躲在屋裡時撲不下來，這一招來得快一倍；
   // 命剩 WIND.sandAt 起飛沙走石：人身邊 WIND.sandR 格內落 WIND.sandN 顆石。不離青丘島心 WIND.leash 格（墨影照自己的 leash）
@@ -53,6 +53,19 @@
     choke: 4, chokePer: 3, fear: [0, 1.5, 3], whirlGap: [13, 17], whirlT: 1.3, whirl: 14, dizzy: 2.5, throwN: 3, galeGap: [18, 24], galeT: 1.0, galeLen: 9, gale: 10, galeShip: 15, galePush: 2,
     sandAt: 0.5, sandGap: [8, 11], sandN: 5, sandR: 3, sandT: 0.9, sand: 10 };
   const SKY_HIGH = ['sky', 'rise'];   // 大風在天上：近身的、神兵三格的都搆不到，也不擋路
+  // 共工（v0.9，終極魔王，設計稿〈七〉〈十四〉）：三種模式輪著換，每 GONG.modeGap 息換一次；換的時候現本相（三乘三）GONG.shiftT 息，不出招、隨便打——
+  // 前 GONG.shiftT − GONG.hintAt 息看不出要換成什麼，後 GONG.hintAt 息地上浮提示（氵土風）；GONG.stay 的機會換回原樣。不離不周山島心 GONG.leash 格。
+  // 海：潛在地裡游（GONG.seaStep 一步，山也鑽得過），身後兩格寬化成淖（遊戲端）；貼近了從人腳下鑽出來：先冒 GONG.digWarn 息水紋，
+  //     那一格溺 GONG.drown、一格內撞 GONG.ram（力）；鑽出來 GONG.surfaceT 息近身才打得到，再潛下去，冷卻 GONG.digGap 息。
+  // 陸：立成三格高的「工」（GONG.landStep 一步）；九格內每 GONG.pullGap 息把人拖近一格（遊戲端，九閽鳴雷打中七息內不拖）；兩格內頭觸 GONG.butt（力）；
+  //     每 GONG.meteorGap 息在人身邊標三個◎，GONG.meteorT 息後隕石砸下：震 GONG.meteor，那格焦 GONG.burnT 息（遊戲端）。
+  // 空：倒懸的「天」，浮在離人 GONG.skyRing 格的地方（近身搆不到）；每 GONG.pressGap 息人腳下一圈「壓」（半徑 GONG.pressR），GONG.pressT 息後還在圈裡就鎖喉（窒）；
+  //     每 GONG.starGap 息星移斗轉（心 GONG.star＋亂 GONG.dizzy 息）。
+  const GONG = { modeGap: [40, 60], shiftT: 8, hintAt: 4, stay: 0.01, leash: 70,
+    seaStep: 0.32, surfaceT: 2, digGap: 9, digWarn: 1.2, drown: 24, ram: 20,
+    landStep: 0.7, pullR: 9, pullGap: 1.5, butt: 30, buttGap: 3, buttR: 2, meteorGap: 7, meteorT: 1.5, meteor: 18, meteorN: 3, burnT: 20,
+    skyRing: [3, 5], skyStep: 0.3, pressGap: 10, pressT: 2, pressR: 2, choke: 4, chokePer: 3, starGap: 12, star: 6, dizzy: 3 };
+  const GONG_MODES = ['sea', 'land', 'sky'];
   const rnd = (a) => a[0] + Math.random() * (a[1] - a[0]);
   const JINK_P = 0.5;   // v0.8.19 使用者定：蜃與大小魔王貼身打完一下、還在等下一下時，這個機會退一步或往側邊挪一步（進退、左右搖擺）
   const TOOTH_TURN = 1.2, TOOTH_STEP = 0.36, TOOTH_GAP = 1.8, TOOTH_FRONT = 0.38, TOOTH_SENSE = 12, TIGER_SEE = 40, TIGER_ROAR_R = 6, TIGER_ROAR_GAP = 10;
@@ -78,16 +91,17 @@
       for (const [dx, dy] of opts) if (ok(e.x + dx, e.y + dy)) { e.x += dx; e.y += dy; return true; }
       return false;
     }
-    rectDist(e, x, y) { if (e.type === '大風' && SKY_HIGH.indexOf(e.state) >= 0) return Infinity; if (e.type === '修蛇') return e.under ? Infinity : Math.min(...this.cellsOf(e).map(([cx, cy]) => U.cheb(cx, cy, x, y))); return e.type === '豨' ? Math.max(Math.max(e.x - x, 0, x - e.x - 1), Math.max(e.y - y, 0, y - e.y - 1)) : U.cheb(e.x, e.y, x, y); }   // 到身子最近一格的距離（修蛇：頭與尾；潛著打不到）
+    rectDist(e, x, y) { if (e.type === '大風' && SKY_HIGH.indexOf(e.state) >= 0) return Infinity; if (e.type === '共工') return Math.min(...this.gongCells(e).map(([cx, cy]) => U.cheb(cx, cy, x, y)));   // 共工（v0.9）：潛在地裡、浮在天上，燭龍焚溟、九閽鳴雷三格內照樣打得到（近身的要看 at()）
+      if (e.type === '修蛇') return e.under ? Infinity : Math.min(...this.cellsOf(e).map(([cx, cy]) => U.cheb(cx, cy, x, y))); return e.type === '豨' ? Math.max(Math.max(e.x - x, 0, x - e.x - 1), Math.max(e.y - y, 0, y - e.y - 1)) : U.cheb(e.x, e.y, x, y); }   // 到身子最近一格的距離（修蛇：頭與尾；潛著打不到）
     tail(e) { return e.type === '牛' ? [e.x - (e.bx === undefined ? 1 : e.bx), e.y - (e.by || 0)] : null; }
-    cellsOf(e) { if (e.type === '豨') return this.hogRect(e); if (e.type === '修蛇') return [[e.x, e.y]].concat(e.tail || []); const t = this.tail(e); return t ? [[e.x, e.y], t] : [[e.x, e.y]]; }
-    covers(e, x, y) { if (e.type === '修蛇') return !e.under && ((e.x === x && e.y === y) || (e.tail || []).some(([tx, ty]) => tx === x && ty === y)); if (e.x === x && e.y === y) return true; if (e.type === '豨') return x >= e.x && x <= e.x + 1 && y >= e.y && y <= e.y + 1; const t = this.tail(e); return !!t && t[0] === x && t[1] === y; }
+    cellsOf(e) { if (e.type === '共工') return this.gongCells(e); if (e.type === '豨') return this.hogRect(e); if (e.type === '修蛇') return [[e.x, e.y]].concat(e.tail || []); const t = this.tail(e); return t ? [[e.x, e.y], t] : [[e.x, e.y]]; }
+    covers(e, x, y) { if (e.type === '共工') return !(e.under && !(e.shiftT > 0)) && this.gongCells(e).some(([cx, cy]) => cx === x && cy === y); if (e.type === '修蛇') return !e.under && ((e.x === x && e.y === y) || (e.tail || []).some(([tx, ty]) => tx === x && ty === y)); if (e.x === x && e.y === y) return true; if (e.type === '豨') return x >= e.x && x <= e.x + 1 && y >= e.y && y <= e.y + 1; const t = this.tail(e); return !!t && t[0] === x && t[1] === y; }
     turn(e, dx, dy) { if (dx && dy) return e.bx ? [Math.sign(dx), 0] : [0, Math.sign(dy)]; return dx ? [Math.sign(dx), 0] : [0, Math.sign(dy)]; }   // 斜著走：身子照舊橫或直，換頭的朝向
     bodyFits(x, y, bx, by, night, self) { const tx = x - bx, ty = y - by; return this.canStand('牛', tx, ty, night) && !this.beastAt(tx, ty, self) && !(this.px === tx && this.py === ty); }   // 尾那一格站得上去、沒有別的獸、不是人
     bisonRoom(x, y, night) { for (const [bx, by] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (this.bodyFits(x, y, bx, by, night, null)) return [bx, by]; return null; }
     at(x, y) { for (const e of this.list) if (this.covers(e, x, y) && !this.aloft(e)) return e; return null; }   // 天上的大風搆不到（v0.8.25）
     beastAt(x, y, except) { for (const e of this.list) if (e !== except && this.covers(e, x, y) && DB[e.type].kind === 'beast' && e.type !== '魄' && e.type !== '龍' && !(e.type === '鷹' && e.tame) && !this.aloft(e)) return e; return null; }   // 龍、馴了的鷹、天上的大風不擋路
-    aloft(e) { return e.type === '大風' && SKY_HIGH.indexOf(e.state) >= 0; }   // 大風在天上（v0.8.25）
+    aloft(e) { return (e.type === '大風' && SKY_HIGH.indexOf(e.state) >= 0) || (e.type === '共工' && e.mode === 'sky' && !(e.shiftT > 0)); }   // 共工的空：浮在天上，近身的搆不到（v0.9）   // 大風在天上（v0.8.25）
     inFront(e, x, y) { const vx = x - e.x, vy = y - e.y, l = Math.hypot(vx, vy), fl = Math.hypot(e.fx || 0, e.fy || 0); return !l || !fl || (vx * e.fx + vy * e.fy) / (l * fl) > TOOTH_FRONT; }   // (x, y) 在不在牠面前
     shielded(e, x, y) { return e.type === '齒' && this.inFront(e, x, y); }   // 從 (x, y) 打鑿齒，是不是打在盾上
     faceTo(e, x, y) { const fx = Math.sign(x - e.x), fy = Math.sign(y - e.y); if (fx || fy) { e.fx = fx; e.fy = fy; } }
@@ -101,7 +115,7 @@
     rammable(x, y) { const ch = this.world.get(x, y); return RAMMABLE.indexOf(ch) >= 0 && (ch === '墟' || this.world.base(x, y) !== ch); }   // 人造的磚門窗，與所有的墟
     riled(e) { return !!e.angry && (e.type === '蛛' || e.type === '蟾' || e.type === '牛' || (e.type === '鷹' && !e.tame)); }   // 半友好的被惹了（v0.7.3：畫面上發紅變大）
     isHostile(o) {           // 會主動找人的：虎豹狼蛇、野豬、毒蛛；惹了才找人的：無毒蛛、蟾、野牛、沒馴的鷹
-      return '虎豹狼蛇豬齒雕豨畢'.indexOf(o.type) >= 0 || o.type === '大風' || (o.type === '修蛇' && !o.under) || (o.type === '蛛' && o.venom) || (o.angry && (o.type === '蛛' || o.type === '蟾' || o.type === '牛' || (o.type === '鷹' && !o.tame)));
+      return '虎豹狼蛇豬齒雕豨畢'.indexOf(o.type) >= 0 || o.type === '大風' || o.type === '共工' || (o.type === '修蛇' && !o.under) || (o.type === '蛛' && o.venom) || (o.angry && (o.type === '蛛' || o.type === '蟾' || o.type === '牛' || (o.type === '鷹' && !o.tame)));
     }
     hostileNear(p, r) {      // 玩家 r 格內最近的敵對獸（鷹替你打的對象）
       let best = null, bd = Infinity;
@@ -500,6 +514,93 @@
       else { e.moveT = 0.35 + Math.random() * 0.25; const [dx, dy] = N8[Math.floor(Math.random() * 8)], nd = U.cheb(e.x + dx, e.y + dy, p.x, p.y); if (nd >= WIND.ring[0] && nd <= WIND.ring[1]) this.windStep(e, p, e.x + dx * 2, e.y + dy * 2, false); }
     }
 
+    // ---------- 共工（v0.9） ----------
+    gongFresh(mode) { const m = GONG_MODES.indexOf(mode) >= 0 ? mode : GONG_MODES[Math.floor(Math.random() * 3)]; return Object.assign({ mode: m, next: null, shiftT: 0, modeT: rnd(GONG.modeGap), moveT: 1 }, this.gongModeInit(m)); }
+    gongModeInit(m) { return { under: m === 'sea', surfaceT: 0, digCD: m === 'sea' ? 4 : 0, dig: null, buttCD: 2, meteorCD: 4, meteor: null, pressCD: 4, press: null, starCD: 6, pullT: GONG.pullGap }; }
+    gongCells(e) {   // 身子佔哪幾格：本相三乘三、陸立成三格高的「工」、海裡與天上一格
+      if (e.shiftT > 0) { const out = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) out.push([e.x + dx, e.y + dy]); return out; }
+      if (e.mode === 'land') return [[e.x, e.y - 1], [e.x, e.y], [e.x, e.y + 1]];
+      return [[e.x, e.y]];
+    }
+    gongFits(e, x, y, mode) {   // 照模式能不能待在 (x, y)：海在地裡（陸地、山都鑽得過，水火不行）、陸是三格高（每格都站得上去）、天上哪裡都飛得到（火不行）；不出不周山、不進屋、不壓在人身上
+      const den = e.den, lea = e.leash || GONG.leash; if (den && U.dist(x, y, den.x, den.y) > lea) return false;
+      const ok = (cx, cy) => {
+        const d = DB[this.world.get(cx, cy)]; if (!d || d.kind === 'fire' || this.world.sheltered(cx, cy, '共工')) return false;
+        if (mode === 'sky') return true; if (d.kind === 'water') return false; if (mode === 'sea') return true;
+        return d.walk > 0 && !d.shelter && !d.gate && !d.bog && d.kind !== 'object' && d.kind !== 'place';
+      };
+      const cells = mode === 'land' ? [[x, y - 1], [x, y], [x, y + 1]] : [[x, y]];
+      return cells.every(([cx, cy]) => ok(cx, cy) && !(this.px === cx && this.py === cy));
+    }
+    gongStep(e, tx, ty, away) {   // 照模式走一步（海裡鑽、陸上走、天上飛）；不鑽別的獸（潛在地裡的不算）
+      let best = null, bd = away ? -1 : Infinity;
+      for (const [dx, dy] of N8) {
+        const nx = e.x + dx, ny = e.y + dy; if (!this.gongFits(e, nx, ny, e.mode)) continue;
+        if (!(e.mode === 'sea' && e.under) && (e.mode === 'land' ? [[nx, ny - 1], [nx, ny], [nx, ny + 1]] : [[nx, ny]]).some(([cx, cy]) => { const o = this.beastAt(cx, cy, e); return o && !this.aloft(o); })) continue;
+        const dd = U.dist(nx, ny, tx, ty) + Math.random() * 0.25; if (away ? dd > bd : dd < bd) { bd = dd; best = [nx, ny]; }
+      }
+      if (!best) return false;
+      e.x = best[0]; e.y = best[1]; return true;
+    }
+    gongSettle(e) {   // 換了模式身子放不下（陸要三格高）：挪到最近放得下的地方
+      if (this.gongFits(e, e.x, e.y, e.mode)) return;
+      for (let r = 1; r <= 8; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === r && this.gongFits(e, e.x + dx, e.y + dy, e.mode)) { e.x += dx; e.y += dy; return; }
+    }
+    gongTimers(e, g, p, dt) {   // 不跟著步子走的倒數：換模式、本相、招式的冷卻與落下
+      for (const k of ['digCD', 'buttCD', 'meteorCD', 'pressCD', 'starCD', 'surfaceT', 'modeT']) if (e[k] > 0) e[k] = Math.max(0, e[k] - dt);
+      if (e.shiftT > 0) {   // 本相：倒數完就換成下一個模式
+        const was = e.shiftT; e.shiftT = Math.max(0, e.shiftT - dt);
+        if (was > GONG.hintAt && e.shiftT <= GONG.hintAt && g.gongHint) g.gongHint(e);
+        if (!e.shiftT) { const stay = e.next === e.mode; e.mode = e.next || e.mode; e.next = null; e.modeT = rnd(GONG.modeGap); Object.assign(e, this.gongModeInit(e.mode)); this.gongSettle(e); e.moveT = 0.5; if (g.gongMode) g.gongMode(e, stay); }
+        return;
+      }
+      if (!(e.modeT > 0)) {   // 該換了：現本相，這時就定下要換成什麼（百分之一換回原樣）
+        e.next = Math.random() < GONG.stay ? e.mode : GONG_MODES.filter(m => m !== e.mode)[Math.floor(Math.random() * 2)];
+        e.shiftT = GONG.shiftT; e.under = false; e.dig = null; e.meteor = null; e.press = null; e.moveT = 0.3; if (g.gongShift) g.gongShift(e); return;
+      }
+      if (e.mode === 'sea') {
+        if (!e.under && !(e.surfaceT > 0) && !e.dig) { e.under = true; e.digCD = GONG.digGap; }   // 鑽出來夠久了，潛下去
+        if (e.dig) { e.dig.t -= dt; if (e.dig.t <= 0) { const dg = e.dig; e.dig = null; e.under = false; e.surfaceT = GONG.surfaceT; this.gongSurface(e, dg); if (g.gongDig) g.gongDig(e, dg); } }
+      }
+      if (e.meteor) { e.meteor.t -= dt; if (e.meteor.t <= 0) { const mt = e.meteor; e.meteor = null; if (g.gongMeteor) g.gongMeteor(e, mt.cells); } }
+      if (e.press) { e.press.t -= dt; if (e.press.t <= 0) { const pr = e.press; e.press = null; if (g.gongPress) g.gongPress(e, pr); } }
+      if (e.mode === 'land' && Math.min(...this.gongCells(e).map(([cx, cy]) => U.cheb(cx, cy, p.x, p.y))) <= GONG.pullR) { e.pullT -= dt; if (e.pullT <= 0) { e.pullT = GONG.pullGap; if (g.gongPull) g.gongPull(e); } }
+    }
+    gongSurface(e, dg) {   // 從人腳下鑽出來：身子落在那一格旁邊（不壓在人身上）
+      let best = null, bd = Infinity;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const x = dg.x + dx, y = dg.y + dy; if (!this.gongFits(e, x, y, 'sea') || this.beastAt(x, y, e)) continue; const dd = Math.abs(dx) + Math.abs(dy) + Math.random() * 0.3; if (dd < bd && (dx || dy)) { bd = dd; best = [x, y]; } }
+      if (best) { e.x = best[0]; e.y = best[1]; }
+    }
+    gongAct(e, g, p) {
+      if (e.shiftT > 0) { e.moveT = 0.3; return; }   // 本相：不動、不出招
+      const d = U.cheb(e.x, e.y, p.x, p.y), den = e.den, lea = e.leash || GONG.leash;
+      if (den && U.dist(e.x, e.y, den.x, den.y) > lea - 1) { e.moveT = 0.4; this.gongStep(e, den.x, den.y, false); return; }   // 不出不周山
+      if (e.mode === 'sea') {
+        if (!e.under || e.dig) { e.moveT = 0.25; return; }   // 鑽出來或正要鑽：待著
+        if (d <= 1 && !(e.digCD > 0) && !p.sailing) { e.dig = { x: p.x, y: p.y, t: GONG.digWarn }; e.moveT = 0.25; if (g.gongDigWarn) g.gongDigWarn(e, e.dig); return; }
+        e.moveT = GONG.seaStep; const ox = e.x, oy = e.y;
+        if (d > 1 && this.gongStep(e, p.x, p.y, false) && g.gongMud) g.gongMud(ox, oy, e.x - ox, e.y - oy);
+        return;
+      }
+      if (e.mode === 'land') {
+        const near = Math.min(...this.gongCells(e).map(([cx, cy]) => U.cheb(cx, cy, p.x, p.y)));
+        if (!(e.meteorCD > 0) && !e.meteor && near <= 12) {   // 隕石：你腳下一個，身邊再兩個
+          const cells = [[p.x, p.y]]; for (let k = 0; k < 30 && cells.length < GONG.meteorN; k++) { const x = p.x + Math.round((Math.random() * 2 - 1) * 2), y = p.y + Math.round((Math.random() * 2 - 1) * 2); if (!cells.some(([a, b]) => a === x && b === y)) cells.push([x, y]); }
+          e.meteor = { t: GONG.meteorT, cells }; e.meteorCD = GONG.meteorGap; if (g.gongMeteorWarn) g.gongMeteorWarn(e);
+        }
+        if (near <= GONG.buttR) {
+          if (!(e.buttCD > 0) && g.bossHit) { g.bossHit(e, GONG.butt, '力', '頭觸'); e.buttCD = GONG.buttGap; e.moveT = 0.6; return; }
+          e.moveT = 0.4; return;
+        }
+        e.moveT = GONG.landStep; this.gongStep(e, p.x, p.y, false); return;
+      }
+      if (!(e.pressCD > 0) && !e.press && d <= 12) { e.press = { x: p.x, y: p.y, t: GONG.pressT }; e.pressCD = GONG.pressGap; if (g.gongPressWarn) g.gongPressWarn(e, e.press); }   // 力壓千鈞：你腳下一圈「壓」
+      if (!(e.starCD > 0) && d <= 12) { e.starCD = GONG.starGap; if (g.gongStars) g.gongStars(e); }   // 星移斗轉
+      if (d > GONG.skyRing[1]) { e.moveT = GONG.skyStep; this.gongStep(e, p.x, p.y, false); }
+      else if (d < GONG.skyRing[0]) { e.moveT = GONG.skyStep; this.gongStep(e, p.x, p.y, true); }
+      else { e.moveT = 0.4 + Math.random() * 0.3; const [dx, dy] = N8[Math.floor(Math.random() * 8)], nd = U.cheb(e.x + dx, e.y + dy, p.x, p.y); if (nd >= GONG.skyRing[0] && nd <= GONG.skyRing[1]) this.gongStep(e, e.x + dx * 2, e.y + dy * 2, false); }
+    }
+
     update(dt, g) {
       const p = g.player, w = this.world, night = g.darkness() > 0.5;
       const roofed = !!DB[w.get(p.x, p.y)].shelter || !!(g.indoors && g.indoors());   // 人在屋裡（地標屋舍或磚圍得住）：天上的蠱雕、惱了的鷹抓不進來（v0.8.8）
@@ -577,7 +678,7 @@
         if (d <= 9 && !e.shade) g.saw(e.type);   // 玄武吐的墨影（v0.8.8）不算見過真身
         if (!e.heard && d <= 8 && this.isHostile(e) && w.clear(e.x, e.y, p.x, p.y)) { e.heard = true; if (g.beastCall) g.beastCall(e); }   // 走近了先聽見牠（各有各的聲音）
         else if (e.heard && d > 14) e.heard = false;
-        if (e.type !== '龍' && e.type !== '豨' && e.type !== '修蛇' && e.type !== '大風' && !e.tame && d > 48) { this.list.splice(i, 1); continue; }   // 大魔王由遊戲端收（走出地界、認輸、死了、斃了）
+        if (e.type !== '龍' && e.type !== '豨' && e.type !== '修蛇' && e.type !== '大風' && e.type !== '共工' && !e.tame && d > 48) { this.list.splice(i, 1); continue; }   // 大魔王由遊戲端收（走出地界、認輸、死了、斃了）
         if (e.type === '鷹') {
           if (e.tame) { e.sta = Math.min(100, e.sta + dt); e.hp = Math.min(DB['鷹'].hp, e.hp + 0.3 * dt); }   // 體力每息回一點，傷慢慢好
           if (e.angryT > 0) { e.angryT -= dt; if (e.angryT <= 0) e.angry = false; }
@@ -607,9 +708,10 @@
         if (e.type === '豨') this.hogTimers(e, g, p, dt);
         if (e.type === '修蛇') this.snakeTimers(e, g, p, dt);
         if (e.type === '大風') this.windTimers(e, g, p, dt);
+        if (e.type === '共工') this.gongTimers(e, g, p, dt);
         if (e.type === '畢') { e.cryT = (e.cryT === undefined ? 4 : e.cryT) - dt; if (e.cryT <= 0 && d <= BIRD.cryR) { e.cryT = rnd(BIRD.cryGap); if (g.birdCry) g.birdCry(e); } }   // 畢方一聲鳴：人身邊三處起訛火
         if (e.tieCD > 0 && e.type === '雕') e.tieCD -= dt;
-        if (e.tiedT > 0 && e.type === '雕') { e.tiedT -= dt; if (e.tiedT <= 0) { e.tiedT = 0; e.mode = 'rise'; e.moveT = 0.2; } }   // 蠱雕被彤弓素矰的絲纏住（繳，v0.8.25）
+        if (e.tiedT > 0 && e.type === '雕') { e.tiedT -= dt; if (e.tiedT <= 0) { e.tiedT = 0; e.mode = 'rise'; e.moveT = 0.2; } }   // 蠱雕被青冥落羽的絲纏住（繳，v0.8.25）
         if (e.type === '齒') { e.turnT = (e.turnT === undefined ? TOOTH_TURN : e.turnT) - dt; if (e.turnT <= 0) { e.turnT = TOOTH_TURN; this.faceTo(e, p.x, p.y); } }   // 一息多才轉一回身
         if (e.type === '白虎') {   // 沒帶虎符的人進了六格：一聲嘯，地跟著抖
           e.roarT = (e.roarT === undefined ? 2 : e.roarT) - dt;
@@ -662,6 +764,7 @@
         if (e.type === '豨') { this.hogAct(e, g, p, night, sheltered); continue; }
         if (e.type === '修蛇') { this.snakeAct(e, g, p, night); continue; }
         if (e.type === '大風') { this.windAct(e, g, p, roofed); continue; }
+        if (e.type === '共工') { this.gongAct(e, g, p); continue; }
         if (e.type === '畢') { this.birdAct(e, g, p, night, sheltered); continue; }
         if (e.type === '雕') {     // 蠱雕：盤旋 → 撲下來抓一下、貼著停一會兒 → 飛回高處
           if (e.mode === 'tied') { e.moveT = 0.2; continue; }   // 被繳住了，落在地上動不了（v0.8.25）
@@ -803,7 +906,7 @@
           else { e.moveT = 1 + Math.random() * 2; if (Math.random() < 0.4) this.wander(e, night, e.type === '蟾' ? '草沙土水' : null); }
         }
         // 山海衣：七格內主動攻擊的獸行動慢一倍
-        if (g.totemNear && this.isHostile(e) && e.type !== '鷹' && e.type !== '豨' && e.type !== '修蛇' && e.type !== '大風' && g.totemNear(e.x, e.y)) e.moveT *= 2;   // 大魔王不吃山海衣這一套（v0.8.25 修：修蛇原本漏了）
+        if (g.totemNear && this.isHostile(e) && e.type !== '鷹' && e.type !== '豨' && e.type !== '修蛇' && e.type !== '大風' && e.type !== '共工' && g.totemNear(e.x, e.y)) e.moveT *= 2;   // 大魔王不吃山海衣這一套（v0.8.25 修：修蛇原本漏了）
       }
     }
 
@@ -811,5 +914,5 @@
     restore(arr) { for (const s of arr || []) { if (s.t === '蜃') continue; this.add(s.t, s.x, s.y, s.tame ? { hp: s.hp, sta: s.sta, tame: true } : {}); } }   // 蜃不跟著讀檔回來：沒解決的蜃由遊戲端扣膽氣
   }
 
-  root.Entities = Entities; Entities.SNAKE = SNAKE; Entities.WIND = WIND; Entities.BIRD = BIRD;
+  root.Entities = Entities; Entities.SNAKE = SNAKE; Entities.WIND = WIND; Entities.BIRD = BIRD; Entities.GONG = GONG;
 })();
