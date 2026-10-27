@@ -56,6 +56,9 @@
   SFX.fuse = function () { this.play((c, o, t) => { tone(c, o, t, 784, 0.7, 0.18, 'sine'); tone(c, o, t + 0.02, 1175, 0.9, 0.08, 'sine'); tone(c, o, t, 392, 0.5, 0.06, 'triangle'); }); };
   SFX.learn = function () { this.play((c, o, t) => { [523, 659, 784].forEach((f, i) => tone(c, o, t + i * 0.09, f, 0.35, 0.12, 'triangle')); }); };
   SFX.fail = function () { this.play((c, o, t) => { tone(c, o, t, 140, 0.18, 0.2, 'sine', 55); swoosh(c, o, t, 900, 200, 0.15, 0.15); }); };
+  SFX.thunder = function () {   // 雷（v0.9.15）：一聲炸裂、接著低沉滾過去
+    this.play((c, o, t) => { swoosh(c, o, t, 3800, 600, 0.25, 0.55); swoosh(c, o, t + 0.05, 420, 60, 1.6, 0.45); tone(c, o, t + 0.02, 70, 1.4, 0.22, 'sawtooth', 32); tone(c, o, t + 0.3, 55, 1.2, 0.12, 'sine', 30); });
+  };
   SFX.tiger = function () {
     this.play((c, o, t) => {
       const osc = c.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(75, t); osc.frequency.linearRampToValueAtTime(55, t + 0.6);
