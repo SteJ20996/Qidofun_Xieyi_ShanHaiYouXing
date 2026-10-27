@@ -14,7 +14,8 @@
     '果': '#c9654a', '灶': '#d9593c', '鼎': '#b4452c', '包': '#2a2724', '囊': '#5a3e2b', '煤': '#2a2724', '鐵': '#8a5a3a', '網': '#5a86a8', '罟': '#4f7a9c', '罾': '#446e90', '路': '#c9b27a', '門': '#9a7a55', '井': '#4a6f8f',
     '棉': '#e8e2d0', '礫': '#b9b4a8', '磚': '#9a5a40', '墟': '#8a8378', '窗': '#c09a6a', '沼': '#6b6a3c', '棧': '#9a6b45', '床': '#a06a4a', '漁': '#5a86a8', '麻': '#a9b07a', '偶': '#b08a5a', '櫃': '#7a4e2d', '舟': '#7a4e2d',
     '塔': '#2a2724', '寺': '#5a3e2b', '船': '#5a3e2b', '泉': '#4a6f8f', '墓': '#6e6c75', '洞': '#2a2724', '燈': '#e0a020',
-    '漠': '#e3cf98', '丘': '#d6bb7a', '池': '#5f9cc0', '棗': '#7d9a55', '熔': '#d2502a', '岩': '#5d5a62', '燧': '#2a2622', '曜': '#2b2133', '川': '#5f9cc0', '湖': '#5a92b8', '湯': '#8cc3d0', '窟': '#3a3028'   // v0.7
+    '漠': '#e3cf98', '丘': '#d6bb7a', '池': '#5f9cc0', '棗': '#7d9a55', '熔': '#d2502a', '岩': '#5d5a62', '燧': '#2a2622', '曜': '#2b2133', '川': '#5f9cc0', '湖': '#5a92b8', '湯': '#8cc3d0', '窟': '#3a3028',   // v0.7
+    '苗': '#8fb06a', '秀': '#b5b05a', '稻': '#d9b54a', '黍': '#d9b54a', '稷': '#d9b54a', '麥': '#d9b54a', '菽': '#d9b54a', '穗': '#cdbb88', '籬': '#8a6a45', '扉': '#8a6a45'   // v0.9.18 五穀、籬
   };
 
   // 光照（v0.6.4；v0.6.9 改成射線）：每道光從燈芯往外射線，碰到磚、門、墟的邊就停，圍出一個多邊形——影子的邊沿著牆角斜斜射出去，不是一格一格的方塊。
@@ -226,14 +227,94 @@
     drawGlyph(ch, color, px, py, size, rot, alpha, kx, ky) {   // kx、ky：橫、縱拉長幾倍（野牛的身子，v0.7.2）
       const ctx = this.ctx, s = this.dpr, c = rot ? Math.cos(rot) : 1, sn = rot ? Math.sin(rot) : 0, ax = kx || 1, ay = ky || 1;
       ctx.setTransform(s * c * ax, s * sn * ax, -s * sn * ay, s * c * ay, px * s, py * s);
-      const a = alpha === undefined ? 1 : alpha;
-      if (a < 1) ctx.globalAlpha = a;
+      const a = alpha === undefined ? 1 : alpha, a0 = ctx.globalAlpha;   // v0.9.14 自查：乘在外面已有的透明度上（原本直接蓋成 a、畫完設回 1，墨影外層的半透明被蓋掉）
+      if (a < 1) ctx.globalAlpha = a0 * a;
       ctx.drawImage(this.glyph(ch, color), -size * 0.65, -size * 0.65, size * 1.3, size * 1.3);
-      if (a < 1) ctx.globalAlpha = 1;
+      if (a < 1) ctx.globalAlpha = a0;
       ctx.setTransform(s, 0, 0, s, 0, 0);
     }
     // ---------- 神兵的招牌特效（v0.8.31） ----------
     fxRnd(sd, i) { const v = Math.sin(i * 12.9898 + sd * 78.233) * 43758.5453; return v - Math.floor(v); }   // 特效裡的亂數：同一下每一幀都一樣
+    // 落雷（v0.9.15）：一道主幹帶三條岔枝從畫面頂上劈下，先閃一下、暗一瞬、再劈一次（回擊），之後餘光變細淡去；
+    // 落點三乘三照傷害分三檔亮起（正中、十字、四角），兩圈衝擊波、四散的火星、一團亮光，「雷」字砸下來
+    boltPath(seed, x0, y0, x1, y1, n, amp) {
+      const pts = [];
+      for (let i = 0; i <= n; i++) { const k = i / n, r = U.hash2(seed, i, 59), sway = Math.sin(Math.PI * k);   // 兩端收、中間擺得開
+        pts.push([x0 + (x1 - x0) * k + (i && i < n ? ((r & 1023) / 1023 - 0.5) * amp * (0.35 + sway) : 0), y0 + (y1 - y0) * k + (i && i < n ? (((r >>> 10) & 255) / 255 - 0.5) * amp * 0.3 : 0)]); }
+      return pts;
+    }
+    drawBoltWarn(f, px, py, pr, T, dark, now) {
+      const ctx = this.ctx, night = dark > 0.5, beat = 0.55 + 0.45 * Math.abs(Math.sin(now * (10 + 8 * pr)));   // 越近落下閃得越急
+      ctx.save();
+      for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+        const tier = Math.abs(i) + Math.abs(j), k = [0.42, 0.26, 0.11][tier] * beat * (0.45 + 0.55 * pr);
+        ctx.fillStyle = (night ? 'rgba(243,239,216,' : 'rgba(201,162,39,') + k + ')'; ctx.fillRect(px + (i - 0.5) * T + 1, py + (j - 0.5) * T + 1, T - 2, T - 2);
+      }
+      ctx.globalAlpha = beat * (0.4 + 0.6 * pr); ctx.strokeStyle = night ? '#f3efd8' : '#a8801a'; ctx.lineWidth = 2; ctx.setLineDash([T * 0.25, T * 0.18]); ctx.strokeRect(px - T * 1.5, py - T * 1.5, T * 3, T * 3);
+      ctx.setLineDash([]); ctx.lineWidth = 2.5; ctx.strokeRect(px - T * 0.5, py - T * 0.5, T, T);   // 正中那格描實線
+      if (pr > 0.6) {   // 落下前一刻：天上垂下一縷細細的先導
+        const q = (pr - 0.6) / 0.4, pts = this.boltPath((f.x * 31 + f.y * 17) | 0, px, -T, px, py, 9, T * 1.2), m = Math.max(1, Math.round(pts.length * q));
+        ctx.globalAlpha = 0.5 * q; ctx.strokeStyle = night ? 'rgba(220,228,255,0.9)' : 'rgba(60,64,80,0.7)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.beginPath();
+        pts.slice(0, m).forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); ctx.setLineDash([]);
+      }
+      ctx.restore();
+    }
+    drawLocust(L, ox, oy, T, now) {   // 蝗群：十幾個小「蝗」字繞著要落的那片田亂飛（v0.9.19）
+      const ctx = this.ctx, cx = ox + (L.x + 0.5) * T, cy = oy + (L.y + 0.5) * T;
+      if (cx < -8 * T || cy < -8 * T || cx > this.w + 8 * T || cy > this.h + 8 * T) return;
+      ctx.save(); ctx.globalAlpha = 0.8;
+      for (let i = 0; i < 16; i++) { const a = now * (0.6 + (i % 5) * 0.17) + i * 2.4, r = T * (1.2 + (i % 7) * 0.45 + 0.4 * Math.sin(now * 1.7 + i)); this.drawGlyph('蝗', '#8a6d1e', cx + Math.cos(a) * r, cy + Math.sin(a * 1.3) * r * 0.7, T * 0.36); }
+      ctx.restore();
+    }
+    drawBoltScar(f, px, py, pr, T) {   // 燒焦的地：照三檔深淺，正中有裂紋；最後四成慢慢淡掉
+      const ctx = this.ctx, fade = pr < 0.6 ? 1 : (1 - pr) / 0.4; if (fade <= 0) return;
+      ctx.save();
+      for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) { const k = [0.42, 0.24, 0.1][Math.abs(i) + Math.abs(j)] * fade; ctx.fillStyle = 'rgba(28,24,20,' + k + ')'; ctx.fillRect(px + (i - 0.5) * T + 2, py + (j - 0.5) * T + 2, T - 4, T - 4); }
+      ctx.strokeStyle = 'rgba(20,16,12,' + 0.7 * fade + ')'; ctx.lineWidth = 1.2; ctx.beginPath();
+      for (let n = 0; n < 6; n++) { const r = U.hash2(f.seed || 1, n, 7), a = n / 6 * Math.PI * 2 + (r & 255) / 255, len = T * (0.5 + ((r >>> 8) & 255) / 255 * 0.8); ctx.moveTo(px, py); ctx.lineTo(px + Math.cos(a) * len * 0.5 + ((r >>> 16) & 15) - 7, py + Math.sin(a) * len * 0.5); ctx.lineTo(px + Math.cos(a) * len, py + Math.sin(a) * len); }
+      ctx.stroke(); ctx.restore();
+    }
+    drawBolt(f, px, py, pr, T, dark) {
+      const ctx = this.ctx, t = f.t, night = dark > 0.5, seed = f.seed || ((f.x * 7 + f.y * 13) | 0);
+      // 主幹的亮度：0–0.12 劈下、0.12–0.2 暗一瞬、0.2–0.32 回擊、0.32–0.75 餘光淡去
+      const a = t < 0.12 ? 1 : t < 0.2 ? 0.18 : t < 0.32 ? 1 : Math.max(0, 1 - (t - 0.32) / 0.43);
+      if (t >= 0.2 && !f.re) { f.re = true; this.flash = Math.max(this.flash || 0, 0.32); }   // 回擊再白一下
+      ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      if (a > 0) {
+        const main = this.boltPath(seed + (t >= 0.2 ? 1 : 0), px + ((seed & 63) - 32) / 32 * T * 2, -T, px, py, Math.max(7, Math.round((py + T) / (T * 0.9))), T * 1.6);
+        const thin = t >= 0.32 ? Math.max(0.35, a) : 1, forks = [];
+        for (let b = 0; b < 3; b++) {   // 三條岔枝：從主幹四成到八成五的地方岔出去，斜斜往下
+          const r = U.hash2(seed, b, 97), at = Math.floor(main.length * (0.4 + ((r & 255) / 255) * 0.45)), [bx, by] = main[at], side = (r >>> 8) & 1 ? 1 : -1, len = T * (1.6 + ((r >>> 9) & 255) / 255 * 2.2);
+          forks.push(this.boltPath(seed * 3 + b + (t >= 0.2 ? 5 : 0), bx, by, bx + side * len * 0.9, by + len, 5, T * 0.8));
+        }
+        const day = !night, layers = day ? [[T * 0.36, 'rgba(28,26,23,' + 0.6 * a + ')'], [T * 0.18, 'rgba(201,162,39,' + a + ')'], [T * 0.07, 'rgba(255,253,240,' + a + ')']]   // 白天紙上：墨邊、金身、白芯
+          : [[T * 0.55, 'rgba(150,175,255,' + 0.3 * a + ')'], [T * 0.22, 'rgba(200,215,255,' + 0.55 * a + ')'], [T * 0.08, 'rgba(255,255,250,' + a + ')']];
+        const line = (pts) => { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); };
+        for (const [lw, col] of layers) { ctx.strokeStyle = col; ctx.lineWidth = lw * thin; line(main); if (a > 0.5 || t < 0.32) { ctx.lineWidth = lw * 0.45 * thin; for (const fk of forks) line(fk); } }
+      }
+      ctx.restore();
+      // 落點：三檔亮格、衝擊波、火星、一團光
+      const q = Math.min(1, t / 0.5), glow = Math.max(0, 1 - t / 0.7);
+      ctx.save();
+      if (glow > 0) {
+        if (night) ctx.globalCompositeOperation = 'lighter';
+        for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) { const k = [0.8, 0.5, 0.24][Math.abs(i) + Math.abs(j)] * glow; ctx.fillStyle = (night ? 'rgba(200,215,255,' : 'rgba(255,214,90,') + k + ')'; ctx.fillRect(px + (i - 0.5) * T + 1, py + (j - 0.5) * T + 1, T - 2, T - 2); }
+        const rg = ctx.createRadialGradient(px, py, 0, px, py, T * 2.2); rg.addColorStop(0, (night ? 'rgba(235,240,255,' : 'rgba(255,248,220,') + 0.9 * glow + ')'); rg.addColorStop(1, 'rgba(255,248,220,0)');
+        ctx.fillStyle = rg; ctx.fillRect(px - T * 2.2, py - T * 2.2, T * 4.4, T * 4.4); ctx.globalCompositeOperation = 'source-over';
+      }
+      for (const [d0, wgt] of [[0, 3], [0.12, 1.8]]) {   // 兩圈衝擊波
+        const qq = Math.min(1, Math.max(0, (t - d0) / 0.5)); if (qq <= 0 || qq >= 1) continue;
+        ctx.strokeStyle = (night ? 'rgba(220,230,255,' : 'rgba(90,70,20,') + 0.75 * (1 - qq) + ')'; ctx.lineWidth = wgt * (1 - qq) + 0.5; ctx.beginPath(); ctx.arc(px, py, T * (0.4 + 2.1 * qq), 0, 6.2832); ctx.stroke();
+      }
+      if (q < 1) {   // 十二點火星往外飛
+        ctx.strokeStyle = night ? 'rgba(255,240,200,' + (1 - q) + ')' : 'rgba(201,120,20,' + (1 - q) + ')'; ctx.lineWidth = 1.6; ctx.beginPath();
+        for (let n = 0; n < 12; n++) { const r = U.hash2(seed, n, 13), ang = (r & 1023) / 1023 * 6.2832, sp = 0.8 + ((r >>> 10) & 255) / 255, d1 = T * (0.3 + 1.7 * q * sp), d2 = d1 + T * 0.35 * (1 - q); ctx.moveTo(px + Math.cos(ang) * d1, py + Math.sin(ang) * d1 + q * q * T * 0.6); ctx.lineTo(px + Math.cos(ang) * d2, py + Math.sin(ang) * d2 + q * q * T * 0.6); }
+        ctx.stroke();
+      }
+      ctx.restore();
+      const drop = Math.min(1, t / 0.18);   // 「雷」字從大砸到落點
+      this.drawGlyph('雷', night ? '#f3efd8' : '#b8860b', px, py, T * (2.4 - 0.9 * drop), (1 - drop) * 0.25, Math.max(0, 1 - pr * 1.1));
+    }
     drawThunder(f, px, py, pr, T, ox, oy) {   // 九閽鳴雷：大「雷」字砸下、三圈方折的雷紋（青銅器上的回紋）往外擴散到三格外，一道道閃電劈到挨打的獸身上
       const ctx = this.ctx, R = f.r || 3, land = Math.min(1, pr / 0.18);
       this.drawGlyph('雷', G.INK.red, px, py - T * 0.9 * (1 - land), T * (2.6 - 1.1 * land), 0, pr < 0.5 ? 1 : Math.max(0, 1 - (pr - 0.5) / 0.5));
@@ -343,7 +424,7 @@
       const k = Math.min(1, dt * 7);
       this.camX += (cx - this.camX) * k; this.camY += (cy - this.camY) * k;
       let ox = w / 2 - this.camX * T, oy = h / 2 - this.camY * T;
-      if (this.shake > 0) { this.shake -= dt; ox += (Math.random() - 0.5) * 10 * this.shake; oy += (Math.random() - 0.5) * 10 * this.shake; }
+      if (this.shake > 0 && dt > 0) { this.shake -= dt; ox += (Math.random() - 0.5) * 10 * this.shake; oy += (Math.random() - 0.5) * 10 * this.shake; }
 
       // —— 宣紙隨世界滾動
       if (!this.pattern) this.pattern = ctx.createPattern(this.paper, 'repeat');
@@ -386,12 +467,14 @@
         if (d.kind === 'fire' || burning) { scale *= 1 + 0.1 * Math.sin(now * 15 + r); rot += Math.sin(now * 9 + (r & 31)) * 0.06; }
         if (ch === '明' || ch === '日') scale *= 1 + 0.04 * Math.sin(now * 3 + r);
         if (burning) alpha = 1;
+        if (ch === '田') alpha = Math.min(1, alpha * (0.55 + 0.13 * world.fertOf(x, y)));   // 地力越厚墨越深（v0.9.18）
         if (act && act.type === 'gather' && act.x === x && act.y === y) { const pr = act.t / act.dur; alpha *= 1 - pr * 0.85; scale *= 1 - pr * 0.35; rot += pr * 0.5; }
         const color = burning && d.kind !== 'fire' ? G.INK.red : (ch === '灶' && !lit ? G.INK.ash : (ch === '窗' || ch === '門') && world.wallHurt(x, y) ? G.INK.red : d.ink);   // 窗門撞剩一半：字變紅
         if (ch.length > 1) {   // 雙字之物（木屋）：兩個字並排寫小一點
           this.drawGlyph(ch[0], color, ox + x * T + T * 0.3, oy + y * T + T / 2 + dy, T * scale * 0.62, rot, alpha);
           this.drawGlyph(ch[1], color, ox + x * T + T * 0.7, oy + y * T + T / 2 + dy, T * scale * 0.62, rot, alpha);
         } else this.drawGlyph(ch, color, ox + x * T + T / 2 + dx, oy + y * T + T / 2 + dy, T * scale, rot, alpha);
+        if (d.crop && d.crop !== 3) { const ck = world.cropKind(x, y); if (ck) this.drawGlyph(L(ck), '#6a5a24', ox + x * T + T * 0.8, oy + y * T + T * 0.8, T * 0.34, 0, 0.8 * alpha); }   // 苗、秀、遺穗角上寫是什麼穀（v0.9.18）
         if ((burning && d.kind !== 'fire') || lit) this.drawGlyph('火', G.INK.red, ox + x * T + T * 0.74, oy + y * T + T * 0.3, T * 0.45 * (1 + 0.15 * Math.sin(now * 13 + r)), rot, 0.95);
       }
 
@@ -499,10 +582,11 @@
           continue;
         }
         if (e.type === '共工') {     // 共工（v0.9，設計稿〈七〉）：本相三乘三（「共」、頂上朱髮「彡」、一圈「己」）；海潛在地裡只見朱髮劃過、鑽出來寫「共」；陸立成三格高的「工」；空倒懸一個「天」、地上一團影子
-          const hair = '#c23b22', GG = g.ents.constructor.GONG, ink = e.hp / (e.max || d.hp) <= 0.3 ? GONG_LOW : d.ink;   // 命剩三成起整個人變黑紫（v0.9.1 使用者定：他本來就是朱紅，變紅看不出來）
+          const shade = !!e.shade, hair = shade ? '#55535c' : '#c23b22', GG = g.ents.constructor.GONG, ink = shade ? '#2b2a30' : e.hp / (e.max || d.hp) <= 0.3 ? GONG_LOW : d.ink;   // 命剩三成起整個人變黑紫（v0.9.1 使用者定：他本來就是朱紅，變紅看不出來）；立極的共工影（v0.9.10）墨灰、半透
           if (e.dig) { const qx = ox + e.dig.x * T + T / 2, qy = oy + e.dig.y * T + T / 2; ctx.save(); ctx.fillStyle = 'rgba(110,84,52,' + (0.18 + 0.1 * Math.sin(now * 14)) + ')'; ctx.fillRect(qx - T * 1.5, qy - T * 1.5, T * 3, T * 3); ctx.restore(); for (let i = 0; i < 3; i++) { const k = (now * 1.4 + i / 3) % 1; this.drawGlyph('氵', G.INK.water, qx, qy, T * (0.5 + k * 0.9), 0, 0.9 * (1 - k)); } }   // 入地如入水：腳下翻起來
           if (e.meteor) for (const [mx, my] of e.meteor.cells) { const qx = ox + mx * T + T / 2, qy = oy + my * T + T / 2, k = 1 - e.meteor.t / GG.meteorT; this.drawGlyph('◎', G.INK.red, qx, qy, T * (0.9 + 0.08 * Math.sin(now * 12)), 0, 0.85); if (k > 0.4) this.drawGlyph('隕', '#5a3e2b', qx, qy - (1 - k) * T * 3, T * (0.6 + 0.4 * k), 0, k); }   // 隕石：先標「◎」，「隕」從天上落下來
           if (e.press) { const qx = ox + e.press.x * T + T / 2, qy = oy + e.press.y * T + T / 2, R = (GG.pressR + 0.5) * T, k = 1 - e.press.t / GG.pressT; ctx.save(); ctx.fillStyle = 'rgba(59,58,64,' + (0.08 + 0.12 * k) + ')'; ctx.beginPath(); ctx.arc(qx, qy, R, 0, 7); ctx.fill(); ctx.strokeStyle = 'rgba(59,58,64,0.6)'; ctx.setLineDash([6, 4]); ctx.lineDashOffset = now * 10; ctx.lineWidth = 2; ctx.stroke(); ctx.restore(); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + now * 0.4; this.drawGlyph('壓', '#3b3a40', qx + Math.cos(a) * R * 0.78, qy + Math.sin(a) * R * 0.78, T * 0.55, 0, 0.35 + 0.45 * k); } }   // 力壓千鈞：一圈「壓」
+          if (shade) { ctx.save(); ctx.globalAlpha = 0.72; }
           if (e.shiftT > 0) {   // 本相
             const sh = Math.sin(now * 30) * 1.5;
             for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + now * 0.5; this.drawGlyph('己', '#3d2a1c', px + Math.cos(a) * T * 1.25, py + Math.sin(a) * T * 1.15, T * 0.7, a + Math.PI / 2, 0.9); }
@@ -527,6 +611,7 @@
             this.drawGlyph('彡', hair, px, py - lift + T * 0.95, T * 0.8, Math.PI, 0.9);
             this.drawGlyph('天', ink, px, py - lift, T * 1.9, Math.PI, 0.85);
           }
+          if (shade) { this.drawGlyph('影', '#55535c', px + T * 0.95, py + T * 0.75, T * 0.5, 0, 0.9); ctx.restore(); }
           continue;
         }
         if (e.type === '大風') {     // 大風（v0.8.25）：在天上時地上一團影子，上方半透明的大字「風」；撲下來寫成「鳳」，左右各兩三個「羽」當翅膀
@@ -598,7 +683,7 @@
         }
         // 主動找人的獸（v0.7.2）：豹、狼、野豬、毒蛛畫大一號，比虎小一點；蛇照舊。半友好的（無毒蛛、蟾、沒馴的鷹）被惹了也發紅、大一號（v0.7.3）
         const riled = g.ents.riled(e);
-        const size = e.type === '虎' ? 0.95 : e.type === '龍' ? 1.1 : (e.type === '豹' || e.type === '狼' || e.type === '豬' || (e.type === '蛛' && e.venom) || riled) ? 0.85 : e.type === '鹿' ? 0.8 : e.type === '魚' ? 0.6 : 0.55;
+        const size = e.type === '虎' ? 0.95 : e.type === '龍' ? 1.1 : (e.type === '豹' || e.type === '狼' || e.type === '豬' || (e.type === '蛛' && e.venom) || riled) ? 0.85 : e.type === '鹿' ? 0.8 : e.type === '狸' ? 0.7 : e.type === '魚' ? 0.6 : 0.55;
         const bobY = e.type === '鳥' ? Math.sin(now * 5 + e.bob) * 3 : e.type === '龍' ? Math.sin(now * 3 + e.bob) * 4 : e.type === '魚' ? Math.sin(now * 2 + e.bob) * 1.5 : 0;
         if (e.type === '龍') lights.push({ x: e.x, y: e.y, cx: e.rx + 0.5, cy: e.ry + 0.5, r: 3, c: DRAGON });
         const rot = e.type === '魚' ? Math.sin(now * 2 + e.bob) * 0.2 : 0;
@@ -657,6 +742,24 @@
           ctx.strokeRect(ox + mx * T + 2, oy + my * T + 2, (Mx - mx + 1) * T - 4, (My - my + 1) * T - 4); ctx.restore();
         }
       }
+      // —— 垂釣（v0.9.17）：竿梢到浮子一條線，浮子「浮」漂在水上；咬鉤時沉下去、盪開水紋；上了鉤線越繃越紅，浮子上頭一條線繃的長條
+      if (g.fishing) {
+        const f = g.fishing, px = ox + p.rx * T + T / 2, py = oy + p.ry * T + T / 2, bx = ox + f.x * T + T / 2, bite = f.phase === 'bite', hook = f.phase === 'hook', ten = hook ? Math.min(1, f.ten) : 0;
+        const by = oy + f.y * T + T / 2 + (bite ? T * 0.16 : Math.sin(now * 2.2) * T * 0.04) + (hook ? Math.sin(now * 23) * T * 0.05 * (0.3 + ten) : 0);
+        const sx = px + Math.sign(p.fx || 0) * T * 0.42, sy = py - T * 0.42 + Math.sign(p.fy || 0) * T * 0.2;   // 竿梢
+        ctx.save();
+        ctx.strokeStyle = hook ? 'rgba(' + Math.round(60 + 150 * ten) + ',' + Math.round(70 - 30 * ten) + ',' + Math.round(80 - 40 * ten) + ',0.85)' : 'rgba(60,64,72,0.6)'; ctx.lineWidth = hook ? 1.2 + ten : 1;
+        ctx.beginPath(); ctx.moveTo(sx, sy); const sag = hook ? T * 0.05 * (1 - ten) : T * 0.35; ctx.quadraticCurveTo((sx + bx) / 2, Math.max(sy, by) + sag, bx, by - T * 0.12); ctx.stroke();
+        if (bite || hook) { ctx.strokeStyle = 'rgba(47,88,120,' + (0.55 - 0.4 * ((now * 1.6) % 1)) + ')'; ctx.lineWidth = 1.2; for (let i = 0; i < 2; i++) { const r = T * (0.2 + 0.45 * (((now * 1.6) + i * 0.5) % 1)); ctx.beginPath(); ctx.ellipse(bx, by + T * 0.06, r, r * 0.45, 0, 0, 7); ctx.stroke(); } }
+        ctx.restore();
+        this.drawGlyph('浮', bite ? G.INK.red : G.INK.water, bx, by, T * (bite ? 0.55 : 0.62), 0, bite ? 0.95 : 0.85);
+        if (hook) {
+          const w0 = T * 1.7, h0 = Math.max(4, T * 0.13), x0 = bx - w0 / 2, y0 = by - T * 0.78;
+          ctx.save(); ctx.fillStyle = 'rgba(255,250,240,0.7)'; ctx.fillRect(x0 - 1, y0 - 1, w0 + 2, h0 + 2);
+          ctx.fillStyle = ten > 0.7 ? '#b4392a' : ten > 0.45 ? '#c9822a' : '#2f5878'; ctx.fillRect(x0, y0, w0 * ten, h0);
+          ctx.fillStyle = 'rgba(40,40,40,0.75)'; ctx.font = Math.round(T * 0.38) + 'px serif'; ctx.textAlign = 'center'; ctx.fillText(L('收') + ' ' + f.done + '／' + f.need, bx, y0 - T * 0.1); ctx.restore();
+        }
+      }
       // —— 滑鼠（v0.6.5）：指著的格子淡淡框一下；點過的路畫成一串小點，點的那格（或跟著的生靈）一個圈
       if (g.mouse) {
         const mx = Math.floor((g.mouse.x - ox) / T), my = Math.floor((g.mouse.y - oy) / T), far = U.cheb(mx, my, p.x, p.y) > 1;
@@ -681,6 +784,7 @@
       // —— 特效
       for (const f of g.fx) {
         const pr = Math.min(1, f.t / f.dur), px = ox + f.x * T + T / 2, py = oy + f.y * T + T / 2;
+        if (f.type === 'boltScar') { this.drawBoltScar(f, px, py, pr, T); continue; }   // 落雷燒焦的地（v0.9.15）：畫在地上那一層，夜色蓋得住
         if (f.type === 'write') {
           this.drawGlyph(f.ch, f.color, px, py, T * (1.6 - 0.6 * pr), (1 - pr) * 0.4, pr * 0.9);
           ctx.save(); ctx.strokeStyle = 'rgba(180,57,42,' + (0.6 * (1 - pr)) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, T * (0.3 + 0.5 * pr), 0, 7); ctx.stroke(); ctx.restore();
@@ -701,11 +805,13 @@
         }
       }
 
+      if (world.locust) this.drawLocust(world.locust, ox, oy, T, now);   // 要落下來的蝗群（v0.9.19）在田上空盤旋
       // —— 霧障：一片片白霧順著風飄
       if (world.fogs.size || this.fogSeen.size) this.drawFog(g, ox, oy, x0, x1, y0, y1, dt, now);
       // —— 夜色與光：光照圖平滑放大蓋上去；光源再點一個亮芯
       const dark = g.viewDark();   // 洞窟裡白天也黑（v0.7）
-      this.rainA = (this.rainA || 0) + ((world.raining() ? 1 : 0) - (this.rainA || 0)) * Math.min(1, dt / 1.5);   // 起雨收雨各淡入淡出一息半
+      const wxHere = g.wxHere ? g.wxHere() : '';   // 人站的這一格的天氣：乾地上不畫雨雪（v0.9.17）
+      this.rainA = (this.rainA || 0) + ((wxHere === 'rain' || wxHere === 'thunder' ? 1 : 0) - (this.rainA || 0)) * Math.min(1, dt / 1.5);   // 起雨收雨各淡入淡出一息半
       const glowK = Math.max(dark, 0.55 * this.rainA);   // 下雨的白天，燈也透出一點微光（v0.6.4）
       if (g.torchLit()) lights.push({ x: p.x, y: p.y, cx: p.rx + 0.5, cy: p.ry + 0.5, r: 3, c: TORCH });
       const lm = dark > 0.02 || (glowK > 0.02 && lights.length) ? this.lightMap(g, ox, oy, x0, x1, y0, y1, lights, dark, glowK, now) : null;
@@ -727,9 +833,15 @@
       }
       // —— 神兵的招牌特效（v0.8.31 使用者要的）：畫在夜色上面，晚上也亮
       for (const f of g.fx) {
-        if ((f.type !== 'thunder' && f.type !== 'scorch' && f.type !== 'feather' && f.type !== 'stars') || f.t < 0) continue;
+        if ((f.type !== 'thunder' && f.type !== 'scorch' && f.type !== 'feather' && f.type !== 'stars' && f.type !== 'bolt' && f.type !== 'boltWarn' && f.type !== 'geese') || f.t < 0) continue;
         const pr = Math.min(1, f.t / f.dur), px = ox + f.x * T + T / 2, py = oy + f.y * T + T / 2;
         if (f.type === 'stars') { const cx2 = ox + p.rx * T + T / 2, cy2 = oy + p.ry * T + T / 2; for (let i = 0; i < 5; i++) { const a = pr * Math.PI * 2 + i / 5 * Math.PI * 2; this.drawGlyph('星', '#c9a227', cx2 + Math.cos(a) * T * 1.3, cy2 + Math.sin(a) * T * 1.0, T * 0.6, a, Math.min(1, (1 - pr) * 2.5)); } }   // 星移斗轉（v0.9）：星字繞你轉一圈
+        else if (f.type === 'geese') {   // 鴻雁來（v0.9.19）：一行「雁」排成人字從畫面上方飛過
+          const lead = f.dir > 0 ? -T * 3 + (w + T * 6) * pr : w + T * 3 - (w + T * 6) * pr, gy = h * 0.16 + Math.sin(pr * 6) * T * 0.2, a = pr < 0.1 ? pr / 0.1 : pr > 0.9 ? (1 - pr) / 0.1 : 1;
+          for (let i = 0; i < 7; i++) { const rank = Math.ceil(i / 2), side = i % 2 ? 1 : -1; this.drawGlyph('雁', '#3a3a3a', lead - f.dir * rank * T * 0.9, gy + side * rank * T * 0.55 + Math.sin(now * 6 + i) * 2, T * 0.42, 0, 0.75 * a); }
+        }
+        else if (f.type === 'bolt') this.drawBolt(f, px, py, pr, T, dark);   // 雷雨的落雷（v0.9.15）
+        else if (f.type === 'boltWarn') this.drawBoltWarn(f, px, py, pr, T, dark, now);   // 雷要落的三乘三先亮：正中最亮、十字次之、四角最淡
         else if (f.type === 'thunder') this.drawThunder(f, px, py, pr, T, ox, oy);
         else if (f.type === 'scorch') this.drawScorch(f, px, py, pr, T, now);
         else this.drawFeather(f, px, py, pr, T, ox, oy);
@@ -760,6 +872,51 @@
         if (lit) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = (dark > 0.02 ? 0.5 : 0.9) * this.rainA * glowK; ctx.imageSmoothingEnabled = true; ctx.drawImage(this.lmGlow, 0, 0, lit.cols, lit.rows, lit.x, lit.y, lit.w, lit.h); }
         ctx.restore();
       }
+      // —— 雪（v0.9.15）：慢慢飄的雪點，白天是淡墨點、晚上是白點；狂風天跟著風斜著走
+      const gale = world.galeOn() ? world.galeDir() : null;
+      this.snowA = (this.snowA || 0) + ((wxHere === 'snow' ? 1 : 0) - (this.snowA || 0)) * Math.min(1, dt / 2);
+      if (this.snowA > 0.02) {
+        const pm = (a, m) => ((a % m) + m) % m, span = h + 40, wide = w + 40, n = Math.min(300, Math.floor(w * h / 3800));
+        ctx.save(); ctx.globalAlpha = this.snowA; ctx.fillStyle = 'rgba(232,238,246,' + (0.1 + 0.04 * dark) + ')'; ctx.fillRect(0, 0, w, h);
+        const day = dark <= 0.5; ctx.fillStyle = day ? 'rgba(255,255,255,0.95)' : 'rgba(244,246,250,0.85)'; ctx.strokeStyle = 'rgba(60,72,98,0.55)'; ctx.lineWidth = 1; ctx.beginPath();   // 白天紙上：白點描一圈淡墨才看得見
+        const gx = gale ? gale[0] * 90 : 0, gy = gale ? gale[1] * 40 : 0;
+        for (let i = 0; i < n; i++) {
+          const r = U.hash2(i, 977, 13), sp = 0.6 + (r & 7) / 10, rad = (day ? 1.8 : 1.2) + ((r >>> 3) & 3) * 0.5;
+          const yy = pm(((r >>> 16) & 4095) / 4096 * span + now * (34 + gy) * sp + oy * 0.6, span) - 20;
+          const xx = pm(((r >>> 4) & 4095) / 4096 * wide + Math.sin(now * 1.1 + i) * 9 + now * gx * sp + ox * 0.6, wide) - 20;
+          ctx.moveTo(xx + rad, yy); ctx.arc(xx, yy, rad, 0, 6.2832);
+        }
+        if (day) ctx.stroke(); ctx.fill(); ctx.restore();
+      }
+      // —— 冰雹（v0.9.19）：又密又快的白粒斜著砸下，落地彈一下
+      this.hailA = (this.hailA || 0) + ((g.hailing && g.hailing() ? 1 : 0) - (this.hailA || 0)) * Math.min(1, dt / 0.8);
+      if (this.hailA > 0.02) {
+        const pm = (a, m) => ((a % m) + m) % m, span = h + 40, wide = w + 40, n = Math.min(220, Math.floor(w * h / 5200)), day = dark <= 0.5;
+        ctx.save(); ctx.globalAlpha = this.hailA; ctx.fillStyle = day ? 'rgba(250,252,255,0.95)' : 'rgba(236,240,246,0.9)'; ctx.strokeStyle = 'rgba(52,62,84,0.6)'; ctx.lineWidth = 1; ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+          const r = U.hash2(i, 431, 29), sp = 0.8 + (r & 7) / 14, rad = 1.6 + ((r >>> 3) & 3) * 0.45;
+          const yy = pm(((r >>> 16) & 4095) / 4096 * span + now * 260 * sp, span) - 20, xx = pm(((r >>> 4) & 4095) / 4096 * wide + now * 40 * sp, wide) - 20;
+          ctx.moveTo(xx + rad, yy); ctx.arc(xx, yy, rad, 0, 6.2832);
+        }
+        if (day) ctx.stroke(); ctx.fill(); ctx.restore();
+      }
+      // —— 風（v0.9.15）：狂風是一道道順著風向掠過的長絲；和風是幾縷慢慢飄的短絲
+      const breeze = !gale && world.breezeOn();
+      if (gale || breeze) {
+        const pm = (a, m) => ((a % m) + m) % m, ddx = gale ? gale[0] : 1, ddy = gale ? gale[1] : -0.15, nn = Math.hypot(ddx, ddy), ux = ddx / nn, uy = ddy / nn;
+        const n = gale ? Math.min(70, Math.floor(w * h / 14000)) : Math.min(14, Math.floor(w * h / 60000) + 4), sp = gale ? 760 : 110, span = Math.max(w, h) + 300;
+        ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = dark > 0.5 ? 'rgba(225,230,240,' + (gale ? 0.32 : 0.22) + ')' : 'rgba(55,66,88,' + (gale ? 0.3 : 0.18) + ')'; ctx.lineWidth = gale ? 1.3 : 1.1; ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+          const r = U.hash2(i, 313, 29), len = gale ? 60 + (r & 63) : 26 + (r & 15), a = ((r >>> 4) & 4095) / 4096 * span - 150, b = ((r >>> 16) & 4095) / 4096 * span - 150;
+          const t = pm(a + now * sp * (0.8 + (r & 7) / 20), span) - 150;   // 沿著風向走的那一段
+          const cx = w / 2 + ux * (t - span / 2 + 150) - uy * (b - span / 2 + 150), cy = h / 2 + uy * (t - span / 2 + 150) + ux * (b - span / 2 + 150);
+          if (gale) { ctx.moveTo(cx, cy); ctx.lineTo(cx - ux * len, cy - uy * len); }
+          else { const wv = Math.sin(now * 2 + i) * 4; ctx.moveTo(cx, cy); ctx.quadraticCurveTo(cx - ux * len / 2 - uy * wv, cy - uy * len / 2 + ux * wv, cx - ux * len, cy - uy * len); }
+        }
+        ctx.stroke(); ctx.restore();
+      }
+      // —— 雷光（v0.9.15）：落雷那一下整個畫面一白
+      if (this.flash > 0) { ctx.save(); ctx.fillStyle = 'rgba(250,250,244,' + Math.min(0.55, this.flash) + ')'; ctx.fillRect(0, 0, w, h); ctx.restore(); this.flash -= dt; }
       // —— 紙邊的舊色，以及身體的訊號：掉血泛紅、中毒泛綠、神志不清泛藍
       const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.45, w / 2, h / 2, Math.max(w, h) * 0.75);
       vg.addColorStop(0, 'rgba(80,60,30,0)'); vg.addColorStop(1, 'rgba(80,60,30,0.32)');
@@ -815,7 +972,7 @@
         else if (e.type === '雕') { m.fillStyle = '#4a4f5c'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
         else if (e.type === '畢') { m.fillStyle = '#24766b'; m.fillRect(i * px - 1, j * px - 1, px + 2, px + 2); }
         else if (e.type === '大風') { m.fillStyle = '#5b6b7a'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
-        else if (e.type === '共工') { if (!e.under || e.shiftT > 0) { m.fillStyle = '#b4392a'; m.fillRect(i * px - px - 2, j * px - px - 2, px * 3 + 4, px * 3 + 4); } }   // v0.9
+        else if (e.type === '共工') { if (!e.under || e.shiftT > 0) { m.fillStyle = e.shade ? '#55535c' : '#b4392a'; m.fillRect(i * px - px - 2, j * px - px - 2, px * 3 + 4, px * 3 + 4); } }   // v0.9
         else if (e.type === '朱雀') { m.fillStyle = '#c23b22'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '玄武') { m.fillStyle = '#1c1a17'; m.fillRect(i * px - 2, j * px - 2, px + 4, px + 4); }
         else if (e.type === '豹' || e.type === '狼' || e.type === '蛇') { m.fillStyle = '#8a2a1a'; m.fillRect(i * px, j * px, px + 1, px + 1); }
@@ -838,7 +995,8 @@
       const az = (p.scaleTaken || p.azure) && g.azure;   // 拿到青鱗以後，東海青龍的所在也畫進來（v0.8）
       if (az) { x0 = Math.min(x0, az.x - 12); y0 = Math.min(y0, az.y - 12); x1 = Math.max(x1, az.x + 12); y1 = Math.max(y1, az.y + 12); }
       const heard = G.zones(w.seed).filter(z => (p.nestHints || {})[z.id] && !(p.zones || {})[z.id]);   // v0.8.19 聽說了、還沒到過的巢穴：畫一圈，圖也拉大到看得見
-      for (const z of heard) { const r = (z.ext || z.r) + 10; x0 = Math.min(x0, z.x - r); y0 = Math.min(y0, z.y - r); x1 = Math.max(x1, z.x + r); y1 = Math.max(y1, z.y + r); }
+      const foc = g.mapFocus ? G.zones(w.seed).find(z => z.id === g.mapFocus) : null;   // v0.9.8 主動指路：點了的那一處也拉進圖裡
+      for (const z of foc ? heard.concat([foc]) : heard) { const r = (z.ext || z.r) + 10; x0 = Math.min(x0, z.x - r); y0 = Math.min(y0, z.y - r); x1 = Math.max(x1, z.x + r); y1 = Math.max(y1, z.y + r); }
       let N = Math.min(2 * G.WORLD_R, Math.ceil(Math.max(x1 - x0, y1 - y0) * 1.06) + 8), ox = Math.round((x0 + x1) / 2 - N / 2), oy = Math.round((y0 + y1) / 2 - N / 2);
       const zm = Math.pow(2, g.mapZoom || 0), fitN = N;   // v0.8.24 使用者要的放大縮小：第 0 檔看得到走過的全部，每放大一檔範圍減半；放大時以你為中心（拖曳、方向鍵挪 g.mapPan）
       if (zm > 1) { N = Math.max(MAP_MIN_N, Math.round(fitN / zm)); const pan = g.mapPan || { x: 0, y: 0 }; ox = Math.round(p.x + pan.x - N / 2); oy = Math.round(p.y + pan.y - N / 2); }
@@ -889,6 +1047,11 @@
         m.save(); m.setLineDash([6, 6]); m.strokeStyle = 'rgba(122,52,34,0.6)'; m.lineWidth = 1.5; m.beginPath(); m.arc(X(z.x + 0.5), Y(z.y + 0.5), Math.max(6, (z.ext || z.r) * px), 0, 7); m.stroke(); m.restore();
         m.font = F(6, 12); m.fillStyle = 'rgba(122,52,34,0.75)'; m.fillText(L(z.name + '？'), X(z.x + 0.5), Y(z.y + 0.5));
       }
+      if (foc) {   // 指路（v0.9.8）：朱紅實線圈住那一處，從你這裡拉一條虛線過去
+        const fx = X(foc.x + 0.5), fy = Y(foc.y + 0.5), R = Math.max(9, (foc.ext || foc.r) * px);
+        m.save(); m.strokeStyle = 'rgba(180,57,42,0.9)'; m.lineWidth = 2.5; m.beginPath(); m.arc(fx, fy, R, 0, 7); m.stroke();
+        m.setLineDash([5, 5]); m.lineWidth = 1.6; m.beginPath(); m.moveTo(X(p.x + 0.5), Y(p.y + 0.5)); m.lineTo(fx, fy); m.stroke(); m.restore();
+      }
       // 碑
       m.font = F(2.6, 9); m.fillStyle = '#1c1a17';
       for (const s of w.steles.values()) if (w.isSeen(s.x, s.y)) m.fillText('碑', X(s.x + 0.5), Y(s.y + 0.5));
@@ -912,6 +1075,14 @@
       if (zm > 1 && N <= MAP_MIN_N) {   // 放到最大：圓外蓋一層紙，只看得見方圓三十格（v0.8.25 使用者定）
         const r = MAP_VIEW_R * px; this.mapView.circle = MAP_VIEW_R; m.save(); m.beginPath(); m.rect(0, 0, S, S); m.arc(S / 2, S / 2, r, 0, Math.PI * 2, true); m.fillStyle = 'rgba(239,229,207,0.94)'; m.fill('evenodd');
         m.strokeStyle = 'rgba(74,66,56,0.55)'; m.lineWidth = 1.5; m.beginPath(); m.arc(S / 2, S / 2, r, 0, Math.PI * 2); m.stroke(); m.restore();
+      }
+      if (p.redeemed) {   // 還願以後（v0.9.10）：紙平了，四角有四象壓著——大地圖四邊各壓一塊鎮紙（北龜、東龍、南雀、西虎）
+        const B = Math.round(Math.max(22, Math.min(34, S * 0.06))), e = B * 0.62;
+        for (const [ch, fill, ink, x, y] of [['龜', '#1c1a17', '#efe5cf', S / 2, e], ['龍', '#24766b', '#efe5cf', S - e, S / 2], ['雀', '#c23b22', '#efe5cf', S / 2, S - e], ['虎', '#f6f1e4', '#2f2a24', e, S / 2]]) {
+          m.save(); m.globalAlpha = 0.92; m.fillStyle = fill; m.strokeStyle = '#2f2a24'; m.lineWidth = 1.5; m.beginPath();
+          if (m.roundRect) m.roundRect(x - B / 2, y - B / 2, B, B, 4); else m.rect(x - B / 2, y - B / 2, B, B); m.fill(); m.stroke();
+          m.globalAlpha = 1; m.fillStyle = ink; m.font = 'bold ' + Math.round(B * 0.7) + 'px ' + FONT; m.textAlign = 'center'; m.textBaseline = 'middle'; m.fillText(L(ch), x, y + 1); m.restore();
+        }
       }
       // 北、比例
       m.font = F(3.5, 14); m.fillStyle = '#4a4238'; m.fillText('北', S - 22, 20);

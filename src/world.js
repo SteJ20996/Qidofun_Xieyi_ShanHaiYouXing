@@ -6,9 +6,15 @@
   const CH = 16;                 // 區塊邊長（格）
   const STEP = 0.5;              // 模擬步長（秒）
   let DAY = 300;                 // 一晝夜（秒），潮汐隨之起落；一日從午夜算起（天亮 0.25、天黑 0.75）。v0.6.10 起看難度（簡單 420、一般 360、困難 300），game.js 開島或讀檔時用 World.setDay() 定
-  const MORNING = 0.26;
+  const DEEP_R = 18;   // 深海離陸地與沙洲至少幾格（v0.9.18 使用者定）
+  const HAIL_P = 0.05, HAIL_TERMS = [6, 13], HAIL_LEN = 1 / 12, HAIL_CROP = 0.3, HAIL_LAMP = 0.25, HAIL_SCARE = 0.25;   // 冰雹（v0.9.19 使用者定：夏季、極少）：立夏到處暑的雷雨，HAIL_P 的機會一起頭夾著一時辰的冰雹；屋外的苗秀三成砸死、熟的三成砸落成穗，燈、稻草人各四分之一砸壞
+  const LOCUST_P = 0.025, LOCUST_MIN = 6, LOCUST_R = 8, LOCUST_FIRE = 6, LOCUST_TERMS = [10, 13];   // 蝗（v0.9.19）：小暑到處暑，自己種了六格以上，每日 LOCUST_P 起一群，隔天半夜落在方圓 LOCUST_R 格的田上；地上的燈火 LOCUST_FIRE 格內的田保得住
+  const MOUSE_P = 0.08, MOUSE_MAX = 2, CAT_R = 12;   // 田鼠（v0.9.19）：秀了、熟了的田每日 MOUSE_P 的機會被偷一把（最多 MOUSE_MAX），籬與稻草人擋不住，只有方圓 CAT_R 格內守田的狸
+  const PECK_P = 0.15, PECK_MAX = 2, FENCE_ROOM = 400;   // 五穀（v0.9.18）：秀了、熟了的田沒有稻草人看著，每日 PECK_P 的機會被雀啄一口（收成少一把，最多 PECK_MAX）；籬圍起來 FENCE_ROOM 格以內不生獸
+  const morning = (d) => (root.CAL ? root.CAL.dawn(d) : 0.25) + 0.01;   // 大清早：那天日出後一點（v0.9.16 以前固定 0.26；v0.9.17 起日出照節氣）
   // 牆的耐久（v0.6.2，不顯示，只計算）：野牛撞一下扣 1。磚 4，撞到剩一半就成了「墟」；墟（村裡的殘垣也是）2；窗、門 2，剩一半時字變色
-  const WALL_HP = { '磚': 4, '墟': 2, '窗': 2, '門': 2 };          // 開局、讀舊存檔時的時刻：大清早（天亮之後一點點）
+  const WALL_HP = { '磚': 4, '墟': 2, '窗': 2, '門': 2, '籬': 2, '扉': 2 };   // 籬與扉（v0.9.18）兩下就碎          // 開局、讀舊存檔時的時刻：大清早（天亮之後一點點）
+  const EX_BASE = 0x4E00, EX_OFF = 8192;   // 走過的地圖存成一串字（v0.9.3，見 packExplored）：字從「一」起，塊的座標加 EX_OFF 免得是負數
   const STOVE_CAP = 999, SHELF_SLOTS = 4;   // 灶與鼎的火最多存 999 息（v0.5.1，原 900）；灶的柴架四格
   const NET_DUR = { 1: 30, 2: 90, 3: 240 };   // 漁網的耐久：小中大各能取幾條魚（v0.4.12），取完就破、不再進魚，棉麻加固回滿
   const TIDE_WET = 0.7;          // 灘一天裡有七成時間在水下（退潮 0.12–0.42）；放在灘上的網魚來得慢，間隔除以這個數
@@ -37,6 +43,12 @@
   const SHIPS = G.SHIPS;                                        // 船的兩種（孤帆、方舟）：大小、命、船頭首骨格數
   let RAIN_MIN = DAY * 0.25, RAIN_MAX = DAY * 1.0, RAIN_GAP_MIN = DAY * 1.0, RAIN_GAP_MAX = DAY * 4.0;
   const RAIN_LAMP_P = 1 / 2500, ROOM_LIMIT = 121;
+  // v0.9.15 天氣（使用者定）：一場雨起時，一小部分成雪、一小部分成雷雨，其餘是雨（v0.9.16 起機會照節氣分，見 src/calendar.js 的 wxOdds()）；雨雷雪天有 GALE_P 的機會起狂風
+  // （一天只往一個方向吹，雨雷雪停了就跟著停，最長 GALE_MAX 日）；晴天每日 BREEZE_P 的機會起和風。狂風每息把墟吹倒 GALE_RUIN_P、
+  // 把稻草人吹走 GALE_SCARE_P（墟只看你方圓 GALE_RUIN_R 格內的，稻草人全紙）。HOUSE_MAX 格以內的屋子：雷打不進、風吹不著（game.js 用）
+  const GALE_P = 0.06, GALE_MAX = 3, BREEZE_P = 0.18, GALE_RUIN_P = 0.0002, GALE_SCARE_P = 0.003, GALE_RUIN_R = 40, HOUSE_MAX = 38;
+  const DIR8 = [[0, -1, '北'], [1, -1, '東北'], [1, 0, '東'], [1, 1, '東南'], [0, 1, '南'], [-1, 1, '西南'], [-1, 0, '西'], [-1, -1, '西北']];   // 狂風把人往哪裡吹；風名照它從哪裡來（往南吹的是北風）
+  const SEEN_STEP = 6;   // v0.9.6：走過的地圖每半息記一次、或離上回記的地方六格就記（船快 2.5 倍時半息能走九到十六格）
   // 一日多長（v0.6.10 看難度）：以日計的長度（霧障一日、雨四分之一到一日、雨停一到四日）跟著換
   const setDay = (sec) => { DAY = sec; FOG_LIFE = DAY; RAIN_MIN = DAY * 0.25; RAIN_MAX = DAY * 1.0; RAIN_GAP_MIN = DAY * 1.0; RAIN_GAP_MAX = DAY * 4.0; };
   // 小屋：磚與門圍起的小空間，裡面不生生靈、生靈也進不去。多小才算看難度，由 game 透過 roomLimitFor(type) 告訴世界：獸一個門檻、魄一個門檻
@@ -53,6 +65,14 @@
       this.burn = new Map();     // "x,y" -> { t: 剩餘燃燒秒數, lvl: 火勢 }
       this.timers = new Map();   // "x,y" -> { from: 現在的字, to: 目標字, at: 世界時間 }（灰化土、草木長回來）
       this.scarecrows = new Map(); // "x,y" -> 稻草人失效的世界時間
+      this.wild = new Map();       // 野生的苗田（v0.9.18）："x,y" -> 什麼穀；底稿是田的格子，生成底稿時一起算，不存檔
+      this.crops = new Map();      // 種下的穀（v0.9.18）："x,y" -> { c 什麼穀, t 下種時刻, f 下種時的地力, pk 被雀啄幾口, rt 熟的時刻, shed 落成遺穗 }
+      this.fert = new Map();       // 地力（v0.9.18）："x,y" -> { v 幾點, t 從幾時起空著, b 種著東西 }；沒記的照底稿（原本是田 3、鋤出來的 2）
+      this.cropDay = -1; this.wildDay = -1; this.wildStage = {};
+      this.hail = null; this.hailP = HAIL_P; this.onHail = null;   // 冰雹（v0.9.19）：{ until }；測試可以把 hailP 設 0
+      this.locust = null;          // 要落下來的蝗群（v0.9.19）：{ x, y, at 幾時落 }
+      this.cats = new Map();       // 守田的狸（v0.9.19）："x,y" -> { x, y, t 幾時留下的 }
+      this.fenceCache = new Map(); this.fences = new Set(); this.onCrop = null;   // fences：放著籬、扉的格子（沒有就不用漫延）   // onCrop(type, x, y, rec)：遊戲端說一聲（凍死、落穗、雀啄）
       this.ores = new Map();       // "x,y" -> 鑿掉的鐵礦幾時長回來（世界時間）
       this.oreBlocked = () => false;   // 回調：那格上有人或生靈站著，等走開再長（免得把誰封在礦裡）
       this.chests = new Map();   // "x,y" -> 櫃裡的東西
@@ -81,7 +101,7 @@
         }
         pl.seen = false;
       }
-      this.time = DAY * MORNING; // 世界時間（秒），從大清早開始
+      this.time = U.r4(DAY * morning(0)); // 世界時間（秒），從大清早開始（v0.9.17 起是立春那天的日出後）
       this.acc = 0; this.seenAcc = 0;
       this.rng = U.mulberry32(this.seed ^ 0x5bd1e995);
       this.onDiscover = null;    // 回調：首次看見某處地標
@@ -89,7 +109,17 @@
       this.rainUntil = 0;        // 雨下到幾時（0 = 沒下）
       this.nextRainAt = DAY * 1.5 + U.trueRand() * DAY * 2.5;   // 第一場雨不早於第二日
       this.rainAcc = 0; this.rainLampP = RAIN_LAMP_P;
-      this.onWeather = null;     // 回調：雨起（true）／雨停（false）
+      this.onWeather = null;     // 回調：雨起（true）／雨停（false）；第二個參數是哪一種（rain／snow／thunder，v0.9.15）
+      this.wx = 'rain';          // 這一場是雨、雪還是雷雨（v0.9.15）
+      this.dryCache = new Map(); // 哪一格是乾地（v0.9.17，照種子固定，算過就記著）
+      this.deepCache = new Map(); // 哪一格是深海（v0.9.18）
+      this.gale = null;          // 狂風：{ until, dir（DIR8 的第幾個）, day（定方向的那一日） }
+      this.breezeDay = -1;       // 起和風的那一日
+      this.snowP = 1; this.thunderP = 1; this.galeP = GALE_P; this.breezeP = BREEZE_P; this.galeRuinP = GALE_RUIN_P; this.galeScareP = GALE_SCARE_P;   // 測試可以改；snowP／thunderP 是乘在節氣機會上的倍率（v0.9.16），設 0 就不起
+      this.onGale = null;        // 回調：狂風轉向（'turn'）、吹倒墟（'ruin', x, y）、吹走稻草人（'scare', x, y）
+      this.onBreeze = null;      // 回調：今天起了和風
+      this.houseCache = new Map();   // "x,y" -> 在不在 HOUSE_MAX 格以內的屋子裡（每步與每次改格清掉）
+      this.galeRuins = null;     // 狂風要看的墟：{ x, y, t, list }（離上回掃的地方十格或三十息就重掃）
       this.onLampRuined = null;  // 回調：某盞燈被雨澆壞
       this.fogs = new Map();     // id -> { id, cells: Set("x,y"), until }：霧障
       this.fogCells = new Map(); // "x,y" -> id
@@ -120,6 +150,12 @@
         if (pl.template) pl.template.forEach((row, j) => Array.from(row).forEach((ch, i) => put(pl.x + i, pl.y + j, ch)));
         else for (let j = 0; j < pl.h; j++) for (let i = 0; i < pl.w; i++) put(pl.x + i, pl.y + j, pl.ch);
       }
+      for (let j = 0; j < CH; j++) for (let i = 0; i < CH; i++) {   // 野生的苗田（v0.9.18）：底稿是田的一片片；v0.9.19 起川原河湖邊、大漠綠洲邊的草地也有（照地域分，G.wildCrop）。稻、川原的都要兩格內有水（只看同一塊底稿裡的）
+        const b0 = c[j * CH + i]; if (b0 !== '田' && b0 !== '草') continue;
+        const kind = G.wildCrop(ox + i, oy + j, this.seed, b0); if (!kind) continue;
+        if (kind === '稻' || (b0 === '草' && kind === '菽')) { let wet = false; for (let b = -2; b <= 2 && !wet; b++) for (let a = -2; a <= 2 && !wet; a++) { const ii = i + a, jj = j + b; if (ii >= 0 && jj >= 0 && ii < CH && jj < CH && DB[c[jj * CH + ii]].kind === 'water') wet = true; } if (!wet) continue; }
+        this.wild.set(U.key(ox + i, oy + j), kind);
+      }
       this.chunks.set(k, c);
       return c;
     }
@@ -131,19 +167,102 @@
     tideLow() { const t = (this.time % DAY) / DAY; return t > 0.37 && t < 0.67; }   // 白天裡的一段退潮（v0.6.2 一日改從午夜算，跟著挪了 0.25）
     tideName() { return this.tideLow() ? '退潮' : '漲潮'; }
     get(x, y) {
-      const d = this.diff.get(U.key(x, y));
+      const k = U.key(x, y), d = this.diff.get(k);
       const b = d !== undefined ? d : this.base(x, y);
+      if ((b === '田' || b === '草') && d === undefined && this.wild.size) { const wk = this.wild.get(k); if (wk) return this.wildGlyph(wk); }   // 野生的苗田照節氣（v0.9.18；v0.9.19 草地上的也算）
       return b === '灘' ? (this.tideLow() ? '沙' : '水') : b;
+    }
+    plain(x, y) { const k = U.key(x, y), d = this.diff.get(k), b = d !== undefined ? d : this.base(x, y); return b === '灘' ? (this.tideLow() ? '沙' : '水') : b; }   // 不算野生苗田的 get（找出生點用，跟 v0.9.17 以前一樣）
+    // ---------- 五穀（v0.9.18） ----------
+    dayIdx() { return Math.floor(this.time / DAY); }
+    termNow() { return root.CAL.term(this.dayIdx()).k; }
+    wildGlyph(kind) {   // 野生的苗田今天長到哪：照 CROPS[kind].wild 的四個節氣（苗、秀、熟、遺穗）輪一年
+      const d = this.dayIdx();
+      if (d !== this.wildDay) { this.wildDay = d; const t = root.CAL.term(d).k; this.wildStage = {}; for (const c in G.CROPS) { const b = G.CROPS[c].wild; let i = 3; for (let n = 0; n < 4; n++) { const a = b[n], z = b[(n + 1) % 4]; if (a <= z ? t >= a && t < z : t >= a || t < z) { i = n; break; } } this.wildStage[c] = ['苗', '秀', c, '穗'][i]; } }
+      return this.wildStage[kind];
+    }
+    cropKind(x, y) { const k = U.key(x, y), r = this.crops.get(k); if (r) return r.c; this.base(x, y); return this.diff.has(k) ? null : this.wild.get(k) || null; }   // base() 先叫：那塊底稿還沒生成時，野生苗田也還沒算
+    isWild(x, y) { const k = U.key(x, y); this.base(x, y); return !this.diff.has(k) && this.wild.has(k); }
+    fertOf(x, y) {   // 地力：種著東西照下種時的；空著每 FERT_FALLOW 日回一點、回到 FERT_REST 為止（撒灰撒上去的四點不會掉回三）
+      const k = U.key(x, y), r = this.fert.get(k);
+      if (!r) return this.base(x, y) === '田' ? G.FERT_WILD : G.FERT_HOED;
+      if (r.b || this.crops.has(k)) return r.v;
+      return r.v >= G.FERT_REST ? r.v : Math.min(G.FERT_REST, r.v + Math.max(0, Math.floor((this.time - r.t) / (G.FERT_FALLOW * DAY))));
+    }
+    setFert(x, y, v, busy) { this.fert.set(U.key(x, y), { v: U.clamp(v, 0, G.FERT_MAX), t: U.r4(this.time), b: busy ? 1 : undefined }); }
+    cropStage(r, term) {   // 1 苗、2 秀、3 熟；麥過冬，下種一百日以後、小滿到白露才熟
+      const el = (this.time - r.t) / DAY;
+      if (r.c === '麥') return el >= 100 && term >= 7 && term <= 14 ? 3 : el >= 80 && term >= 6 && term <= 14 ? 2 : 1;
+      const g = G.CROPS[r.c].grow; return el >= g ? 3 : el >= g * 0.55 ? 2 : 1;
+    }
+    cropDaysLeft(r) {   // 還要幾日熟（給提示用；麥是到來年小滿）
+      if (r.c !== '麥') return Math.max(0, Math.ceil(G.CROPS[r.c].grow - (this.time - r.t) / DAY));
+      const d = this.dayIdx(); if (r._dl && r._dl[0] === d) return r._dl[1];
+      const Y = root.CAL.YEAR || 360; let v = 0; for (let n = 0; n < Y * 2; n++) { const t = root.CAL.term(d + n).k; if (d + n - r.t / DAY >= 100 && t >= 7 && t <= 14) { v = n; break; } } r._dl = [d, v]; return v;
+    }
+    plant(x, y, kind) {   // 下種：地力照下種時記住
+      const f = this.fertOf(x, y); this.crops.set(U.key(x, y), { c: kind, t: U.r4(this.time), f, pk: 0, ms: 0 }); this.setFert(x, y, f, true); this.set(x, y, '苗'); return f;
+    }
+    endCrop(x, y, cost) {   // 這一格的穀沒了（收了、凍死、被吃、拔了）：地力減 cost，從現在起算休耕
+      const k = U.key(x, y), r = this.crops.get(k), f = r ? r.f : this.fertOf(x, y);
+      this.crops.delete(k); if (r) this.setFert(x, y, f - (cost || 0), false);
+      return r;
+    }
+    cropTick() {   // 換日（或時間跳過去）時：長、凍、落、雀啄
+      const d = this.dayIdx(); if (d === this.cropDay) return; const days = this.cropDay < 0 ? 1 : Math.max(1, d - this.cropDay); this.cropDay = d;
+      const term = root.CAL.term(d).k, frost = term >= G.CROP_FROST[0] || term < G.CROP_FROST[1];
+      for (const [k, r] of [...this.crops]) {
+        const [x, y] = U.unkey(k), ch = this.get(x, y), cd = DB[ch];
+        if (!cd || !cd.crop) { this.crops.delete(k); continue; }
+        if (r.shed) continue;
+        const st = this.cropStage(r, term);
+        if (st < 3 && frost && r.c !== '麥') { this.endCrop(x, y, 0); this.set(x, y, '田'); if (this.onCrop) this.onCrop('frost', x, y, r); continue; }
+        if (st === 3) { if (r.rt === undefined) r.rt = U.r4(r.c === '麥' ? this.time : Math.min(this.time, r.t + G.CROPS[r.c].grow * DAY)); if (this.time - r.rt >= G.CROP_HOLD * DAY) { r.shed = 1; this.set(x, y, '穗'); if (this.onCrop) this.onCrop('shed', x, y, r); continue; } }
+        if (st >= 2 && !this.scared(x, y)) for (let i = 0; i < days && (r.pk || 0) < PECK_MAX; i++) if (U.trueRand() < PECK_P) { r.pk = (r.pk || 0) + 1; if (this.onCrop) this.onCrop('peck', x, y, r); }
+        if (st >= 2 && !this.catNear(x, y)) for (let i = 0; i < days && (r.ms || 0) < MOUSE_MAX; i++) if (U.trueRand() < MOUSE_P) { r.ms = (r.ms || 0) + 1; if (this.onCrop) this.onCrop('mouse', x, y, r); }   // 田鼠（v0.9.19）
+        const want = st === 1 ? '苗' : st === 2 ? '秀' : r.c; if (ch !== want) this.set(x, y, want);
+      }
+      if (this.locust && this.time >= this.locust.at) this.locustLand();
+      else if (!this.locust && term >= LOCUST_TERMS[0] && term <= LOCUST_TERMS[1] && this.crops.size >= LOCUST_MIN && U.trueRand() < 1 - Math.pow(1 - LOCUST_P, Math.min(days, 30))) {
+        const live = [...this.crops].filter(([, r]) => !r.shed); if (live.length) { const [x, y] = U.unkey(live[Math.floor(Math.random() * live.length)][0]); this.locust = { x, y, at: U.r4((d + 1) * DAY) }; if (this.onCrop) this.onCrop('locust', x, y, this.locust); }
+      }
+    }
+    locustLand() {   // 蝗群落下（v0.9.19）：方圓八格自己種的田吃光，地上的燈火六格內的保得住（《詩·小雅·大田》秉畀炎火）
+      const L = this.locust; this.locust = null; let eaten = 0, saved = 0;
+      for (const [k, r] of [...this.crops]) {
+        const [x, y] = U.unkey(k); if (r.shed || U.cheb(x, y, L.x, L.y) > LOCUST_R) continue;
+        if (this.lightNear(x, y, LOCUST_FIRE)) { saved++; continue; }
+        this.endCrop(x, y, 0); this.set(x, y, '田'); eaten++;
+      }
+      if (this.onCrop) this.onCrop('locustLand', L.x, L.y, { eaten, saved });
+    }
+    catNear(x, y) { for (const c of this.cats.values()) if (U.cheb(x, y, c.x, c.y) <= CAT_R) return true; return false; }   // 方圓十二格內有守田的狸（v0.9.19）
+    cropNear(x, y, r) { if (!this.crops.size) return false; for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (this.crops.has(U.key(x + dx, y + dy))) return true; return false; }   // 附近有自己種的田
+    // 籬圍起來的一片（v0.9.18）：從這格順著獸走得過的格子漫延（籬、扉、磚門窗都擋），FENCE_ROOM 格以內圍得住、四面至少有一格籬或扉，就不生獸
+    fenced(x, y) {
+      if (!this.fences.size) return false;
+      const k0 = U.key(x, y), hit = this.fenceCache.get(k0); if (hit !== undefined) return hit;
+      let near = false; for (const k of this.fences) { const [fx, fy] = U.unkey(k); if (Math.abs(fx - x) <= 25 && Math.abs(fy - y) <= 25) { near = true; break; } }
+      if (!near) return false;
+      const open = (cx, cy) => { const d = this.info(cx, cy); return d.walk > 0 && !d.gate && d.kind !== 'water'; };
+      if (!open(x, y)) { this.fenceCache.set(k0, false); return false; }
+      const seen = new Set([k0]), q = [[x, y]]; let fence = false, over = false;
+      for (let h = 0; h < q.length && !over; h++) { const [cx, cy] = q[h]; for (const [dx, dy] of N4) { const nx = cx + dx, ny = cy + dy, k = U.key(nx, ny); if (seen.has(k)) continue; if (open(nx, ny)) { seen.add(k); q.push([nx, ny]); if (seen.size > FENCE_ROOM) { over = true; break; } } else if (this.info(nx, ny).fence) fence = true; } }
+      const v = !over && fence; for (const k of seen) this.fenceCache.set(k, v); return v;
     }
     raw(x, y) { const d = this.diff.get(U.key(x, y)); return d !== undefined ? d : this.base(x, y); }
     info(x, y) { return DB[this.get(x, y)]; }
     set(x, y, ch) {
       const k = U.key(x, y), old = this.get(x, y);
       if (this.roomCache.size) this.roomCache.clear();
+      if (this.fenceCache.size) this.fenceCache.clear();
+      if (this.houseCache.size) this.houseCache.clear();
       if (this.fogRoomCache.size) this.fogRoomCache.clear();
       this.ver = (this.ver || 0) + 1;   // 地上的字變了：畫面那邊的視線快取看這個數失效（v0.6.4）
       if (old !== ch) this.wallHp.delete(k);   // 換了字，舊的耐久就不算了
-      if (ch === this.base(x, y)) this.diff.delete(k); else this.diff.set(k, ch);
+      if (ch === this.base(x, y) && !this.wild.has(k)) this.diff.delete(k); else this.diff.set(k, ch);   // 野生苗田那格動過就記著（v0.9.18），免得收了又照節氣長回來
+      if (this.crops.size && !(DB[ch] && DB[ch].crop) && this.crops.has(k)) this.crops.delete(k);
+      if (DB[ch] && DB[ch].fence) this.fences.add(k); else if (this.fences.size) this.fences.delete(k);
       if (DB[ch].flam <= 0) this.burn.delete(k);
       if ((old === '灶' || old === '鼎') && ch !== '灶' && ch !== '鼎') this.stoves.delete(k);
       if ((old === '灶' || old === '鼎') && ch !== old) this.shelves.delete(k);   // 柴架跟著灶、鼎（v0.8.15）走（拆下時遊戲端先把它記到囊裡那個灶、鼎上）
@@ -248,6 +367,55 @@
       }
     }
     revealAll(px, py) { this.markSeen(px, py, G.HOME_R); }   // 塔上看得見整座本島（v0.7 島擴了，照 HOME_R）
+    // 存檔瘦身（v0.9.3 使用者定）：走過的地圖原本每塊寫 64 個十六進位字（加上鍵名約 76 字），走得多的存檔光這一項就上百萬字。
+    // 改寫成一串字：每塊先兩個字記位置——第一字 = EX_BASE + ((cx + EX_OFF) × 2 + 走滿了沒)，第二字 = EX_BASE + cy + EX_OFF；
+    // 走滿的塊就這兩個字。沒走滿的，十六列一列一列記（每字裝 15 位，一塊記完補齊到整字）：
+    //   00 這列沒看過、01 整列看過、10 一段連著的（起點 4 位、長度減一 4 位）、11 其他（16 位照抄）。
+    // 字都落在 U+4E00–U+CDFF（從「一」起），不碰代理對、引號、反斜線，JSON 與 localStorage 原樣存取。舊存檔的 explored 照舊讀得進來
+    packExplored() {
+      let out = '', acc = 0, n = 0;
+      const put = (v, bits) => { for (let j = 0; j < bits; j++) { if (v & (1 << j)) acc |= 1 << n; if (++n === 15) { out += String.fromCharCode(EX_BASE + acc); acc = 0; n = 0; } } };
+      for (const [k, b] of this.explored) {
+        let any = false, full = true; for (let i = 0; i < 32; i++) { if (b[i]) any = true; if (b[i] !== 255) full = false; }
+        if (!any) continue;
+        const [cx, cy] = U.unkey(k);
+        out += String.fromCharCode(EX_BASE + (cx + EX_OFF) * 2 + (full ? 1 : 0), EX_BASE + cy + EX_OFF);
+        if (full) continue;
+        for (let r = 0; r < 16; r++) {
+          const v = b[r * 2] | (b[r * 2 + 1] << 8);
+          if (v === 0) { put(0, 2); continue; }
+          if (v === 0xffff) { put(1, 2); continue; }
+          let st = 0; while (!((v >> st) & 1)) st++;
+          const run = v >> st;
+          if ((run & (run + 1)) === 0) { put(2, 2); put(st, 4); put(31 - Math.clz32(run), 4); }   // 31 − clz32 = 長度減一
+          else { put(3, 2); put(v, 16); }
+        }
+        if (n) { out += String.fromCharCode(EX_BASE + acc); acc = 0; n = 0; }
+      }
+      return out;
+    }
+    unpackExplored(str) {
+      const m = new Map(); let i = 0, acc = 0, n = 0;
+      const get = (bits) => { let v = 0; for (let j = 0; j < bits; j++) { if (!n) { acc = str.charCodeAt(i++) - EX_BASE; n = 15; } if (acc & 1) v |= 1 << j; acc >>= 1; n--; } return v; };
+      while (i + 1 < str.length) {
+        const a = str.charCodeAt(i) - EX_BASE, cy = str.charCodeAt(i + 1) - EX_BASE - EX_OFF, full = a & 1, cx = (a >> 1) - EX_OFF; i += 2;
+        const b = new Uint8Array(32);
+        if (full) b.fill(255);
+        else {
+          n = 0;
+          for (let r = 0; r < 16; r++) {
+            const tag = get(2); let v = 0;
+            if (tag === 1) v = 0xffff;
+            else if (tag === 2) { const st = get(4), len = get(4) + 1; v = ((1 << len) - 1) << st; }
+            else if (tag === 3) v = get(16);
+            b[r * 2] = v & 255; b[r * 2 + 1] = (v >> 8) & 255;
+          }
+          n = 0;   // 一塊記完補齊到整字，下一塊從新的一字起
+        }
+        m.set(U.key(cx, cy), b);
+      }
+      return m;
+    }
     seenCount() { let n = 0; for (const b of this.explored.values()) for (const v of b) { let x = v; while (x) { n += x & 1; x >>= 1; } } return n; }
     // 走的人多了，也便成了路
     trample(x, y) {
@@ -477,9 +645,67 @@
       this.steerFog(f, px, py);
       return this.placeFog(f, f.gx + Math.cos(f.ang), f.gy + Math.sin(f.ang), f.age);
     }
-    // ---------- 天氣：雨 ----------
-    raining() { return this.time < this.rainUntil; }
-    passable(x, y) { const d = this.info(x, y); return d.walk > 0 && !d.gate; }   // 門雖能走，算磚
+    // ---------- 天氣：雨、雪、雷雨、狂風、和風（v0.9.15） ----------
+    // 全紙的天氣（一場雨雪雷雨起訖、狂風跟著它）：raining()／snowing()／thundering()／precip()；
+    // 某一格實際怎樣看 wxAt(x, y)（v0.9.17）：大漠火山是乾地，雨雪不下，雷雨成乾雷（只打雷）
+    raining() { return this.time < this.rainUntil && this.wx !== 'snow'; }   // 雨與雷雨：澆燈、雨聲、雨絲（雪不澆燈）
+    snowing() { return this.time < this.rainUntil && this.wx === 'snow'; }
+    thundering() { return this.time < this.rainUntil && this.wx === 'thunder'; }
+    hailing() { return !!this.hail && this.time < this.hail.until && this.precip(); }   // 冰雹（v0.9.19）
+    hailAt(x, y) { return this.hailing() && !this.dryAt(x, y); }
+    startHail() {   // 冰雹一起頭就砸一回：屋外的田、燈、稻草人
+      this.hail = { until: U.r4(this.time + HAIL_LEN * DAY) }; let crops = 0, lamps = 0, scares = 0;
+      const out = (x, y) => !this.covered(x, y) && !this.dryAt(x, y);
+      for (const [k, r] of [...this.crops]) { const [x, y] = U.unkey(k), cd = DB[this.get(x, y)]; if (r.shed || !cd || !cd.crop || !out(x, y) || U.trueRand() >= HAIL_CROP) continue; if (cd.crop >= 3) { r.shed = 1; this.set(x, y, '穗'); } else { this.endCrop(x, y, 0); this.set(x, y, '田'); } crops++; }
+      for (const k of [...this.lamps]) { const [x, y] = U.unkey(k); if (this.get(x, y) !== '燈' || !out(x, y) || U.trueRand() >= HAIL_LAMP) continue; this.set(x, y, '白'); lamps++; if (this.onLampRuined) this.onLampRuined(x, y); }
+      for (const k of [...this.scarecrows.keys()]) { const [x, y] = U.unkey(k); if (this.get(x, y) !== '偶' || !out(x, y) || U.trueRand() >= HAIL_SCARE) continue; this.set(x, y, this.info(x, y).to || '白'); this.scarecrows.delete(k); scares++; }
+      if (this.onHail) this.onHail({ crops, lamps, scares });
+    }
+    precip() { return this.time < this.rainUntil; }   // 雨雷雪
+    // 深海（v0.9.18 使用者定）：「淼」，而且離陸地與沙洲（灘）至少 DEEP_R 格（照原本的地看，算圓）；算過的格子記著
+    deepSea(x, y) {
+      const k = U.key(x, y); let v = this.deepCache.get(k); if (v !== undefined) return v;
+      if (this.deepCache.size > 40000) this.deepCache.clear();
+      v = this.base(x, y) === '淼';
+      for (let dy = -DEEP_R; dy <= DEEP_R && v; dy++) { const w = Math.floor(Math.sqrt(DEEP_R * DEEP_R - dy * dy)); for (let dx = -w; dx <= w; dx++) { const d = DB[this.base(x + dx, y + dy)]; if (!d || d.kind !== 'water') { v = false; break; } } }
+      this.deepCache.set(k, v); return v;
+    }
+    dryAt(x, y) { const k = U.key(x, y); let v = this.dryCache.get(k); if (v === undefined) { if (this.dryCache.size > 20000) this.dryCache.clear(); v = G.dryAt(x, y, this.seed); this.dryCache.set(k, v); } return v; }
+    wxAt(x, y) { if (!this.precip()) return ''; if (!this.dryAt(x, y)) return this.wx; return this.wx === 'thunder' ? 'dry' : ''; }   // '' 晴（或乾地上別處在下）、'rain'、'snow'、'thunder'、'dry' 乾雷
+    galeOn() { return !!this.gale && this.precip() && this.time < this.gale.until; }
+    breezeOn() { return !this.precip() && this.breezeDay === Math.floor(this.time / DAY); }
+    galeDir() { return this.gale ? DIR8[this.gale.dir] : null; }   // [dx, dy, 往哪] ；風名是 DIR8[(dir + 4) % 8][2] + '風'
+    galeName() { return this.gale ? DIR8[(this.gale.dir + 4) % 8][2] + '風' : ''; }
+    newGale() { return { until: U.r4(this.time + (0.25 + U.trueRand() * (GALE_MAX - 0.25)) * DAY), dir: Math.floor(U.trueRand() * 8), day: Math.floor(this.time / DAY) }; }
+    // 三十八格以內的屋子（v0.9.15）：地標屋舍，或從這格順著能走的格子漫延、HOUSE_MAX 格以內圍得住、四面有人造的磚門窗墟；洞窟裡也算有頂
+    smallHouse(x, y) {
+      const d = this.info(x, y); if (d.shelter || d.cave) return true;
+      if (!this.passable(x, y) || d.kind === 'water') return false;
+      const k0 = U.key(x, y), hit = this.houseCache.get(k0); if (hit !== undefined) return hit;
+      const seen = new Set([k0]), q = [[x, y]]; let made = false, over = false;
+      while (q.length) {
+        if (seen.size > HOUSE_MAX) { over = true; break; }
+        const [cx, cy] = q.shift();
+        for (const [dx, dy] of N4) { const nx = cx + dx, ny = cy + dy, k = U.key(nx, ny); if (seen.has(k)) continue; if (this.passable(nx, ny)) { seen.add(k); q.push([nx, ny]); } else if ('磚門窗墟'.indexOf(this.get(nx, ny)) >= 0) made = true; }
+      }
+      const r = !over && made;
+      if (over) this.houseCache.set(k0, false); else for (const k of seen) this.houseCache.set(k, r);
+      return r;
+    }
+    galeTick(px, py) {   // 狂風每一步（半息）：換日轉向；墟、稻草人照每息的機會吹倒、吹走
+      const today = Math.floor(this.time / DAY), g = this.gale;
+      if (g.day !== today) { g.day = today; g.dir = Math.floor(U.trueRand() * 8); if (this.onGale) this.onGale('turn'); }
+      const pr = 1 - Math.pow(1 - this.galeRuinP, STEP), ps = 1 - Math.pow(1 - this.galeScareP, STEP);
+      const R = this.galeRuins;
+      if (!R || Math.max(Math.abs(px - R.x), Math.abs(py - R.y)) > 10 || this.time - R.t > 30) {
+        const list = []; for (let y = py - GALE_RUIN_R; y <= py + GALE_RUIN_R; y++) for (let x = px - GALE_RUIN_R; x <= px + GALE_RUIN_R; x++) if (this.get(x, y) === '墟') list.push([x, y]);
+        this.galeRuins = { x: px, y: py, t: this.time, list };
+      }
+      const gone = (x, y) => this.set(x, y, this.info(x, y).to || '白');   // 吹倒、吹走：跟拆掉一樣寫回底下的字
+      for (const [x, y] of this.galeRuins.list) if (this.get(x, y) === '墟' && U.trueRand() < pr) { gone(x, y); if (this.onGale) this.onGale('ruin', x, y); }
+      for (const k of [...this.scarecrows.keys()]) { const [x, y] = U.unkey(k); if (this.get(x, y) === '偶' && U.trueRand() < ps) { gone(x, y); this.scarecrows.delete(k); if (this.onGale) this.onGale('scare', x, y); } }
+    }
+    passable(x, y) { const d = this.info(x, y); return (d.walk > 0 && !d.gate) || !!d.fence; }   // 門雖能走，算磚；籬與扉（v0.9.18）不算屋子的四面
     // 屋裡：從這格四鄰出發順著能走的格子漫延，不可通行的字與門擋住；ROOM_LIMIT 格內圍得住才算屋裡
     covered(x, y) {
       const seen = new Set(), q = [];
@@ -535,7 +761,7 @@
       for (const k of Array.from(this.lamps)) {
         const [x, y] = U.unkey(k);
         if (this.get(x, y) !== '燈') { this.lamps.delete(k); continue; }
-        if (this.covered(x, y) || U.trueRand() >= this.rainLampP) continue;
+        if (this.covered(x, y) || this.dryAt(x, y) || U.trueRand() >= this.rainLampP) continue;   // 乾地上不下雨（v0.9.17）
         this.set(x, y, '白');
         if (this.onLampRuined) this.onLampRuined(x, y);
       }
@@ -555,22 +781,33 @@
         for (const f of this.fogs.values()) { f.x += Math.cos(f.ang) * v * dt; f.y += Math.sin(f.ang) * v * dt; f.age += dt * k; }
       }
       this.acc += dt; this.seenAcc += dt;
-      if (this.seenAcc >= 0.5) { this.seenAcc = 0; this.markSeen(px, py, 9); }
+      if (this.seenAcc >= 0.5 || Math.max(Math.abs(px - this.seenX), Math.abs(py - this.seenY)) >= SEEN_STEP) { this.seenAcc = 0; this.seenX = px; this.seenY = py; this.markSeen(px, py, 9); }   // v0.9.6 船快了：半息走不到六格才照時間記，免得走過的地圖斷成一顆一顆
       while (this.acc >= STEP) { this.acc -= STEP; this.step(px, py); }
     }
 
     step(px, py) {
       const rng = this.rng;
       // —— 天氣：雨起雨停（真隨機，不走種子）；下雨時每息看一次屋外的燈
-      if (this.rainUntil > 0 && this.time >= this.rainUntil) { this.rainUntil = 0; this.nextRainAt = this.time + RAIN_GAP_MIN + U.trueRand() * (RAIN_GAP_MAX - RAIN_GAP_MIN); if (this.onWeather) this.onWeather(false); }
-      else if (this.rainUntil <= 0 && this.time >= this.nextRainAt) { this.rainUntil = this.time + RAIN_MIN + U.trueRand() * (RAIN_MAX - RAIN_MIN); if (this.onWeather) this.onWeather(true); }
+      if (this.rainUntil > 0 && this.time >= this.rainUntil) { const was = this.wx; this.rainUntil = 0; this.gale = null; this.hail = null; this.nextRainAt = this.time + RAIN_GAP_MIN + U.trueRand() * (RAIN_GAP_MAX - RAIN_GAP_MIN); if (this.onWeather) this.onWeather(false, was); }
+      else if (this.rainUntil <= 0 && this.time >= this.nextRainAt) {   // v0.9.15：這一場是雨、雪還是雷雨；雨雷雪天小機會起狂風
+        this.rainUntil = this.time + RAIN_MIN + U.trueRand() * (RAIN_MAX - RAIN_MIN);
+        const odd = root.CAL.wxOdds(Math.floor(this.time / DAY)), ps = odd.snow * this.snowP, pt = odd.thunder * this.thunderP;   // v0.9.16：雪在冬天與倒春寒、雷雨在春分二候到秋分之前
+        const r = U.trueRand(); this.wx = r < ps ? 'snow' : r < ps + pt ? 'thunder' : 'rain';
+        this.gale = U.trueRand() < this.galeP ? this.newGale() : null;
+        if (this.onWeather) this.onWeather(true, this.wx);
+        this.hail = null; if (this.wx === 'thunder') { const tk = root.CAL.term(Math.floor(this.time / DAY)).k; if (tk >= HAIL_TERMS[0] && tk <= HAIL_TERMS[1] && U.trueRand() < this.hailP) this.startHail(); }
+      }
       if (this.raining()) { this.rainAcc += STEP; while (this.rainAcc >= 1) { this.rainAcc -= 1; this.rainLamps(); } } else this.rainAcc = 0;
+      if (this.gale && !this.galeOn()) this.gale = null;   // 雨雷雪停了、到了時候，狂風跟著停
+      if (this.gale) this.galeTick(px, py);
       if (this.ores.size) this.regrowOres();
+      if (this.dayIdx() !== this.cropDay) this.cropTick();   // 五穀換日長（v0.9.18）
       // —— 霧障：到時的先起；換日擲兩次；放了一日的自己散
       for (let i = this.fogPlan.length - 1; i >= 0; i--) if (this.time >= this.fogPlan[i]) { this.fogPlan.splice(i, 1); this.spawnFog(px, py); }
       const today = Math.floor(this.time / DAY);
       if (today !== this.fogDay) {
         this.fogDay = today;
+        if (!this.precip() && U.trueRand() < this.breezeP) { this.breezeDay = today; if (this.onBreeze) this.onBreeze(); }   // 晴天才起和風（v0.9.15）
         for (let i = 0; i < FOG_ROLLS; i++) if (U.trueRand() < this.fogP) this.fogPlan.push(today * DAY + U.trueRand() * DAY);
       }
       for (const [id, f] of this.fogs) if (this.time >= f.until) this.removeFog(id);
@@ -579,7 +816,7 @@
         if (this.time >= f.moveAt) { f.moveAt = this.time + this.fogStep * (0.6 + U.trueRand() * 0.8); this.steerFog(f, px, py); }
         if (this.fogStep < 1e6) this.placeFog(f, f.x, f.y, f.age);   // 每半息照此刻的位置與形狀重算
       }
-      this.roomCache.clear();
+      this.roomCache.clear(); this.houseCache.clear(); this.fenceCache.clear();
       // —— 灶裡的柴
       for (const [k, f] of this.stoves) { if (f > 0) this.stoves.set(k, Math.max(0, f - STEP)); }
       // —— 火勢蔓延
@@ -647,7 +884,7 @@
       const good = '草田土沙';
       for (let r = 0; r < 200; r++) {
         for (let i = -r; i <= r; i++) for (const [x, y] of [[i, -r], [i, r], [-r, i], [r, i]]) {
-          if (good.indexOf(this.get(x, y)) >= 0 && this.countAround(x, y, '水淼山') === 0 && !this.placeTiles.has(U.key(x, y))) return { x, y };
+          if (good.indexOf(this.plain(x, y)) >= 0 && this.countAround(x, y, '水淼山') === 0 && !this.placeTiles.has(U.key(x, y))) return { x, y };
         }
       }
       return { x: 0, y: 0 };
@@ -665,21 +902,24 @@
       const stoves = {}; for (const [k, v] of this.stoves) stoves[k] = U.r4(v);
       const bags = {}; for (const [k, v] of this.bags) bags[k] = v;
       const weirs = {}; for (const [k, v] of this.weirs) weirs[k] = U.r4(v);
-      const explored = {}; for (const [k, b] of this.explored) explored[k] = Array.from(b, v => v.toString(16).padStart(2, '0')).join('');
+      const ex = this.packExplored();   // v0.9.3：走過的地圖改寫成一串字（見 packExplored），不再寫 explored
       const seen = this.places.filter(p => p.seen).map(p => p.id);
       const wallHp = {}; for (const [k, v] of this.wallHp) wallHp[k] = v;
-      return { seed: this.seed, gen: G.GEN, purses: Object.fromEntries(this.purses), dayLen: DAY, time: U.r4(this.time), wallHp, diff, burn, timers, stoves, shelves, bags, weirs, explored, seen, scarecrows, ores: Object.fromEntries([...this.ores].map(([k, v]) => [k, U.r4(v)])), chests, nets, rainUntil: U.r4(this.rainUntil), nextRainAt: U.r4(this.nextRainAt),
+      const crops = {}; for (const [k, r] of this.crops) crops[k] = [r.c, U.r4(r.t), r.f, r.pk || 0, r.rt === undefined ? -1 : U.r4(r.rt), r.shed ? 1 : 0, r.ms || 0];   // 五穀（v0.9.18）；田鼠偷了幾把（v0.9.19）
+      const fert = {}; for (const [k, r] of this.fert) fert[k] = [r.v, U.r4(r.t), r.b ? 1 : 0];
+      const cats = [...this.cats.values()].map(c => [c.x, c.y, U.r4(c.t)]);
+      return { crops, fert, cats, locust: this.locust ? [this.locust.x, this.locust.y, U.r4(this.locust.at)] : undefined, hail: this.hail ? U.r4(this.hail.until) : undefined, cropDay: this.cropDay, seed: this.seed, gen: G.GEN, wx: this.wx, gale: this.gale ? { until: U.r4(this.gale.until), dir: this.gale.dir, day: this.gale.day } : undefined, breezeDay: this.breezeDay, purses: Object.fromEntries(this.purses), dayLen: DAY, time: U.r4(this.time), wallHp, diff, burn, timers, stoves, shelves, bags, weirs, ex, seen, scarecrows, ores: Object.fromEntries([...this.ores].map(([k, v]) => [k, U.r4(v)])), chests, nets, rainUntil: U.r4(this.rainUntil), nextRainAt: U.r4(this.nextRainAt),
         fogs: [...this.fogs.values()].map(f => [U.r4(f.until), [...f.cells].join(';'), f.sea ? 1 : 0, f.shape, [U.r4(f.x), U.r4(f.y), U.r4(f.age || 0), U.r4(f.ang || 0)]]), fogPlan: this.fogPlan.map(U.r4), fogDay: this.fogDay,
         ships: Object.fromEntries([...this.ships].map(([k, v]) => [k, { kind: v.kind, hp: U.r4(v.hp), skulls: (v.skulls || []).map(([n, e]) => [n, U.r4(e)]), repairs: v.repairs || 0, cells: v.cells, fid: v.fid, dir: v.dir, t: v.t }])) };   // t：下水的時刻（v0.8.21）   // fid：洞庭那一場用過這艘（v0.8.16）
     }
     restore(s, briefDay) {
-      const t0 = s.time || DAY * MORNING; this.time = t0; this.timeShift = 0;
+      const t0 = s.time || U.r4(DAY * morning(0)); this.time = t0; this.timeShift = 0;
       if (s.dayLen !== DAY && s.keepClock && s.dayLen > 0) {   // 遊戲裡改難度（v0.8.2）：第幾日、幾時都不變，只換一日的長度；存著的時刻跟著挪，倒數的息數不變
         const d = Math.floor(t0 / s.dayLen), frac = (t0 - d * s.dayLen) / s.dayLen;
         this.time = U.r4(d * DAY + frac * DAY); this.timeShift = U.r4(this.time - t0);
       } else if (s.dayLen !== DAY) {   // 舊存檔（一日長度不同）：日數不換算，時間設成那天的大清早（v0.6.2 使用者定）；存著的時刻跟著挪，倒數不變
         const d = briefDay > 0 ? briefDay - 1 : Math.floor(t0 / DAY);
-        this.time = d * DAY + DAY * MORNING; this.timeShift = U.r4(this.time - t0);
+        this.time = U.r4(d * DAY + DAY * morning(d)); this.timeShift = U.r4(this.time - t0);
       }
       const sh = (v) => typeof v === 'number' && v > 0 ? U.r4(v + this.timeShift) : v;
       this.diff = new Map(Object.entries(s.diff || {})); this.ver = (this.ver || 0) + 1;
@@ -688,6 +928,8 @@
       this.lamps = new Set(); for (const [k, v] of this.diff) if (v === '燈') this.lamps.add(k);
       this.rainUntil = sh(s.rainUntil || 0) > this.time ? sh(s.rainUntil) : 0;
       this.nextRainAt = sh(s.nextRainAt) || (this.time + DAY + U.trueRand() * DAY * 2);
+      this.wx = s.wx || 'rain'; this.breezeDay = s.breezeDay === undefined ? -1 : s.breezeDay;   // v0.9.15 天氣；舊存檔照雨
+      this.gale = s.gale && sh(s.gale.until) > this.time ? { until: sh(s.gale.until), dir: s.gale.dir | 0, day: s.gale.day } : null; this.galeRuins = null;
       this.rainAcc = 0;
       this.fogs = new Map(); this.fogCells = new Map(); this.fogSeq = 0;
       for (const [u, cells, sea, shape, at] of s.fogs || []) { const until = sh(u); if (until > this.time && cells) this.addFog(cells.split(';'), until, sea, shape && shape.h ? shape : null, at); }   // v0.6.4 前的霧只有格子：照格子配一個形
@@ -730,6 +972,13 @@
       this.burn = new Map(Object.entries(s.burn || {}).map(([k, v]) => [k, { t: v[0], lvl: v[1] }]));
       this.timers = new Map(Object.entries(s.timers || {}).map(([k, v]) => [k, { to: v[0], at: sh(v[1]), from: v[2] || '灰' }]));
       this.scarecrows = new Map(Object.entries(s.scarecrows || {}).map(([k, v]) => [k, sh(v)]));
+      this.crops = new Map(Object.entries(s.crops || {}).map(([k, a]) => [k, { c: a[0], t: sh(a[1]) || a[1], f: a[2], pk: a[3] || 0, rt: a[4] >= 0 ? sh(a[4]) || a[4] : undefined, shed: a[5] ? 1 : 0, ms: a[6] || 0 }]));   // 五穀（v0.9.18）；舊存檔沒有
+      this.fert = new Map(Object.entries(s.fert || {}).map(([k, a]) => [k, { v: a[0], t: sh(a[1]) || a[1], b: a[2] ? 1 : undefined }]));
+      this.cropDay = s.cropDay === undefined ? -1 : s.cropDay; this.wildDay = -1; this.fenceCache = new Map();
+      this.cats = new Map((s.cats || []).map(([x, y, t]) => [U.key(x, y), { x, y, t: sh(t) || t }]));   // 守田的狸（v0.9.19）
+      this.hail = s.hail ? { until: sh(s.hail) || s.hail } : null;   // 冰雹（v0.9.19）
+      this.locust = s.locust ? { x: s.locust[0], y: s.locust[1], at: sh(s.locust[2]) || s.locust[2] } : null;   // 要落下來的蝗群
+      this.fences = new Set(); for (const [k, v] of this.diff) if (DB[v] && DB[v].fence) this.fences.add(k);
       this.ores = new Map(Object.entries(s.ores || {}).map(([k, v]) => [k, sh(v)]));
       this.chests = new Map(Object.entries(s.chests || {}));
       this.shelves = new Map(Object.entries(s.shelves || {}).map(([k, v]) => [k, v.map(([n, c]) => ({ n, c }))]));
@@ -737,10 +986,14 @@
       for (const [k, v] of Object.entries(s.nets || {})) { const rec = { size: v[0], x: v[1], y: v[2], fish: v[3], t: sh(v[4]), under: v[5] ? Array.from(v[5]) : [], dur: v[6] === undefined ? NET_DUR[v[0]] : v[6], rf: v[7] || 0 }; rec.tidal = rec.under.indexOf('灘') >= 0; this.nets.set(k, rec); for (let j = 0; j < rec.size; j++) for (let i = 0; i < rec.size; i++) this.netCells.set(U.key(rec.x + i, rec.y + j), k); }
       this.stoves = new Map(Object.entries(s.stoves || {}));
       this.bags = new Map(Object.entries(s.bags || {}));
-      this.purses = new Map(Object.entries(s.purses || {}));   // v0.8.27 荷包的期限（舊存檔的荷包沒有期限）
+      const reDay = (v) => typeof v === 'number' && v > 0 && s.dayLen > 0 && s.dayLen !== DAY ? U.r4(Math.round(v / s.dayLen) * DAY) : v;   // 荷包的期限是「第幾日」：一日的長度換了（換難度、舊存檔），照日數換算，不照息數（v0.9.14 自查：原本沒換算，簡單一般換來換去會早幾日或晚幾日沒了）
+      this.purses = new Map(Object.entries(s.purses || {}).map(([k, r]) => [k, Object.assign({}, r, { until: reDay(r.until) }, r.deaths ? { deaths: r.deaths.map(d => Object.assign({}, d, { until: reDay(d.until), t: sh(d.t) })) } : {})]));   // v0.8.27 荷包的期限（舊存檔的荷包沒有期限）
       this.weirs = new Map(Object.entries(s.weirs || {}).map(([k, v]) => [k, sh(v)]));
-      this.explored = new Map();
-      for (const [k, hex] of Object.entries(s.explored || {})) { const b = new Uint8Array(32); for (let i = 0; i < 32; i++) b[i] = parseInt(hex.substr(i * 2, 2), 16) || 0; this.explored.set(k, b); }
+      if (typeof s.ex === 'string') this.explored = this.unpackExplored(s.ex);   // v0.9.3 起的寫法
+      else {   // v0.9.2 以前：每塊 64 個十六進位字
+        this.explored = new Map();
+        for (const [k, hex] of Object.entries(s.explored || {})) { const b = new Uint8Array(32); for (let i = 0; i < 32; i++) b[i] = parseInt(hex.substr(i * 2, 2), 16) || 0; this.explored.set(k, b); }
+      }
       const seen = new Set(s.seen || []);
       for (const pl of this.places) pl.seen = seen.has(pl.id);
     }
@@ -755,9 +1008,11 @@
     return Math.max(...xs) - Math.min(...xs) > Math.max(...ys) - Math.min(...ys) ? 'h' : 'v';
   };
   World.newShip = (kind) => ({ kind: SHIPS[kind] ? kind : '孤帆', hp: (SHIPS[kind] || SHIPS['孤帆']).hp, skulls: [], repairs: 0 });
+  World.DEEP_R = DEEP_R;
   root.World = World;
   root.World.CH = CH;
   Object.defineProperty(root.World, 'DAY', { get: () => DAY, configurable: true });
   root.World.setDay = setDay;
   root.World.SCARE_DAYS = SCARE_DAYS; root.World.SCARE_CAP = SCARE_CAP;
+  root.World.HOUSE_MAX = HOUSE_MAX; root.World.DIR8 = DIR8;
 })();

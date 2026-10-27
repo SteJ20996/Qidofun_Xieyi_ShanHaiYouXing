@@ -4,12 +4,13 @@
 // v0.8.27 起三個生成版本都查（第三版是大陸與島：陸地三成五到四成五、傳送點網的間距與地界外圈、一千二百格以上的陸塊）。
 // v0.8.26 起兩個生成版本都查（舊存檔第一版、新開的島第二版）：第二版另查孤嶼——每座的中心是陸地、不碰本島方框外島地界與戰場；本島兩版一格不差；印整張紙的陸地比例。
 // 不用瀏覽器，直接在 Node 裡載入 util／glyphs／world。
-// 用法：node scripts/gen-check.mjs [種子數=40] [起始種子=1] [生成版本=兩版都查]
+// 用法：node scripts/gen-check.mjs [種子數=40] [起始種子=1] [生成版本=4；all 四版都查]
 import vm from 'node:vm';
 import fs from 'node:fs';
-for (const f of ['util', 'glyphs', 'world']) vm.runInThisContext(fs.readFileSync(new URL('../src/' + f + '.js', import.meta.url), 'utf8'), { filename: f + '.js' });
+for (const f of ['util', 'glyphs', 'calendar', 'world']) vm.runInThisContext(fs.readFileSync(new URL('../src/' + f + '.js', import.meta.url), 'utf8'), { filename: f + '.js' });
 const G = globalThis.G, World = globalThis.World, DB = G.DB, DAY = World.DAY;
-const N = +process.argv[2] || 40, S0 = +process.argv[3] || 1, GENS = process.argv[4] ? [+process.argv[4]] : [1, 2, 3];
+// v0.9.5：舊存檔讀進來一律搬到第四版（1600×1600 的紙），遊戲裡只剩第四版；預設只查第四版，第四個參數給 all 四版都查、給數字只查那一版
+const N = +process.argv[2] || 40, S0 = +process.argv[3] || 1, GENS = process.argv[4] === 'all' ? [1, 2, 3, 4] : process.argv[4] ? [+process.argv[4]] : [4];
 // v0.4 起島的面積加倍：可達範圍與礦的下限跟著加倍
 const NEED = { '木林森': 30, '草': 60, '石山磊': 20, '礫': 8, '棉': 6, '麻': 3, '果': 4 }, ORE = { '煤': 32, '鐵': 32 }, REACH = 3000;
 let bad = 0, sumOld = 0, sumNew = 0, gen = 1;
@@ -88,7 +89,7 @@ function gen3Probs(seed, probs) {   // v0.8.27 第三版：陸地比例（不連
   const share = 1 - sea / (W * W); landStat.share += share;
   if (share < 0.35 || share > 0.45) probs.push('陸地佔 ' + (share * 100).toFixed(1) + '%（要三成五到四成五）');
   const big = G.masses(seed).list.filter(m => m.area > G.MASS_MIN && !m.home && !m.zone); landStat.masses = (landStat.masses || 0) + big.length;
-  if (big.length < 5) probs.push('一千二百格以上的陸塊只有 ' + big.length + ' 塊');
+  if (big.length < 5) probs.push('' + G.MASS_MIN + ' 格以上的陸塊只有 ' + big.length + ' 塊');
   const gs = G.gateNet(seed).list; landStat.gates = (landStat.gates || 0) + gs.length;
   if (!gs.some(g => g.home)) probs.push('原點附近沒有傳送點');
   let pair = 0, far = 0;
@@ -164,7 +165,7 @@ console.log('v0.7 本島陸地平均：' + Math.round(sumOld / N) + ' → ' + Ma
 if (Math.abs(ratio - 1.45) > 0.05) { bad++; console.log('陸地平均多了 ' + Math.round((ratio - 1) * 100) + '%，不是四成五上下'); }
 console.log('v0.8.4 四方地界：壓到外島的 ' + zoneStat.forced + ' 處；不周山平均併進 ' + (zoneStat.merged / N).toFixed(2) + ' 座外島');
 console.log('v0.8.25 龍淵小礁：平均 ' + ((zoneStat.reefs || 0) / N).toFixed(2) + ' 個');
-console.log('v0.8.26 整張紙的陸地：平均 ' + (landStat.share / N * 100).toFixed(1) + '%；孤嶼平均 ' + Math.round(landStat.sk / N) + ' 座' + (gen >= 3 ? '；v0.8.27 一千二百格以上的陸塊平均 ' + (landStat.masses / N).toFixed(1) + ' 塊、傳送點平均 ' + (landStat.gates / N).toFixed(1) + ' 個' : ''));
+console.log('v0.8.26 整張紙的陸地：平均 ' + (landStat.share / N * 100).toFixed(1) + '%；孤嶼平均 ' + Math.round(landStat.sk / N) + ' 座' + (gen >= 3 ? '；v0.8.27 ' + G.MASS_MIN + ' 格以上的陸塊平均 ' + (landStat.masses / N).toFixed(1) + ' 塊、傳送點平均 ' + (landStat.gates / N).toFixed(1) + ' 個' : ''));
 }
 console.log(bad ? ('有 ' + bad + ' 座島有問題') : ('全部 ' + N + ' 座島都玩得下去'));
 process.exit(bad ? 1 : 0);

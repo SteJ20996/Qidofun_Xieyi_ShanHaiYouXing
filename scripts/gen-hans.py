@@ -53,7 +53,7 @@ js = ('// hans.js —— 繁轉簡的字表與詞表（scripts/gen-hans.py 由 O
 
 # 拿遊戲裡每一行文字比對
 bad = 0; lines = 0
-for p in ['index.html', 'src/game.js', 'src/glyphs.js', 'src/world.js', 'src/entities.js', 'src/render.js', 'src/pad.js']:
+for p in ['index.html', 'src/game.js', 'src/glyphs.js', 'src/calendar.js', 'src/sky.js', 'src/world.js', 'src/entities.js', 'src/render.js']:   # src/pad.js 手柄 v0.5.8 封存了
     for line in (root / p).read_text(encoding='utf-8').splitlines():
         if not re.search(r'[㐀-鿿]', line): continue
         lines += 1

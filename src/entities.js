@@ -5,6 +5,7 @@
   const U = root.U, G = root.G, DB = G.DB;
   const N8 = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
   const N4 = [[0, -1], [-1, 0], [1, 0], [0, 1]];
+  const CAT_ROAM = 5, CAT_LOST = 24;   // 狸（v0.9.19）：守田的在家方圓五格裡轉；跟著人的離了二十四格就自己找來
   const SCARED = '虎豹狼蛇蛛蟾豬';         // 稻草人擋得住的（野豬也怕；野牛不怕）
   const HOSTILE = '虎豹狼蛇蛛蟾豬牛';       // 敵對獸：攻擊間隔放慢四分之一
   const FOREST = '林森竹';
@@ -19,7 +20,8 @@
   const FISH_RATE = 1.8, EAGLE_RATE = 1.25;   // 魚出現得多八成、鷹多兩成五（v0.6.10 使用者定）：附近的上限與刷新的機會一起放大
   const RILE_CALM = 20, RILE_GIVEUP = 12;   // 被惹的蛛、蟾：二十息後或人走出十二格就消氣（v0.7.3；鷹十二息、野牛三十息另算）
   const STAIRS = '台階', STAIR_SLOW = 1.5, FLIERS = '鳥龍鷹魄魚蜃雕朱雀大風';   // 獸也上得了階與台（v0.6.8 使用者定），一步多花一半時間
-  const SMELL = 0.7, RAM_GAP = 1.6, RAMMABLE = '磚門窗墟';
+  const SMELL = 0.7, RAM_GAP = 1.6, RAMMABLE = '磚門窗墟籬扉';   // v0.9.18 籬與扉也撞得壞
+  const GRAZE_P = 0.05, GRAZERS = '鹿豬牛';   // 五穀（v0.9.18）：鹿、野豬、野牛站在長著苗、秀、熟穀的田裡，每息 GRAZE_P 的機會啃掉那一格
   const SKULL_SCARE = 8;   // v0.8.21 使用者定：船頭有獸首骨，蜃不敢近到八格內
   const MINI_BOSS = '蜃齒雕畢';   // 小魔王：命照難度加（v0.8.10 使用者定，見 game.js 的 bigHp）
   // 魄（v0.5 加強）：玩家身上的光（手裡的火把蠟燭、頭上的燈帽）只把魄逼到 GHOST_KEEP 格外，在 GHOST_HOVER 格內徘徊；
@@ -64,7 +66,8 @@
   const GONG = { modeGap: [40, 60], shiftT: 8, hintAt: 4, stay: 0.01, leash: 70,
     seaStep: 0.32, surfaceT: 2, digGap: 9, digWarn: 1.2, drown: 24, ram: 20,
     landStep: 0.7, pullR: 9, pullGap: 1.5, butt: 30, buttGap: 3, buttR: 2, meteorGap: 7, meteorT: 1.5, meteor: 18, meteorN: 3, burnT: 20,
-    skyRing: [3, 5], skyStep: 0.3, pressGap: 10, pressT: 2, pressR: 2, choke: 4, chokePer: 3, starGap: 12, star: 6, dizzy: 3 };
+    skyRing: [3, 5], skyStep: 0.3, pressGap: 10, pressT: 2, pressR: 2, choke: 4, chokePer: 3, starGap: 12, star: 6, dizzy: 3,
+    stageKeep: 0.4 };   // 立極（v0.9.10）：共工影一段至少要在那個模式下打掉四成（本相時打得到、也吃一倍半，但壓不過這條線）
   const GONG_MODES = ['sea', 'land', 'sky'];
   const rnd = (a) => a[0] + Math.random() * (a[1] - a[0]);
   const JINK_P = 0.5;   // v0.8.19 使用者定：蜃與大小魔王貼身打完一下、還在等下一下時，這個機會退一步或往側邊挪一步（進退、左右搖擺）
@@ -77,7 +80,7 @@
       this.list = [];
       this.spawnAcc = 0;
       this.ghostAcc = 0;
-      this.seaP = 1 / 160;       // 行船時每一點五息有這麼點機會浮上一頭蜃（平均約二百四十息一頭）
+      this.seaP = 1.15 * 1.35 / 160;    // 行船時每一點五息有這麼點機會浮上一頭蜃（平均約一百五十五息一頭；v0.9.5 紙縮了、航程短了，使用者定多一成五；v0.9.8 再多三成五）
       this.toothP = 1 / 100;     // 人在西邊的外島上，每一點五息有這麼點機會走出一頭鑿齒（平均約一百五十息一頭，v0.8.5）
       this.harpyP = 1 / 100;     // 人在南邊的海上或外島上，每一點五息有這麼點機會飛來一頭蠱雕（v0.8.6）
       this.birdP = 1 / 100;      // 人在火島上，每一點五息有這麼點機會跳出一隻畢方（v0.8.25）
@@ -100,7 +103,7 @@
     bodyFits(x, y, bx, by, night, self) { const tx = x - bx, ty = y - by; return this.canStand('牛', tx, ty, night) && !this.beastAt(tx, ty, self) && !(this.px === tx && this.py === ty); }   // 尾那一格站得上去、沒有別的獸、不是人
     bisonRoom(x, y, night) { for (const [bx, by] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (this.bodyFits(x, y, bx, by, night, null)) return [bx, by]; return null; }
     at(x, y) { for (const e of this.list) if (this.covers(e, x, y) && !this.aloft(e)) return e; return null; }   // 天上的大風搆不到（v0.8.25）
-    beastAt(x, y, except) { for (const e of this.list) if (e !== except && this.covers(e, x, y) && DB[e.type].kind === 'beast' && e.type !== '魄' && e.type !== '龍' && !(e.type === '鷹' && e.tame) && !this.aloft(e)) return e; return null; }   // 龍、馴了的鷹、天上的大風不擋路
+    beastAt(x, y, except) { for (const e of this.list) if (e !== except && this.covers(e, x, y) && DB[e.type].kind === 'beast' && e.type !== '魄' && e.type !== '龍' && !(e.tame && (e.type === '鷹' || e.type === '狸')) && !this.aloft(e)) return e; return null; }   // 龍、馴了的鷹、天上的大風不擋路
     aloft(e) { return (e.type === '大風' && SKY_HIGH.indexOf(e.state) >= 0) || (e.type === '共工' && e.mode === 'sky' && !(e.shiftT > 0)); }   // 共工的空：浮在天上，近身的搆不到（v0.9）   // 大風在天上（v0.8.25）
     inFront(e, x, y) { const vx = x - e.x, vy = y - e.y, l = Math.hypot(vx, vy), fl = Math.hypot(e.fx || 0, e.fy || 0); return !l || !fl || (vx * e.fx + vy * e.fy) / (l * fl) > TOOTH_FRONT; }   // (x, y) 在不在牠面前
     shielded(e, x, y) { return e.type === '齒' && this.inFront(e, x, y); }   // 從 (x, y) 打鑿齒，是不是打在盾上
@@ -138,6 +141,7 @@
     }
     remove(e) { const i = this.list.indexOf(e); if (i >= 0) this.list.splice(i, 1); }
     nearWater(x, y) { for (const [dx, dy] of N4) if (DB[this.world.get(x + dx, y + dy)].kind === 'water') return true; return false; }
+    catSpot(x, y, night) { for (let r = 0; r <= 3; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; const nx = x + dx, ny = y + dy; if (this.canStand('狸', nx, ny, night) && !this.at(nx, ny)) return [nx, ny]; } return null; }   // 守田的狸回來時站哪（v0.9.19）
     nearWood(x, y) { for (const [dx, dy] of N4) if ('木林森竹'.indexOf(this.world.get(x + dx, y + dy)) >= 0) return true; return false; }
 
     // 出生地：各有各的家
@@ -147,11 +151,13 @@
       if (type === '鳥') return d.kind === 'plant' || d.kind === 'ground';
       if (type === '魚') return d.kind === 'water';
       if (this.world.sheltered(x, y, type)) return false;                  // 小屋裡不生生靈（多小才算看難度，魄另一個門檻）
+      if (this.world.fenced && this.world.fenced(x, y)) return false;      // 籬圍起來的田裡也不生（v0.9.18）
       if (type === '蜃') return ch === '淼';                                // 蜃只從深海浮上來
       if (type === '齒') return d.walk > 0 && d.kind !== 'object' && d.kind !== 'water' && !d.bog;   // 鑿齒：外島的陸地上（哪座島由遊戲端判斷）
       if (type === '雕') return d.kind !== 'fire';                          // 蠱雕在天上：海上陸上都來得
       if (type === '畢') return d.walk > 0 && d.kind !== 'object' && d.kind !== 'water' && d.kind !== 'fire' && !d.bog;   // 畢方：火島的陸地上（哪座島由遊戲端判斷）
       if (type === '鹿') return '林木草竹棉麻果'.indexOf(ch) >= 0;
+      if (type === '狸') return '林竹'.indexOf(ch) >= 0;                      // 狸：林竹間（v0.9.19）
       if (type === '虎') return ch === '森' || (night && ch === '林');
       if (type === '豹') return ch === '森' || ch === '林';
       if (type === '狼') return night && '草田沙棉麻漠'.indexOf(ch) >= 0;        // 漠島的夜裡也有狼（v0.7）
@@ -194,7 +200,7 @@
     spawnCaps(night, bm) {
       const frac = (v) => Math.floor(v) + (Math.random() < v - Math.floor(v) ? 1 : 0);
       const caps = { '鳥': night ? 4 : 10, '鹿': 6, '魚': frac(8 * FISH_RATE), '虎': night ? Math.ceil(3 * bm) : 2, '豹': night ? Math.ceil(2 * bm) : 1, '狼': night ? Math.ceil(3 * bm) : 0, '蛇': Math.ceil(2 * bm), '蟾': 3 };
-      caps['鷹'] = frac(2 * EAGLE_RATE); caps['龜'] = 1; caps['豬'] = 2; caps['牛'] = 2; caps['蛛'] = 2;   // 蛛：只在洞窟裡生（v0.7）
+      caps['鷹'] = frac(2 * EAGLE_RATE); caps['龜'] = 1; caps['豬'] = 2; caps['牛'] = 2; caps['蛛'] = 2; caps['狸'] = 1;   // 狸：附近最多一隻野的（v0.9.19）   // 蛛：只在洞窟裡生（v0.7）
       return caps;
     }
     climbOk(e, nx, ny) { return this.world.get(nx, ny) !== '台' || STAIRS.indexOf(this.world.get(e.x, e.y)) >= 0; }   // 上台要從階或台上來（v0.6.8，跟人一樣）
@@ -546,15 +552,26 @@
       if (this.gongFits(e, e.x, e.y, e.mode)) return;
       for (let r = 1; r <= 8; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === r && this.gongFits(e, e.x + dx, e.y + dy, e.mode)) { e.x += dx; e.y += dy; return; }
     }
+    gongStageFloor(e) {   // 立極（v0.9.10 使用者定）：共工影照命分三段，海 → 陸 → 空；這一段的命最低壓到哪裡（第三段到零）。本相時（已經算進下一段）另留四成給那個模式打
+      const st = e.stage || 0, seg = (e.max || 1) / 3, floor = st < 2 ? (e.max || 1) - seg * (st + 1) : 0;
+      return e.shiftT > 0 ? floor + seg * GONG.stageKeep : floor;
+    }
     gongTimers(e, g, p, dt) {   // 不跟著步子走的倒數：換模式、本相、招式的冷卻與落下
       for (const k of ['digCD', 'buttCD', 'meteorCD', 'pressCD', 'starCD', 'surfaceT', 'modeT']) if (e[k] > 0) e[k] = Math.max(0, e[k] - dt);
+      if (e.stages) {   // 立極：不照時間換，照命換——掉到這一段的線就現本相、換下一段（不會原地不換）
+        const fl = this.gongStageFloor(e); if (e.hp < fl) e.hp = fl;
+        if (!(e.shiftT > 0) && (e.stage || 0) < 2 && e.hp <= fl) {
+          e.stage = (e.stage || 0) + 1; e.next = GONG_MODES[e.stage]; e.shiftT = GONG.shiftT; e.under = false; e.dig = null; e.meteor = null; e.press = null; e.moveT = 0.3;
+          if (g.gongShift) g.gongShift(e); return;
+        }
+      }
       if (e.shiftT > 0) {   // 本相：倒數完就換成下一個模式
         const was = e.shiftT; e.shiftT = Math.max(0, e.shiftT - dt);
         if (was > GONG.hintAt && e.shiftT <= GONG.hintAt && g.gongHint) g.gongHint(e);
         if (!e.shiftT) { const stay = e.next === e.mode; e.mode = e.next || e.mode; e.next = null; e.modeT = rnd(GONG.modeGap); Object.assign(e, this.gongModeInit(e.mode)); this.gongSettle(e); e.moveT = 0.5; if (g.gongMode) g.gongMode(e, stay); }
         return;
       }
-      if (!(e.modeT > 0)) {   // 該換了：現本相，這時就定下要換成什麼（百分之一換回原樣）
+      if (!e.stages && !(e.modeT > 0)) {   // 該換了：現本相，這時就定下要換成什麼（百分之一換回原樣）
         e.next = Math.random() < GONG.stay ? e.mode : GONG_MODES.filter(m => m !== e.mode)[Math.floor(Math.random() * 2)];
         e.shiftT = GONG.shiftT; e.under = false; e.dig = null; e.meteor = null; e.press = null; e.moveT = 0.3; if (g.gongShift) g.gongShift(e); return;
       }
@@ -622,7 +639,7 @@
         const bm = night && g.beastMult ? g.beastMult() : 1;   // 困難：夜裡狼虎豹蛇一倍半
         const caps = this.spawnCaps(night, bm);
         for (const type in caps) {
-          const have = type === '鷹' ? this.list.filter(e => e.type === '鷹' && !e.tame).length : this.count(type);
+          const have = type === '鷹' || type === '狸' ? this.list.filter(e => e.type === type && !e.tame).length : this.count(type);   // 馴了的鷹、狸不算
           if (have >= caps[type]) continue;
           if (type === '蛇' && Math.random() > 0.25) continue;        // 蛇出沒機率偏低
           if (type === '狼' && Math.random() > 0.5) continue;
@@ -630,9 +647,12 @@
           if (type === '龜' && Math.random() > 0.1) continue;         // 龜少見
           if (type === '豬' && Math.random() > 0.3) continue;
           if (type === '牛' && Math.random() > 0.25) continue;
+          if (type === '狸' && Math.random() > 0.12) continue;        // 狸少見（v0.9.19）
           this.spawnNear(type, p, 14, 30, night);
           if (type === '魚' && Math.random() < FISH_RATE - 1 && this.count('魚') < caps['魚']) this.spawnNear('魚', p, 14, 30, night);   // 魚每回多八成的機會再刷一條（v0.6.10）
         }
+        // 守田的狸（v0.9.19）：人到四十格內就在家附近現身；走遠了散去，家記在世界裡
+        for (const [k, c] of w.cats) if (U.cheb(p.x, p.y, c.x, c.y) <= 40 && !this.list.some(e => e.type === '狸' && e.home === k)) { const at = this.catSpot(c.x, c.y, night); if (at) this.add('狸', at[0], at[1], { tame: true, home: k, moveT: 1 }); }
         // 東海青龍（v0.8）：人到四十格內就在牠那片海上現身；走遠了跟別的生靈一樣散去（不存檔，回來再現）
         const az = g.azure; if (az && U.cheb(p.x, p.y, az.x, az.y) <= 40 && !this.list.some(e => e.type === '青龍')) this.add('青龍', az.x, az.y, { moveT: 2 });
         // 白虎（v0.8.5）：人到虎嶺四十格內，就在島心現身；走遠了散去
@@ -678,17 +698,19 @@
         if (d <= 9 && !e.shade) g.saw(e.type);   // 玄武吐的墨影（v0.8.8）不算見過真身
         if (!e.heard && d <= 8 && this.isHostile(e) && w.clear(e.x, e.y, p.x, p.y)) { e.heard = true; if (g.beastCall) g.beastCall(e); }   // 走近了先聽見牠（各有各的聲音）
         else if (e.heard && d > 14) e.heard = false;
-        if (e.type !== '龍' && e.type !== '豨' && e.type !== '修蛇' && e.type !== '大風' && e.type !== '共工' && !e.tame && d > 48) { this.list.splice(i, 1); continue; }   // 大魔王由遊戲端收（走出地界、認輸、死了、斃了）
+        if (e.type !== '龍' && e.type !== '豨' && e.type !== '修蛇' && e.type !== '大風' && e.type !== '共工' && (!e.tame || e.home) && d > 48) { this.list.splice(i, 1); continue; }   // 大魔王由遊戲端收（走出地界、認輸、死了、斃了）
         if (e.type === '鷹') {
           if (e.tame) { e.sta = Math.min(100, e.sta + dt); e.hp = Math.min(DB['鷹'].hp, e.hp + 0.3 * dt); }   // 體力每息回一點，傷慢慢好
           if (e.angryT > 0) { e.angryT -= dt; if (e.angryT <= 0) e.angry = false; }
         }
         if (e.type === '魚' && DB[w.get(e.x, e.y)].kind !== 'water') { this.list.splice(i, 1); continue; }
         if (e.type === '狼' && g.daylight() > 0.5) { this.list.splice(i, 1); continue; }                 // 狼天亮散去
+        if (GRAZERS.indexOf(e.type) >= 0 && !e.tame && g.cropEaten) { const cd = DB[w.get(e.x, e.y)]; if (cd && cd.crop && cd.crop <= 3 && U.trueRand() < dt * GRAZE_P) g.cropEaten(e, e.x, e.y); }   // 啃田（v0.9.18）
         if (e.fade !== undefined && e.fade < 1) { e.fade -= dt * 1.2; if (e.fade <= 0) this.list.splice(i, 1); continue; }   // 正在煙滅
         if (e.type === '魄') {
           // 地上的光（燈、火、旺灶）三格內、龍四格內即煙滅；玩家身上的光只逼得退（見下面的行動）
           if (w.lightNear(e.x, e.y, GHOST_BURN) || this.dragonNear(e.x, e.y, 4)) { e.fade = 0.99; if (g.ghostBurned) g.ghostBurned(e); continue; }   // 遊戲端：屋外的夜裡長膽氣、燈帽少兩息（v0.6.5）
+          if (g.snowCalm && g.snowCalm() && !e.shade) { e.fade = 0.99; continue; }        // 開局頭十天的雪夜：魄散了（v0.9.18）
           if (g.daylight() > 0.3) {
             if (FOREST.indexOf(w.get(e.x, e.y)) >= 0) { e.frozen = true; continue; }     // 白日藏於林中，不動
             e.fade = 0.99; continue;                                                          // 不在林裡，天亮煙滅
@@ -827,6 +849,19 @@
           else if (spring && U.cheb(e.x, e.y, spring.x, spring.y) > 1) { e.moveT = 0.4; this.stepTo(e, spring.x, spring.y, false, night); }
           else if (spring) { e.moveT = 2 + Math.random() * 3; }
           else { e.moveT = 0.7 + Math.random() * 1.6; if (Math.random() < 0.6) this.wander(e, night, '林木草竹棉麻'); }
+        } else if (e.type === '狸') {   // v0.9.19：野的見人就躲；馴了的跟著人，到了自己種的田邊就留下來守著；守田的在家附近轉
+          if (!e.tame) { if (d <= 4) { e.moveT = 0.2; this.stepTo(e, p.x, p.y, true, night); } else { e.moveT = 0.8 + Math.random() * 1.8; if (Math.random() < 0.6) this.wander(e, night, '林竹草田'); } }
+          else if (e.home) {
+            const c = w.cats.get(e.home);
+            if (!c) { delete e.home; e.moveT = 0.5; }
+            else if (U.cheb(e.x, e.y, c.x, c.y) > CAT_ROAM) { e.moveT = 0.4; this.stepTo(e, c.x, c.y, false, night); }
+            else { e.moveT = 1 + Math.random() * 2.5; if (Math.random() < 0.5) this.wander(e, night, null); if (U.cheb(e.x, e.y, c.x, c.y) > CAT_ROAM) this.stepTo(e, c.x, c.y, false, night); }
+          } else {
+            if (d > CAT_LOST && g.catLost) g.catLost(e);
+            else if (d > 2) { e.moveT = d > 6 ? 0.16 : 0.24; this.stepTo(e, p.x, p.y, false, night); }
+            else e.moveT = 0.8 + Math.random();
+            if (g.catSettle && w.cropNear(e.x, e.y, 3) && !w.catNear(e.x, e.y)) g.catSettle(e);
+          }
         } else if (e.type === '魚') {
           e.moveT = 0.5 + Math.random() * 1.2; if (Math.random() < 0.7) this.wander(e, night, '水');   // 魚愛在淺水游（v0.5.1，撒網撒得到）
         } else if (e.type === '虎' || e.type === '豹') {
@@ -910,7 +945,7 @@
       }
     }
 
-    serialize() { return this.list.filter(e => e.type === '龍' || e.type === '蜃' || (e.type === '鷹' && e.tame)).map(e => ({ t: e.type, x: e.x, y: e.y, hp: e.hp, sta: e.sta, tame: e.tame })); }
+    serialize() { return this.list.filter(e => e.type === '龍' || e.type === '蜃' || (e.type === '鷹' && e.tame) || (e.type === '狸' && e.tame && !e.home)).map(e => ({ t: e.type, x: e.x, y: e.y, hp: e.hp, sta: e.sta, tame: e.tame })); }
     restore(arr) { for (const s of arr || []) { if (s.t === '蜃') continue; this.add(s.t, s.x, s.y, s.tame ? { hp: s.hp, sta: s.sta, tame: true } : {}); } }   // 蜃不跟著讀檔回來：沒解決的蜃由遊戲端扣膽氣
   }
 
