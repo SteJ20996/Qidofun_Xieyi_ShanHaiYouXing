@@ -98,9 +98,23 @@
   function dawn(d) { return 0.5 - dayFrac(d) / 2; }   // 日出：一天裡的幾成（0 是半夜）
   function dusk(d) { return 0.5 + dayFrac(d) / 2; }   // 日落
 
+  // 節氣事件（v0.9.21 使用者定：照七十二候，哪幾天有什麼事）。只算日子，事情由遊戲端去做。
+  //   snake  驚蟄頭三天：蛇多一倍（《月令七十二候集解》：「萬物出乎震，震為雷，故曰驚蟄，是蟄蟲驚而出走矣。」）
+  //   noMouse 清明二候「田鼠化為鴽」：田鼠不偷田
+  //   sparrow 寒露二候「雀入大水為蛤」起到立春以前：雀少、不啄田（《禮記·月令》季秋寫作「爵入大水為蛤」）
+  //   wolf   霜降頭三天（初候「豺乃祭獸」，月令作「豺乃祭獸戮禽」）：狼白天也出來，追鹿
+  //   shen   立冬三候「雉入大水為蜃」：海上的蜃多五成
+  //   solstice 冬至那一天（《呂氏春秋·仲冬紀》「日短至」，〈月令〉仲冬同）：那一夜魄不出來
+  //   winter 立冬到立春以前：冬夜在屋裡燈下讀書也算晴耕雨讀
+  function events(d) {
+    const t = term(d);
+    return { snake: t.k === 2 && t.day <= 3, noMouse: t.k === 4 && t.hou === 1, sparrow: (t.k === 16 && t.hou >= 1) || t.k >= 17,
+      wolf: t.k === 17 && t.day <= 3, shen: t.k === 18 && t.hou === 2, solstice: t.k === 21 && t.day === 1, winter: t.k >= 18 };
+  }
+
   // 狀態列與見聞錄的寫法
   function label(d) { const m = month(d), t = term(d); return m.name + ' · ' + t.name + '第' + t.day + '天'; }
   function longLabel(d) { const m = month(d), t = term(d); return m.yearName + m.name + ' · ' + t.name + '第' + t.day + '天（' + ['初', '二', '三'][t.hou] + '候 ' + t.houName + '）'; }
 
-  root.CAL = { LAT, decl, dayFrac, dawn, dusk, TERMS, LEN, START, START_DAY, YEAR, MONTH, SOLAR, CYCLE_M, LEAP_AT, SNOW_BY, THUNDER_BY, CYCLE, term, month, zhongqi, wxOdds, sunLon, moonAge, label, longLabel, dayName };
+  root.CAL = { LAT, decl, dayFrac, dawn, dusk, TERMS, LEN, START, START_DAY, YEAR, MONTH, SOLAR, CYCLE_M, LEAP_AT, SNOW_BY, THUNDER_BY, CYCLE, term, month, zhongqi, wxOdds, events, sunLon, moonAge, label, longLabel, dayName };
 })();

@@ -93,6 +93,12 @@
     '扉': { s: 12, walk: 1.0, kind: 'object', gate: true, fence: true, flam: 0.4, ink: INK.brown, yield: { '扉': 1 }, time: 0.8, place: true, flavor: '柴扉，開在籬上：人過得去，獸過不去，不擋光（v0.9.18）。' },
     '偶': { s: 11, walk: 0, kind: 'object', ink: INK.brown, yield: { '偶': 1 }, time: 1.0, place: true, flavor: '稻草人。四十五天內獸不近身：前半十格，後半七格。再放一個可以續到六十天；面向按 E 拆下，重放重計。' },
     '櫃': { s: 18, walk: 0, kind: 'object', ink: INK.brown, yield: { '櫃': 1 }, time: 1.0, place: true, flavor: '四角用石、四邊用木的櫃子。面向它按 E 開，二十四格。' },
+    // —— 窯與陶（v0.9.21 使用者定：窯不另生火，借旁邊灶的火）
+    '窯': { s: 15, walk: 0, kind: 'object', ink: INK.red, yield: { '窯': 1 }, time: 1.5, place: true, flavor: '燒陶的窯（v0.9.21）。窯自己不生火，借旁邊灶的火：擺在灶旁一格（八方都算），灶裡有火就燒得成，燒的時候灶火耗得快一倍。面向它按 F 開窯：埴燒成陶釜、陶甑、甕、缸、瓦、陶燈，磚燒成甓。' },
+    '甕': { s: 18, walk: 0, kind: 'object', ink: INK.brown, yield: { '甕': 1 }, time: 1.0, place: true, flavor: '陶甕（v0.9.21），十二格，只裝吃的：穀在甕裡變陳慢一半，果在甕裡不醉。面向它按 E 開。' },
+    '缸': { s: 9, walk: 0, kind: 'object', ink: INK.river, yield: { '缸': 1 }, time: 1.0, place: true, flavor: '陶缸（v0.9.21）。擺在屋外，下雨下雪自己接水，最多六瓶；拿空瓶面向它按 F 舀一瓶淡水。' },
+    '珠': { s: 10, walk: 0, kind: 'object', light: 6, ink: '#5aa8b2', yield: { '鮫珠': 1 }, time: 1.0, place: true, flavor: '鮫珠擱在地上，夜裡自己發光，照六格、魄三格內煙滅；雨淋、冰雹、魄撲都滅不了。拿回囊裡就不亮了。' },
+    '甓': { s: 18, walk: 0, kind: 'object', ink: '#4f5b66', opaque: true, yield: { '甓': 1 }, time: 6.0, fast: '鎬', place: true, flavor: '甓，窯裡燒過的磚，就是青磚（《詩·陳風·防有鵲巢》：「中唐有甓」）。跟磚一樣砌，野牛要多撞一半才撞得壞。' },
     '舟': { s: 6, walk: 0, kind: 'object', ink: INK.brown, place: true, onWater: true, flavor: '停著的船（孤帆一乘二、方舟二乘三）。從船邊走上去或面向它按 E 上船，面向它按 F 收回船艙（船身有一格跟岸共邊才收得回）；船上 WASD 走動，1 左 2 上 3 下 4 右開船，C 修船，深水亦可渡，漲潮時沙洲也過得去。' },
     '碑': { s: 13, walk: 0, kind: 'object', ink: INK.black, flavor: '古碑，刻著活下去的法子。讀之，力氣漸長。' },
     '桑': { s: 10, walk: 0, kind: 'object', ink: '#3a7a52', flavor: '扶桑（v0.8.21 傳送點）：「湯谷上有扶桑，十日所浴。」（《山海經·海外東經》）東邊地界外那一圈的傳送點，一開始就立在那裡，走到三格內就點亮。面向它按 E，寫一個地名就到那裡（符紙一、力十、飽八）。' },
@@ -111,7 +117,8 @@
     '洞': { s: 9, walk: 0, kind: 'place', ink: INK.black, flavor: '黑處藏過龍。牠往東海去了，只留下一片青鱗。' },
     '井': { s: 4, walk: 0, kind: 'place', ink: INK.water, flavor: '井裡有水。空瓶可取淡水。' },
     // —— 獸（hp 血；atk 一擊傷害；bite 每秒毒；passive 不惹不攻擊）
-    '鳥': { s: 11, kind: 'beast', ink: INK.beast, hp: 10, flavor: '飛鳥，見人則起，捉不住。聽鳥鳴，心裡舒坦。' },
+    '鮫': { s: 17, kind: 'beast', ink: '#2f6f7a', hp: 200, name: '鮫人', flavor: '鮫人（v0.9.21）。「南海外有鮫人，水居如魚，不廢織績，其眼能泣珠。」（《博物志》卷二）夜裡南方的海上偶爾見到她坐在水裡織東西。不是敵人，也不是商人：帶棉麻給她，她替你織。' },
+    '雀': { s: 11, kind: 'beast', ink: INK.beast, hp: 10, flavor: '雀，依人小鳥也（《說文》）。見人則起，捉不住；彈弓打得著（v0.9.22），可牠躲得快，瞄準了也只有兩成五打中（v0.9.23）；打中了驚飛、三十息不落田，兩下就死了。聽雀鳴，心裡舒坦。秀了、熟了的田沒有稻草人看著，牠落下來就啄。寒露二候「雀入大水為蛤」，到立春以前少見，也不啄田。' },
     '魚': { s: 11, kind: 'beast', ink: INK.water, hp: 10, food: { eat: 15, hurt: 5 }, flavor: '游魚。生食傷身，烤之則美。' },
     '鹿': { s: 11, kind: 'beast', ink: INK.beast, hp: 30, flavor: '林間鹿，見人則走。有刃可獵，得肉。聽鹿呦，心裡舒坦。' },
     '狸': { s: 10, kind: 'beast', ink: INK.beast, hp: 40, flavor: '狸，林竹間的野貓，見人就躲。手持魚按 F 投一條，也許肯跟你走；帶到自己種的田邊，牠就留下來守著，方圓十二格的田鼠不敢來偷穗。《禮記·郊特牲》：「迎貓，為其食田鼠也。」' },
@@ -142,7 +149,7 @@
   };
   const VIS = { '草': [0.6, 0.42], '花': [0.62, 0.8], '棉': [0.75, 0.85], '麻': [0.72, 0.85], '沙': [0.58, 0.5], '礫': [0.62, 0.6], '田': [0.78, 0.6], '苗': [0.68, 0.8], '秀': [0.74, 0.85], '稻': [0.8, 0.92], '黍': [0.8, 0.92], '稷': [0.8, 0.92], '麥': [0.8, 0.92], '菽': [0.8, 0.92], '穗': [0.62, 0.6], '籬': [0.95, 0.95], '扉': [0.88, 0.95], '土': [0.6, 0.5], '灰': [0.6, 0.5], '雪': [0.7, 0.55],
     '水': [0.82, 0.8], '淼': [0.95, 0.9], '石': [0.72, 0.85], '山': [1.12, 1], '木': [0.9, 1], '果': [0.9, 1], '竹': [0.85, 0.95], '林': [1.0, 1], '森': [1.08, 1],
-    '火': [0.9, 1], '炎': [1.0, 1], '焱': [1.1, 1], '灶': [0.95, 1], '鼎': [1.0, 1], '磚': [0.95, 1], '碑': [1.05, 1], '亭': [1.05, 1], '包': [0.9, 1], '煤': [1.0, 1], '鐵': [1.0, 1], '網': [1.0, 1], '罟': [1.0, 1], '罾': [1.0, 1], '偶': [1.0, 1], '櫃': [0.95, 1], '舟': [1.0, 1],
+    '火': [0.9, 1], '炎': [1.0, 1], '焱': [1.1, 1], '灶': [0.95, 1], '鼎': [1.0, 1], '磚': [0.95, 1], '甓': [0.95, 1], '窯': [0.95, 1], '甕': [0.9, 1], '缸': [0.9, 1], '碑': [1.05, 1], '亭': [1.05, 1], '包': [0.9, 1], '煤': [1.0, 1], '鐵': [1.0, 1], '網': [1.0, 1], '罟': [1.0, 1], '罾': [1.0, 1], '偶': [1.0, 1], '櫃': [0.95, 1], '舟': [1.0, 1],
     '路': [0.55, 0.45], '墟': [0.88, 0.8], '門': [0.85, 0.9], '井': [0.9, 1],
     '漠': [0.6, 0.5], '丘': [0.78, 0.7], '池': [0.82, 0.8], '棗': [0.9, 1], '熔': [1.0, 1], '岩': [0.74, 0.85], '曜': [1.0, 1], '川': [0.85, 0.8], '湖': [0.85, 0.8], '湯': [0.85, 0.9], '窟': [0.82, 0.75] };
   for (const ch in DB) {
@@ -216,6 +223,13 @@
     '灰': { s: 6, kind: 'item', flavor: '草木灰。選中面向田按 F 撒下，地力 +1（最多四）。火燒過的地上取得到（楚越「火耕而水耨」）。' },
     '釜': { s: 10, kind: 'item', flavor: '鐵釜（v0.9.18）。帶在囊裡，灶的界面就多一欄「釜」：煮稷粥、豆羹、魚羹。' },
     '甑': { s: 17, kind: 'item', flavor: '甑，底有孔，架在釜上蒸（v0.9.18）。釜甑都帶著，灶上就蒸得了稻飯、黍糕、麥餅。' },
+    '鮫綃': { s: 30, kind: 'wear', slot: '襯', red: 0.02, warm: true, jiao: true, flavor: '鮫綃（v0.9.21）。「南海出鮫綃紗，泉先潛織，一名龍紗……以為服，入水不濡。」（《述異記》卷上）穿在裡面：落水的倒數慢五分之一，落水時的減益減半；跟內襯一樣禦寒減傷。' },
+    '鮫珠': { s: 27, kind: 'item', tile: '珠', flavor: '鮫人泣的珠（v0.9.21）。面向地上按 F 擱下，是一盞滅不了的燈（照六格、魄三格內煙滅，雨雹都不怕）；帶在囊裡行船，夜裡船邊三格魄近不了。' },
+    '鯤': { s: 19, kind: 'food', single: true, food: { eat: 1 }, flavor: '鯤（v0.9.21）。「鯤，魚子。」（《爾雅·釋魚》）小得看不清的一粒魚子。離了水兩日就乾了：放進有水的缸裡養著，或回北冥選中它面向深海按 F 放回去。生吃一口就沒了。' },
+    '埴': { s: 11, kind: 'item', flavor: '埴，黏土（v0.9.21）。拿鋤在淡水（川、湖、池、泉）邊兩格內鋤土、鋤草，三成的機會帶出一塊；在沼裡鋤，五成。「埏埴以為器，當其無，有器之用。」（《老子》第十一章）在窯裡燒成陶。' },
+    '陶釜': { s: 21, kind: 'item', dur: 100, flavor: '陶釜（v0.9.21）。跟鐵釜一樣煮粥羹；用一次少一點，一百次就碎了（v0.9.22 起，原本三十次）。帶著鐵釜時先用鐵的。' },
+    '陶甑': { s: 28, kind: 'item', dur: 100, flavor: '陶甑（v0.9.21）。架在釜上蒸飯糕餅；用一次少一點，一百次就碎了（v0.9.22 起，原本三十次）。帶著鐵甑時先用鐵的。' },
+    '瓦': { s: 5, kind: 'item', flavor: '瓦（v0.9.21）。選中瓦、面向磚或甓按 F，蓋成瓦簷：簷下一格的燈雨淋不壞、冰雹砸不著，人站在簷下也不挨冰雹；蓋了瓦的磚，狂風與大風吹不垮。拆磚時瓦退回。' },
     '稷粥': { s: 27, kind: 'food', food: { eat: 34, meal: '稷' }, flavor: '稷粥。飽 +34；一頓之內飽掉得慢四分之一。' },
     '豆羹': { s: 26, kind: 'food', food: { eat: 30, meal: '菽' }, flavor: '豆羹。飽 +30；一頓之內暖掉得慢四分之一。' },
     '豉': { s: 11, kind: 'food', food: { eat: 8, side: true }, flavor: '豆豉：菽煮過、拌了鹽封著發的。飽 +8。不算一頓，配著五穀的菜吃算調和。《釋名·釋飲食》：「豉，嗜也。五味調和，須之而成，乃可甘嗜也。」' },
@@ -293,7 +307,7 @@
   // 製作欄的大類（左側選）：每條配方照 id 歸類，沒列到的進「材料」
   const CRAFT_CATS = ['全部', '居所', '工具', '神兵', '衣甲', '燈火', '漁船', '食藥', '材料'];
   const CAT_OF = {
-    '居所': ['brick', 'door', 'fence', 'gate', 'window', 'bed', 'chest', 'stove', 'cauldron', 'scarecrow', 'bridge', 'platform', 'steps'],
+    '居所': ['brick', 'kiln', 'door', 'fence', 'gate', 'window', 'bed', 'chest', 'stove', 'cauldron', 'scarecrow', 'bridge', 'platform', 'steps'],
     '工具': ['grind', 'regrind', 'crush', 'forge', 'forgew', 'obsidian', 'fan', 'sling'],
     '神兵': ['hammer', 'seagod', 'skygod'],
     '衣甲': ['lining', 'pants', 'vest', 'cap', 'shoes', 'ironvest', 'helm', 'ironboots', 'wvest', 'whelm', 'wboots'],
@@ -339,6 +353,36 @@
   };
   const HARMONY_T = 1 / 12, HARMONY_K = 1.5;   // 調和（v0.9.18）：一時辰（十二分之一日）內先後吃了穀的菜與肉魚果（side），這一頓長一半，一頓只算一回
   // 灶上的釜甑（v0.9.18）：帶著釜，灶的界面多一欄；蒸的還要甑。每樣兩份穀（或魚）加一瓶淡水成兩份，空瓶退回；豉用海水、黍酒三份黍一瓶淡水成一瓶（v0.9.19）
+  // 作物字一筆一筆長（v0.9.21 使用者定）：五穀的字照筆順一筆一筆寫出來——苗、秀時寫到一半多，熟了寫全。
+  // 每一筆是一條中線（照霞鶩文楷 TC 描的，座標是十格見方的字身，乘十寫成整數：0–100，往右、往下），畫的時候沿中線刷一道粗筆當遮罩，只露出字形裡寫到的那幾筆。
+  // 筆順照台灣的筆順通則排（先上後下、先左後右、先橫後豎、先撇後捺、封口最後；艹作四畫）；臼、氺、艹、來這幾個部件我手上沒有教育部筆順學習網的原表可對，要再核。
+  const STROKES = {
+    '稻': [[37, 15, 25, 21, 12, 28], [10, 40, 41, 38], [26, 23, 26, 89], [25, 44, 18, 62, 8, 76], [32, 49, 39, 59],
+      [82, 15, 66, 21, 53, 25], [61, 30, 67, 45], [77, 28, 87, 45], [49, 25, 46, 38, 42, 48],
+      [63, 47, 50, 55], [46, 55, 48, 89], [51, 69, 61, 68], [66, 55, 86, 54, 82, 82], [67, 70, 80, 69], [52, 84, 86, 83]],
+    '黍': [[71, 12, 45, 17, 21, 22], [15, 29, 83, 27], [47, 22, 47, 45], [45, 32, 30, 42, 13, 51], [53, 31, 70, 41, 85, 48],
+      [50, 46, 35, 58, 7, 68], [51, 49, 70, 59, 91, 65],
+      [48, 58, 49, 92, 37, 86], [30, 66, 40, 72], [17, 84, 43, 74], [67, 64, 57, 73], [54, 73, 80, 86]],
+    '稷': [[37, 15, 24, 21, 11, 28], [9, 40, 41, 38], [26, 23, 26, 90], [25, 46, 18, 64, 8, 76], [31, 47, 38, 58],
+      [45, 19, 47, 43], [46, 19, 81, 17, 79, 40], [50, 29, 78, 27], [63, 20, 63, 37], [50, 39, 80, 37],
+      [54, 45, 45, 56, 41, 61], [68, 44, 69, 53, 89, 53],
+      [58, 53, 50, 66, 40, 76], [53, 64, 76, 61, 62, 74, 35, 90], [54, 66, 66, 79, 92, 89]],
+    '麥': [[21, 22, 79, 19], [48, 11, 50, 53], [31, 28, 16, 49], [33, 35, 40, 44], [69, 26, 55, 43], [69, 35, 76, 45], [47, 44, 30, 56, 11, 66], [53, 43, 70, 55, 89, 62],
+      [44, 52, 30, 68, 19, 77], [40, 63, 67, 60, 50, 74, 11, 90], [39, 70, 52, 77, 66, 86]],
+    '菽': [[13, 24, 36, 23], [34, 13, 38, 33], [42, 22, 86, 20], [63, 11, 57, 34],
+      [31, 32, 32, 47], [36, 41, 47, 41], [14, 55, 51, 53], [33, 54, 34, 90, 23, 84], [21, 64, 13, 83], [43, 65, 50, 76],
+      [52, 43, 79, 42, 65, 66, 45, 90], [56, 51, 68, 69, 92, 87]]
+  };
+  // 窯裡燒的（v0.9.21）：need 料、k 出幾個、t 燒幾個 KILN_T（四分之一日）；窯一次燒一窯
+  const KILN = {
+    '陶釜': { need: { '埴': 2 }, k: 1, t: 1, note: '煮粥羹，用一百次' },
+    '陶甑': { need: { '埴': 2 }, k: 1, t: 1, note: '架在釜上蒸，用一百次' },
+    '甕': { need: { '埴': 4 }, k: 1, t: 2, note: '十二格，只裝吃的；穀變陳慢一半、果不醉' },
+    '缸': { need: { '埴': 6 }, k: 1, t: 2, note: '屋外接雨雪，存六瓶淡水' },
+    '瓦': { need: { '埴': 1 }, k: 4, t: 1, note: '蓋在磚、甓上成瓦簷' },
+    '燈': { need: { '埴': 1, '油脂': 1 }, k: 2, t: 1, label: '陶燈', note: '陶的油燈，一窯兩盞（跟石燈一樣）' },
+    '甓': { need: { '磚': 2 }, k: 2, t: 1, note: '燒過的磚（青磚），耐撞一倍半' }
+  };
   const POT = {
     '稷粥': { vessel: '釜', verb: '煮', need: { '稷': 2, '淡水瓶': 1 }, k: 2 },
     '豆羹': { vessel: '釜', verb: '煮', need: { '菽': 2, '淡水瓶': 1 }, k: 2 },
@@ -397,6 +441,7 @@
     { id: 'window', out: '窗', n: 1, need: { '木': 2, '麻布': 1 }, sta: 3, note: '擋獸不擋光；睡在窗多的屋裡愜意多回' },
     { id: 'bed', out: '床', n: 1, need: { '棉': 6, '木': 2 }, sta: 10, note: '夜裡面向它按 R，一覺到天明' },
     { id: 'chest', out: '櫃', n: 1, need: { '石': 4, '木': 4 }, sta: 6, note: '四角石四邊木，二十四格' },
+    { id: 'kiln', out: '窯', n: 1, need: { '石': 8, '土': 4 }, sta: 8, note: '擺在灶旁，借灶火燒陶（v0.9.21）' },
     { id: 'torch', out: '火把', n: 4, need: { '石子': 1, '草': 3, '木': 2 }, sta: 2, note: '石子一草三木二成四根；拿在手上才亮' },
     { id: 'candle', out: '蠟燭', n: 2, need: { '棉': 1, '肉': 1 }, sta: 2, note: '拿在手上才亮，照兩格' },
     { id: 'candle2', out: '蠟燭', n: 3, need: { '棉': 1, '油脂': 1 }, sta: 2, note: '油脂做的，一份油脂三根（從麻布包裡取）' },
@@ -1309,12 +1354,12 @@
   function biomeName(ch) {
     return ({ '淼': '深水', '水': '淺水', '沙': '沙地', '礫': '碎石地', '石': '石灘', '山': '群山', '雪': '雪原',
       '草': '草原', '花': '花野', '棉': '棉田', '麻': '麻田', '木': '疏林', '果': '果林', '林': '林地', '森': '深林', '竹': '竹林', '田': '田野',
-      '土': '荒土', '灰': '焦土', '白': '白紙', '火': '火場', '炎': '火場', '焱': '火場', '灶': '灶邊', '鼎': '鼎邊', '磚': '磚邊', '床': '床邊', '櫃': '櫃邊', '偶': '稻草人旁',
+      '土': '荒土', '灰': '焦土', '白': '白紙', '火': '火場', '炎': '火場', '焱': '火場', '灶': '灶邊', '鼎': '鼎邊', '磚': '磚邊', '甓': '磚邊', '窯': '窯邊', '甕': '甕邊', '缸': '缸邊', '床': '床邊', '櫃': '櫃邊', '偶': '稻草人旁',
       '燈': '燈下', '棧': '棧上', '漁': '魚梁', '舟': '船邊', '包': '荷包', '煤': '煤層', '鐵': '鐵礦脈', '網': '網邊', '罟': '網邊', '罾': '網邊', '碑': '古碑', '亭': '惜字亭', '囊': '囊', '路': '小路', '塔': '塔下', '寺': '寺中', '船': '船邊',
       '泉': '泉邊', '墓': '墓前', '洞': '洞口', '井': '井邊', '墟': '村中', '門': '門口',
       '漠': '大漠', '丘': '沙丘', '池': '綠洲', '棗': '綠洲', '熔': '熔岩邊', '岩': '岩地', '曜': '黑曜石脈', '川': '河邊', '湖': '湖畔', '湯': '溫泉', '窟': '洞窟' })[ch] || ch;
   }
 
   RECIPES.forEach(r => { r.cat = '材料'; for (const c in CAT_OF) if (CAT_OF[c].indexOf(r.id) >= 0) r.cat = c; });
-  root.G = { WILD_MIX, WILD_CELL, CROPS, POT, HARMONY_T, HARMONY_K, CROP_HOLD, CROP_FROST, FERT_MAX, FERT_REST, FERT_FALLOW, FERT_WILD, FERT_HOED, wildCrop, FISH, MEALS, FISH_MEAL_T, MEAL_CUT, dryAt, DRY_KINDS, natTile, contTheta, contLand, CONT_IRON, namePools, NAME_LIST, regionAt, siteAt, masses, massAt, gateNet, REGION_NAMES, CONT_LAND, MASS_CELL, get MASS_MIN() { return MASS_MIN; }, HOME_SEA, get GATE_LAND_MIN() { return GATE_LAND_MIN; }, get GATE_LAND_MAX() { return GATE_LAND_MAX; }, get GATE_SEA_MIN() { return GATE_SEA_MIN; }, get GATE_SEA_MAX() { return GATE_SEA_MAX; }, GATE_RING, GATE_RING_MAX, zoneTerr, setGen, get GEN() { return GEN; }, GEN_NEW, ISLE_R2, skerryAt, skerryOf, skerries, SKERRY_CELL, SKERRY_R, SKERRY_SHOAL, SKERRY_GAP, SKERRY_EDGE, SKERRY_KINDS, reefs, REEF_RING, REEF_AREA, REEF_MIN, REEF_MAX, REEF_GAP, stelePaths, isleWell, INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, get WORLD_R() { return WORLD_R; }, PAPER_K, HOME_BOX, HOME_R, HOME_K, isleAt, isleOf, isles, get ISLE_CELL() { return ISLE_CELL; }, ISLE_NAMES, azureAt, zones, zoneAt, ZONE_DEFS };
+  root.G = { STROKES, KILN, WILD_MIX, WILD_CELL, CROPS, POT, HARMONY_T, HARMONY_K, CROP_HOLD, CROP_FROST, FERT_MAX, FERT_REST, FERT_FALLOW, FERT_WILD, FERT_HOED, wildCrop, FISH, MEALS, FISH_MEAL_T, MEAL_CUT, dryAt, DRY_KINDS, natTile, contTheta, contLand, CONT_IRON, namePools, NAME_LIST, regionAt, siteAt, masses, massAt, gateNet, REGION_NAMES, CONT_LAND, MASS_CELL, get MASS_MIN() { return MASS_MIN; }, HOME_SEA, get GATE_LAND_MIN() { return GATE_LAND_MIN; }, get GATE_LAND_MAX() { return GATE_LAND_MAX; }, get GATE_SEA_MIN() { return GATE_SEA_MIN; }, get GATE_SEA_MAX() { return GATE_SEA_MAX; }, GATE_RING, GATE_RING_MAX, zoneTerr, setGen, get GEN() { return GEN; }, GEN_NEW, ISLE_R2, skerryAt, skerryOf, skerries, SKERRY_CELL, SKERRY_R, SKERRY_SHOAL, SKERRY_GAP, SKERRY_EDGE, SKERRY_KINDS, reefs, REEF_RING, REEF_AREA, REEF_MIN, REEF_MAX, REEF_GAP, stelePaths, isleWell, INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, get WORLD_R() { return WORLD_R; }, PAPER_K, HOME_BOX, HOME_R, HOME_K, isleAt, isleOf, isles, get ISLE_CELL() { return ISLE_CELL; }, ISLE_NAMES, azureAt, zones, zoneAt, ZONE_DEFS };
 })();
