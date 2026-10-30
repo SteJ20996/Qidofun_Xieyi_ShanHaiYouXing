@@ -12,7 +12,7 @@
     '土': '#a98a62', '灰': '#8d8781', '白': '#f3ebd8', '火': '#d9593c', '炎': '#d9593c', '焱': '#d9593c',
     '明': '#f0c54a', '休': '#9a6b45', '困': '#7a5a3e', '碑': '#2a2724', '亭': '#8a3a2a', '桑': '#3a7a52', '若': '#a2552f', '建': '#5a4a2a', '日': '#e07a4a', '月': '#e3c35a',
     '果': '#c9654a', '灶': '#d9593c', '鼎': '#b4452c', '包': '#2a2724', '囊': '#5a3e2b', '煤': '#2a2724', '鐵': '#8a5a3a', '網': '#5a86a8', '罟': '#4f7a9c', '罾': '#446e90', '路': '#c9b27a', '門': '#9a7a55', '井': '#4a6f8f',
-    '棉': '#e8e2d0', '礫': '#b9b4a8', '磚': '#9a5a40', '墟': '#8a8378', '窗': '#c09a6a', '沼': '#6b6a3c', '棧': '#9a6b45', '床': '#a06a4a', '漁': '#5a86a8', '麻': '#a9b07a', '偶': '#b08a5a', '櫃': '#7a4e2d', '舟': '#7a4e2d',
+    '棉': '#e8e2d0', '礫': '#b9b4a8', '磚': '#9a5a40', '甓': '#5b6770', '窯': '#b4452c', '甕': '#7a5a3a', '缸': '#4f7a8a', '墟': '#8a8378', '窗': '#c09a6a', '沼': '#6b6a3c', '棧': '#9a6b45', '床': '#a06a4a', '漁': '#5a86a8', '麻': '#a9b07a', '偶': '#b08a5a', '櫃': '#7a4e2d', '舟': '#7a4e2d',
     '塔': '#2a2724', '寺': '#5a3e2b', '船': '#5a3e2b', '泉': '#4a6f8f', '墓': '#6e6c75', '洞': '#2a2724', '燈': '#e0a020',
     '漠': '#e3cf98', '丘': '#d6bb7a', '池': '#5f9cc0', '棗': '#7d9a55', '熔': '#d2502a', '岩': '#5d5a62', '燧': '#2a2622', '曜': '#2b2133', '川': '#5f9cc0', '湖': '#5a92b8', '湯': '#8cc3d0', '窟': '#3a3028',   // v0.7
     '苗': '#8fb06a', '秀': '#b5b05a', '稻': '#d9b54a', '黍': '#d9b54a', '稷': '#d9b54a', '麥': '#d9b54a', '菽': '#d9b54a', '穗': '#cdbb88', '籬': '#8a6a45', '扉': '#8a6a45'   // v0.9.18 五穀、籬
@@ -212,6 +212,17 @@
       x.globalAlpha = 1; x.fillText(ch, S / 2, S / 2 + 4);
       this.atlas.set(key, c);
       return c;
+    }
+    // 作物字一筆一筆長（v0.9.21）：照 G.STROKES 的中線刷一道粗筆當遮罩，字形只露出前 n 筆；快取同 glyph()
+    partGlyph(ch, color, n) {
+      const key = ch + '|' + color + '|' + n; let c = this.atlas.get(key); if (c) return c;
+      const S = 128, full = this.glyph(ch, color), list = G.STROKES[ch]; c = document.createElement('canvas'); c.width = c.height = S;
+      const m = document.createElement('canvas'); m.width = m.height = S; const mx = m.getContext('2d');   // 先把寫到的幾筆刷在另一張上（聯集），再一次蓋上去當遮罩
+      mx.strokeStyle = '#000'; mx.lineCap = 'round'; mx.lineJoin = 'round'; mx.lineWidth = S * 0.72 * 0.14;
+      const at = (g) => (g / 10 * 64 - 320) / 576 * S * 0.72;   // 描的時候字身 576 點、置中在 320；這裡字身 S×0.72、中心 (S/2, S/2+4)
+      for (let i = 0; i < Math.min(n, list.length); i++) { const st = list[i]; mx.beginPath(); mx.moveTo(S / 2 + at(st[0]), S / 2 + 4 + at(st[1])); for (let j = 2; j < st.length; j += 2) mx.lineTo(S / 2 + at(st[j]), S / 2 + 4 + at(st[j + 1])); mx.stroke(); }
+      const x = c.getContext('2d'); x.drawImage(full, 0, 0); x.globalCompositeOperation = 'destination-in'; x.drawImage(m, 0, 0);
+      this.atlas.set(key, c); return c;
     }
     drawShip(cx, cy, rec, now, warded, aboard) {   // v0.8.17：船身一塊長方形（東西長或南北長），淡淡的甲板，上頭一個拉長的「舟」字（跟野牛一樣，橫躺拉扁、直立拉長）
       const T = this.tile, k = G.SHIPS[rec.kind] || G.SHIPS['孤帆'], h = rec.dir === 'h', W = h ? k.h : k.w, H = h ? k.w : k.h, hurt = rec.hp / k.hp;
@@ -470,12 +481,24 @@
         if (ch === '田') alpha = Math.min(1, alpha * (0.55 + 0.13 * world.fertOf(x, y)));   // 地力越厚墨越深（v0.9.18）
         if (act && act.type === 'gather' && act.x === x && act.y === y) { const pr = act.t / act.dur; alpha *= 1 - pr * 0.85; scale *= 1 - pr * 0.35; rot += pr * 0.5; }
         const color = burning && d.kind !== 'fire' ? G.INK.red : (ch === '灶' && !lit ? G.INK.ash : (ch === '窗' || ch === '門') && world.wallHurt(x, y) ? G.INK.red : d.ink);   // 窗門撞剩一半：字變紅
-        if (ch.length > 1) {   // 雙字之物（木屋）：兩個字並排寫小一點
+        const ck = d.crop && d.crop <= 2 ? world.cropKind(x, y) : null, strokes = ck && G.STROKES[ck];
+        if (strokes && L(ck) === ck) {   // 作物字一筆一筆長（v0.9.21）：苗、秀寫那種穀的字，照長了幾成寫到第幾筆；角上小字寫苗或秀（簡體的麥字形不同，照舊畫）
+          const N = strokes.length, nS = Math.max(1, Math.min(N - 1, Math.ceil(world.cropFrac(x, y) * (N - 1))));
+          ctx.save(); const s0 = this.dpr; ctx.setTransform(s0 * Math.cos(rot) * 1, s0 * Math.sin(rot), -s0 * Math.sin(rot), s0 * Math.cos(rot), (ox + x * T + T / 2 + dx) * s0, (oy + y * T + T / 2 + dy) * s0); ctx.globalAlpha = alpha;
+          const sz = T * scale; ctx.drawImage(this.partGlyph(ck, color, nS), -sz * 0.65, -sz * 0.65, sz * 1.3, sz * 1.3); ctx.restore(); ctx.setTransform(s0, 0, 0, s0, 0, 0);
+          this.drawGlyph(L(ch), color, ox + x * T + T * 0.82, oy + y * T + T * 0.8, T * 0.3, 0, 0.75 * alpha);
+        }
+        else if (ch.length > 1) {   // 雙字之物（木屋）：兩個字並排寫小一點
           this.drawGlyph(ch[0], color, ox + x * T + T * 0.3, oy + y * T + T / 2 + dy, T * scale * 0.62, rot, alpha);
           this.drawGlyph(ch[1], color, ox + x * T + T * 0.7, oy + y * T + T / 2 + dy, T * scale * 0.62, rot, alpha);
         } else this.drawGlyph(ch, color, ox + x * T + T / 2 + dx, oy + y * T + T / 2 + dy, T * scale, rot, alpha);
-        if (d.crop && d.crop !== 3) { const ck = world.cropKind(x, y); if (ck) this.drawGlyph(L(ck), '#6a5a24', ox + x * T + T * 0.8, oy + y * T + T * 0.8, T * 0.34, 0, 0.8 * alpha); }   // 苗、秀、遺穗角上寫是什麼穀（v0.9.18）
+        if (d.crop && d.crop !== 3 && !(strokes && L(ck) === ck)) { const ck = world.cropKind(x, y); if (ck) this.drawGlyph(L(ck), '#6a5a24', ox + x * T + T * 0.8, oy + y * T + T * 0.8, T * 0.34, 0, 0.8 * alpha); }   // 苗、秀、遺穗角上寫是什麼穀（v0.9.18）
         if ((burning && d.kind !== 'fire') || lit) this.drawGlyph('火', G.INK.red, ox + x * T + T * 0.74, oy + y * T + T * 0.3, T * 0.45 * (1 + 0.15 * Math.sin(now * 13 + r)), rot, 0.95);
+        if (world.eaves.size && world.eaves.has(U.key(x, y))) {   // 瓦簷（v0.9.21）：磚上一道青灰的瓦脊，兩頭翹
+          const ex = ox + x * T, ey = oy + y * T; ctx.save(); ctx.fillStyle = 'rgba(70,82,92,0.88)'; ctx.beginPath(); ctx.moveTo(ex - T * 0.06, ey + T * 0.02); ctx.quadraticCurveTo(ex + T / 2, ey + T * 0.2, ex + T * 1.06, ey + T * 0.02); ctx.lineTo(ex + T * 0.94, ey + T * 0.17); ctx.quadraticCurveTo(ex + T / 2, ey + T * 0.3, ex + T * 0.06, ey + T * 0.17); ctx.closePath(); ctx.fill(); ctx.restore();
+        }
+        if (ch === '窯') { const kr = world.kilns.get(U.key(x, y)); if (kr && !kr.done && world.kilnFire(x, y)) { lights.push({ x, y, r: 2.5, c: STOVE }); this.drawGlyph('火', G.INK.red, ox + x * T + T * 0.74, oy + y * T + T * 0.3, T * 0.4 * (1 + 0.15 * Math.sin(now * 11 + r)), rot, 0.9); } else if (kr && kr.done) this.drawGlyph('成', '#6a5a24', ox + x * T + T * 0.78, oy + y * T + T * 0.26, T * 0.32, 0, 0.85); }   // 窯燒著冒火、燒好了寫「成」（v0.9.21）
+        if (ch === '缸' && world.jarWater(x, y) >= 1) this.drawGlyph('水', G.INK.water, ox + x * T + T * 0.78, oy + y * T + T * 0.76, T * 0.3, 0, 0.8);   // 缸裡有水
       }
 
       // —— 大字地標：一個字佔好幾格
@@ -683,14 +706,15 @@
         }
         // 主動找人的獸（v0.7.2）：豹、狼、野豬、毒蛛畫大一號，比虎小一點；蛇照舊。半友好的（無毒蛛、蟾、沒馴的鷹）被惹了也發紅、大一號（v0.7.3）
         const riled = g.ents.riled(e);
-        const size = e.type === '虎' ? 0.95 : e.type === '龍' ? 1.1 : (e.type === '豹' || e.type === '狼' || e.type === '豬' || (e.type === '蛛' && e.venom) || riled) ? 0.85 : e.type === '鹿' ? 0.8 : e.type === '狸' ? 0.7 : e.type === '魚' ? 0.6 : 0.55;
-        const bobY = e.type === '鳥' ? Math.sin(now * 5 + e.bob) * 3 : e.type === '龍' ? Math.sin(now * 3 + e.bob) * 4 : e.type === '魚' ? Math.sin(now * 2 + e.bob) * 1.5 : 0;
+        const size = e.type === '虎' ? 0.95 : e.type === '龍' ? 1.1 : (e.type === '豹' || e.type === '狼' || e.type === '豬' || (e.type === '蛛' && e.venom) || riled) ? 0.85 : e.type === '鹿' ? 0.8 : e.type === '狸' ? 0.7 : e.type === '鮫' ? 0.8 : e.type === '魚' ? 0.6 : 0.55;
+        const bobY = e.type === '雀' ? Math.sin(now * 5 + e.bob) * 3 : e.type === '龍' ? Math.sin(now * 3 + e.bob) * 4 : e.type === '魚' ? Math.sin(now * 2 + e.bob) * 1.5 : 0;
         if (e.type === '龍') lights.push({ x: e.x, y: e.y, cx: e.rx + 0.5, cy: e.ry + 0.5, r: 3, c: DRAGON });
         const rot = e.type === '魚' ? Math.sin(now * 2 + e.bob) * 0.2 : 0;
         if (e.type === '虎' && e.calm <= 0 && U.cheb(e.x, e.y, p.x, p.y) <= 8) {
           ctx.save(); ctx.fillStyle = 'rgba(180,57,42,0.12)'; ctx.beginPath(); ctx.arc(px, py, T * 0.6, 0, 7); ctx.fill(); ctx.restore();
         }
         this.drawGlyph(e.type, ((e.type === '蟾' || e.type === '蛛') && e.venom) || riled ? G.INK.red : d.ink, px, py + bobY, T * size, rot, 1);
+        if (e.type === '鮫') this.drawGlyph(L('機'), '#5a4632', px + T * 0.62, py + T * 0.12 + Math.sin(now * 4) * 1.2, T * 0.42, Math.sin(now * 4) * 0.08, 0.85);   // 鮫人膝上的機（v0.9.21），梭子一來一回
         if (e.provoked > 0 && U.cheb(e.x, e.y, p.x, p.y) <= 7) { ctx.save(); ctx.fillStyle = G.INK.red; ctx.font = 'bold ' + Math.round(T * 0.42) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.fillText('怒', px + T * 0.4, py - T * 0.42); ctx.restore(); }   // 被彈弓惹惱、七格內要撲過來的
       }
       // —— 彈弓的準星：手持彈弓時，面前九格內會被打到的那隻
@@ -814,6 +838,8 @@
       this.rainA = (this.rainA || 0) + ((wxHere === 'rain' || wxHere === 'thunder' ? 1 : 0) - (this.rainA || 0)) * Math.min(1, dt / 1.5);   // 起雨收雨各淡入淡出一息半
       const glowK = Math.max(dark, 0.55 * this.rainA);   // 下雨的白天，燈也透出一點微光（v0.6.4）
       if (g.torchLit()) lights.push({ x: p.x, y: p.y, cx: p.rx + 0.5, cy: p.ry + 0.5, r: 3, c: TORCH });
+      if (g.pearlShip && g.pearlShip()) lights.push({ x: p.x, y: p.y, cx: p.rx + 0.5, cy: p.ry + 0.5, r: 3, c: AZURE });   // 行船帶著鮫珠（v0.9.21）
+      for (const e of g.ents.list) if (e.type === '鮫') lights.push({ x: e.x, y: e.y, r: 1.5, c: AZURE });   // 鮫人身邊微微發光
       const lm = dark > 0.02 || (glowK > 0.02 && lights.length) ? this.lightMap(g, ox, oy, x0, x1, y0, y1, lights, dark, glowK, now) : null;
       this.lastLm = lm;   // 測試看得到這一幀有沒有夜色、暖光
       if (lm) {
@@ -839,6 +865,17 @@
         else if (f.type === 'geese') {   // 鴻雁來（v0.9.19）：一行「雁」排成人字從畫面上方飛過
           const lead = f.dir > 0 ? -T * 3 + (w + T * 6) * pr : w + T * 3 - (w + T * 6) * pr, gy = h * 0.16 + Math.sin(pr * 6) * T * 0.2, a = pr < 0.1 ? pr / 0.1 : pr > 0.9 ? (1 - pr) / 0.1 : 1;
           for (let i = 0; i < 7; i++) { const rank = Math.ceil(i / 2), side = i % 2 ? 1 : -1; this.drawGlyph('雁', '#3a3a3a', lead - f.dir * rank * T * 0.9, gy + side * rank * T * 0.55 + Math.sin(now * 6 + i) * 2, T * 0.42, 0, 0.75 * a); }
+        }
+        else if (f.type === 'kun') {   // 鯤（v0.9.21）：海面下一道影子游過去，一次比一次大
+          const LL = f.size * T, mv = (pr - 0.5) * T * (3 + f.size * 0.6), cx3 = px + T / 2 + Math.cos(f.ang) * mv, cy3 = py + T / 2 + Math.sin(f.ang) * mv, a = Math.sin(Math.PI * pr) * 0.42;
+          ctx.save(); ctx.translate(cx3, cy3); ctx.rotate(f.ang); ctx.globalAlpha = a; ctx.fillStyle = '#14202a'; ctx.beginPath(); ctx.ellipse(0, 0, LL * 0.55, LL * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(-LL * 0.5, 0); ctx.lineTo(-LL * 0.78, -LL * 0.16); ctx.lineTo(-LL * 0.78, LL * 0.16); ctx.closePath(); ctx.fill(); ctx.restore();
+          if (f.size <= 12) this.drawGlyph(L('鯤'), '#d9e4ea', cx3, cy3, Math.min(T * 1.2, LL * 0.3), f.ang, a * 0.8);
+        }
+        else if (f.type === 'peng') {   // 化而為鵬（v0.9.21）：比畫面還大的「鵬」字影子，從北往南掠過；rise 是從水裡起來
+          const S = Math.max(w, h) * 1.6, cy3 = -S * 0.5 + (h + S) * pr, a = (pr < 0.15 ? pr / 0.15 : pr > 0.85 ? (1 - pr) / 0.15 : 1) * 0.55;
+          if (f.rise && pr < 0.3) { ctx.save(); ctx.globalAlpha = (0.3 - pr) * 1.5; ctx.fillStyle = '#e8eef2'; for (let i = 0; i < 14; i++) { const sx = (i / 14) * w + Math.sin(now * 3 + i) * 20; ctx.fillRect(sx, h * (0.2 + 0.6 * ((i * 37) % 10) / 10), T * 2.4, 2); } ctx.restore(); }
+          ctx.save(); ctx.globalAlpha = a; this.drawGlyph(L('鵬'), '#0f1418', w / 2 + Math.sin(pr * 3) * T, cy3, S, Math.sin(now * 0.7) * 0.03, a); ctx.restore();
         }
         else if (f.type === 'bolt') this.drawBolt(f, px, py, pr, T, dark);   // 雷雨的落雷（v0.9.15）
         else if (f.type === 'boltWarn') this.drawBoltWarn(f, px, py, pr, T, dark, now);   // 雷要落的三乘三先亮：正中最亮、十字次之、四角最淡

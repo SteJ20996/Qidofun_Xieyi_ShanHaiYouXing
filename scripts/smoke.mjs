@@ -1531,7 +1531,7 @@ const result = await page.evaluate(async () => {
     g.removeItem('鐵', 1); }
   // ============ v0.6.2：一日三百息從半夜起算、精確到四位、墟與補牆、草花田路上放東西、舊存檔 ============
   { ok('v0.6.2: a fresh island wakes in the early morning, just after dawn (v0.9.17: that day\'s sunrise, 立春 at 32°N)', new window.World(w.seed + 7).time === U.r4(DAY * (window.CAL.dawn(0) + 0.01)) && window.CAL.dawn(0) > 0.27);
-    const old = JSON.parse(JSON.stringify(w.serialize())); delete old.dayLen; old.time = 375 * 9 + 375 * 0.8; old.diff['3,3'] = '牆';
+    const old = window.World.loosen(JSON.parse(JSON.stringify(w.serialize()))); delete old.dayLen; old.time = 375 * 9 + 375 * 0.8; old.diff['3,3'] = '牆';
     old.scarecrows = { '0,0': old.time + 100 }; old.timers = { '1,1': ['苗', old.time + 50, '田'] };
     const w3 = new window.World(w.seed); w3.restore(old, 10);
     ok('v0.6.2: an old save keeps its day number and comes back at that day\'s early morning', w3.time === U.r4(DAY * 9 + DAY * (window.CAL.dawn(9) + 0.01)), w3.time / DAY);
@@ -2634,7 +2634,7 @@ const result = await page.evaluate(async () => {
       const { x: X, y: Y } = openSea(g.spawn.x + 320, g.spawn.y + 320, 7); g.save(); const sv3 = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot)));
       const o3 = JSON.parse(JSON.stringify(sv3)); o3.world.ships = o3.world.ships || {};
       o3.world.ships[X + ',' + (Y - 1)] = { kind: '方舟', hp: 300, skulls: [], repairs: 1, dir: 'v', cells: [[X, Y - 1], [X + 1, Y - 1], [X + 2, Y - 1], [X, Y], [X + 1, Y], [X + 2, Y], [X, Y + 1], [X + 1, Y + 1], [X + 2, Y + 1]] };
-      o3.world.diff = o3.world.diff || {}; for (const [x, y] of o3.world.ships[X + ',' + (Y - 1)].cells) o3.world.diff[x + ',' + y] = '舟';
+      window.World.loosen(o3.world); o3.world.diff = o3.world.diff || {}; for (const [x, y] of o3.world.ships[X + ',' + (Y - 1)].cells) o3.world.diff[x + ',' + y] = '舟';
       for (let dx = -6; dx <= 6; dx++) for (let dy = -6; dy <= 6; dy++) if (!o3.world.diff[(X + dx) + ',' + (Y + dy)]) o3.world.diff[(X + dx) + ',' + (Y + dy)] = '淼';
       const deep = Object.keys(o3.world.diff).length; g.load(o3);
       const r5 = [...w.ships.values()].find(r => r.kind === '方舟' && r.hp === 300 && r.repairs === 1);
@@ -2959,7 +2959,7 @@ const result = await page.evaluate(async () => {
     g.removeItem('淡水瓶', 9); g.removeItem('玻璃瓶', 9); g.removeItem('黑曜石', 9); g.removeItem('木', 1); g.removeItem('麻', 1); p.x = p.rx = home0.x; p.y = p.ry = home0.y; calm(); p.food = 100; p.warm = 100;
     // 舊存檔：船停在長出來的新陸地上 → 挪到最近的海
     let ext = null; for (let r = 60; r < 125 && !ext; r++) for (let a = 0; a < 360 && !ext; a += 3) { const x = Math.round(Math.cos(a * Math.PI / 180) * r), y = Math.round(Math.sin(a * Math.PI / 180) * r); if (G.DB[G.oldTile(x, y, sd)].kind === 'water' && G.DB[G.oldTile(x, y + 1, sd)].kind === 'water' && G.DB[G.baseTile(x, y, sd)].kind !== 'water' && G.DB[G.baseTile(x, y + 1, sd)].kind !== 'water') ext = [x, y]; }
-    const sv = JSON.parse(JSON.stringify(w.serialize())); sv.ships = { [ext[0] + ',' + ext[1]]: { kind: '孤帆', hp: 100, skulls: [], repairs: 0, cells: [[ext[0], ext[1]], [ext[0], ext[1] + 1]] } }; sv.diff[ext[0] + ',' + ext[1]] = '舟'; sv.diff[ext[0] + ',' + (ext[1] + 1)] = '舟';
+    const sv = window.World.loosen(JSON.parse(JSON.stringify(w.serialize()))); sv.ships = { [ext[0] + ',' + ext[1]]: { kind: '孤帆', hp: 100, skulls: [], repairs: 0, cells: [[ext[0], ext[1]], [ext[0], ext[1] + 1]] } }; sv.diff[ext[0] + ',' + ext[1]] = '舟'; sv.diff[ext[0] + ',' + (ext[1] + 1)] = '舟';
     const w6 = new window.World(sd); w6.restore(sv, g.day()); const sh = [...w6.ships.values()][0];
     ok('v0.7: a ship an old save left where new land grew is moved to the nearest sea, the land under it restored', w6.movedShips === 1 && !!sh && sh.cells.every(([x, y]) => G.DB[w6.base(x, y)].kind === 'water') && w6.get(ext[0], ext[1]) === G.baseTile(ext[0], ext[1], sd), [w6.movedShips, sh && sh.cells, ext]);
     g.save(); const svo = JSON.parse(localStorage.getItem('xieyi.save.v5')); delete svo.player.isleNews; g.load(svo);
@@ -3042,7 +3042,7 @@ const result = await page.evaluate(async () => {
     if (vil) for (let dy = 0; dy < vil.h && rx === null; dy++) for (let dx = 0; dx < vil.w; dx++) if (w.base(vil.x + dx, vil.y + dy) === '墟') { rx = vil.x + dx; ry = vil.y + dy; break; }
     ok('v0.6.8: blank paper over a village 墟 is written back as earth, not as the ruin again (墟 never mends itself)', rx !== null && w.rewriteBlank(rx, ry) === '土' && w.rewriteBlank(p.x, p.y) === w.base(p.x, p.y), [rx, ry]); }
   g.save(); const sv = JSON.parse(localStorage.getItem('xieyi.save.v5'));
-  ok('save v5 keeps sanity, courage, scarecrows and chests', sv && sv.v === 5 && typeof sv.player.san === 'number' && typeof sv.player.cour === 'number' && sv.world.scarecrows && sv.world.chests && sv.player.places.ta === 2);
+  ok('save v6 (v0.9.21; v5 before) keeps sanity, courage, scarecrows and chests', sv && sv.v === 6 && typeof sv.player.san === 'number' && typeof sv.player.cour === 'number' && sv.world.scarecrows && sv.world.chests && sv.player.places.ta === 2);
   // —— 三格存檔：第一格沿用舊鍵；每格帶摘要
   ok('eight save slots: slot 1 keeps the old key, slots 2–8 get suffixes, autostart plays slot 1', XIEYI.Game.slotKey(1) === 'xieyi.save.v5' && XIEYI.Game.slotKey(2) === 'xieyi.save.v5.2' && XIEYI.Game.slotKey(3) === 'xieyi.save.v5.3' && XIEYI.Game.slotKey(8) === 'xieyi.save.v5.8' && g.slot === 1);
   ok('the save carries a brief: day, night, level, deaths, slept nights', !!sv.brief && sv.brief.day === g.day() && sv.brief.night === g.nightNo() && sv.brief.level === g.level() && typeof sv.brief.deaths === 'number' && typeof sv.brief.nights === 'number', sv.brief);
@@ -3500,7 +3500,7 @@ const result = await page.evaluate(async () => {
     ok('v0.9.13: slaying 共工 raises a stele (天柱下) in the 不周山 basin; it reads as a rubbing — black paper, white words — the teacher\'s 天圓地方 told through the child', gsTile === '碑' && gsDist >= 0 && gsDist <= 40 && rubbed && /rgb\(29, 27, 25\)/.test(rbg) && /四角之不揜/.test(rt) && /紙黑字白/.test(rt) && /先生說/.test(rt), [gs, gsTile, gsDist, rbg]);
     const pl0 = w.places[0]; g.readPlace(pl0); const plain = !document.querySelector('#read .panel').classList.contains('rubbing'); g.closeRead();
     ok('v0.9.13: …the eight landmarks still read on white paper', plain);
-    if (old.world && old.world.diff) delete old.world.diff[gs.x + ',' + gs.y]; delete old.player.gongStele; p.gongStele = undefined;   // 那份存檔當成碑還沒立的舊存檔
+    window.World.loosen(old.world); if (old.world && old.world.diff) delete old.world.diff[gs.x + ',' + gs.y]; delete old.player.gongStele; p.gongStele = undefined;   // 那份存檔當成碑還沒立的舊存檔（v0.9.21：存檔的差異層是 dz，先解開再改）
     p.key2 = undefined; g.load(old); const back = p.key2;   // 真的讀檔是新開一局（player 是新的）；這裡就地讀，先清掉
     ok('v0.9.11: an old save that had already slain 共工 gets the key when read (dated the day he fell), with a word about it', !!back && back.day === 7 && /地維/.test(toasts()), back);
     ok('v0.9.13: …and the stele by the crack is raised for it too', !!p.gongStele && w.get(p.gongStele.x, p.gongStele.y) === '碑', p.gongStele);
@@ -3784,10 +3784,12 @@ const result = await page.evaluate(async () => {
     hold('稻'); g.pressPlace(); const rice = w.get(fx, fy) === '苗' && w.crops.get(fx + ',' + fy).c === '稻';
     ok('v0.9.18: 稻 needs water beside the field and 地力 2; a handful of 草木灰 raises 地力 by one', noWater && lowFert && ashed && rice, [noWater, lowFert, ashed, rice]);
     // 雀與稻草人
-    const tR = w.time; w.time = tR + 20 * D; U.trueRand = () => 0.01; tick(); const pecked = w.crops.get(fx + ',' + fy).pk === 1;
-    w.addScarecrow(fx + 3, fy); w.time += D; tick(); const guarded = w.crops.get(fx + ',' + fy).pk === 1; U.trueRand = () => 0.99;
+    const tR = w.time, keepPL = w.peckLive; w.time = tR + 20 * D; U.trueRand = () => 0.01; tick(); const nearSkip = !w.crops.get(fx + ',' + fy).pk;   // v0.9.21：人在二十四格內，換日不另算（看得見的雀自己來啄）
+    w.peckLive = () => false; w.time += D; tick(); const pecked = w.crops.get(fx + ',' + fy).pk === 1;   // 人不在附近的田照換日算
+    w.addScarecrow(fx + 3, fy); w.time += D; tick(); const guarded = w.crops.get(fx + ',' + fy).pk === 1; U.trueRand = () => 0.99; w.peckLive = keepPL;
     w.time = tR + 32 * D; tick(); g.pressGather(); if (g.action) g.finishReap(g.action);
     ok('v0.9.18: once it heads, sparrows peck an unguarded field (one handful less at harvest); a 稻草人 nearby keeps them off', pecked && guarded && g.count('稻') === 3, [pecked, guarded, g.count('稻')]);
+    ok('v0.9.21: a field within 24 tiles of you is not pecked at the turn of the day (the sparrows you can see do it, and you can shoo them)', nearSkip, nearSkip);
     keepCell(fx + 3, fy); w.set(fx + 3, fy, '草'); w.scarecrows.clear();
     // 菽肥田、熟過頭落穗
     at(6); w.setFert(fx, fy, 1, false); hold('菽'); g.pressPlace(); const tB = w.time; w.time = tB + 24 * D; tick(); g.pressGather(); if (g.action) g.finishReap(g.action); const bean = w.fertOf(fx, fy) === 2;
@@ -3991,6 +3993,286 @@ const result = await page.evaluate(async () => {
       ok('v0.9.19: the small 吐槽 button opens a feedback box with the three questions; 留言 (only when the page can open the comment box), 複製, 存成檔案; the game halts while it is open; Esc closes', dlg && /最花時間/.test(area) && /最無聊/.test(area) && /最想多一點/.test(area) && btns.some(b => /複製/.test(b)) && btns.some(b => /存成檔案/.test(b)) && paused && closed && /v\d+\.\d+\.\d+/.test(XIEYI.Say.ctx()), { btns, paused, closed }); }
     U.trueRand = tr; p.bag = keepBag; p.sel = keepSel; p.tut = keepTut; p.visits = keepV; p.firsts = keepF; p.wuhou = keepW; g.barSig = ''; g.buildBag();
     w.time = keepT; w.rainUntil = keepRain; w.nextRainAt = keepNext; w.wx = keepWx; p.san = 90; p.hp = Math.max(p.hp, 80); }
+  // ============ v0.9.21 鳥改雀；節氣事件；雀看得見、趕得走；冬夜讀書；冬至一夜無魄 ============
+  { const C = window.CAL, D = XIEYI.DAY, keepT = w.time, keepV = p.visits, keepX = p.x, keepY = p.y, keepSan = p.san, keepIn = g.indoors, keepLight = w.lightNear, keepNow = U.trueRand, keepList = g.ents.list.slice();
+    const termDay = (k, day) => { for (let d = 0; d < 365; d++) { const tm = C.term(d); if (tm.k === k && tm.day === (day || 1)) return d; } };
+    const at = (k, day, fr) => { w.time = termDay(k, day) * D + D * (fr === undefined ? 0.5 : fr); g.evC = null; };
+    // 鳥改雀
+    const caps = g.ents.spawnCaps(false, 1, null), dbOk = !!G.DB['雀'] && !G.DB['鳥'] && /依人小鳥/.test(G.DB['雀'].flavor);
+    ok('v0.9.21: the small bird is now 雀 everywhere (字庫、出生上限、提示); 鳥 is gone from the creatures', dbOk && caps['雀'] === 10 && caps['鳥'] === undefined && /雀/.test(document.getElementById('help').textContent), { dbOk, caps });
+    // 節氣事件：日子
+    const days = (k) => { const out = []; for (let d = 0; d < 365; d++) if (C.events(d)[k]) out.push(C.term(d).name + C.term(d).day + ':' + C.term(d).hou); return out; };
+    const sn = days('snake'), nm = days('noMouse'), sp = days('sparrow'), wf = days('wolf'), sh = days('shen'), so = days('solstice'), wi = days('winter');
+    ok('v0.9.21: the 節氣事件 fall on their 候 — 驚蟄 first three days, 清明二候, 寒露二候 until 立春, 霜降 first three days, 立冬三候, 冬至 day one, winter 立冬–大寒', sn.join() === '驚蟄1:0,驚蟄2:0,驚蟄3:0' && nm.length >= 4 && nm.every(s => /^清明\d+:1$/.test(s)) && /^寒露\d+:1$/.test(sp[0]) && /^大寒/.test(sp[sp.length - 1]) && wf.join() === '霜降1:0,霜降2:0,霜降3:0' && sh.every(s => /^立冬\d+:2$/.test(s)) && so.join() === '冬至1:0' && /^立冬1/.test(wi[0]) && /^大寒/.test(wi[wi.length - 1]), { sn, nm, sp: [sp[0], sp[sp.length - 1]], wf, sh, so });
+    const c1 = g.ents.spawnCaps(false, 1, { snake: true }), c2 = g.ents.spawnCaps(false, 1, { sparrow: true }), c3 = g.ents.spawnCaps(false, 1, { wolf: true }), c4 = g.ents.spawnCaps(true, 1, { wolf: true });
+    { let gx = null; for (let r = 1; r < 30 && !gx; r++) for (let dx = -r; dx <= r && !gx; dx++) for (const dy of [-r, r]) if (w.get(p.x + dx, p.y + dy) === '草') { gx = [p.x + dx, p.y + dy]; break; }
+      g.ents.spawnCaps(false, 1, null); const offDay = gx ? !g.ents.habitat('狼', gx[0], gx[1], false) : null; g.ents.spawnCaps(false, 1, { wolf: true }); const onDay = gx ? g.ents.habitat('狼', gx[0], gx[1], false) : null; g.ents.spawnCaps(false, 1, null);
+      ok('v0.9.21 自查: during 豺乃祭獸 a grass tile is wolf habitat by day too, so the daytime cap can actually spawn wolves (it used to give a cap of two that never filled)', gx && offDay && onDay, { gx, offDay, onDay }); }
+    ok('v0.9.21: 驚蟄 doubles the snake cap; 雀入大水為蛤 leaves only three 雀 by day; 豺乃祭獸 lets two wolves out by day (night unchanged)', c1['蛇'] === 2 * caps['蛇'] && c2['雀'] === 3 && c3['狼'] === 2 && caps['狼'] === 0 && c4['狼'] === g.ents.spawnCaps(true, 1, null)['狼'], { c1: c1['蛇'], c2: c2['雀'], c3: c3['狼'] });
+    // 頭一回說一聲
+    p.visits = {}; at(2, 1, 0.5); g.wuhouAcc = 1; g.wuhouTick(0.01); const tst = document.getElementById('toasts').textContent; const v1 = p.visits['ev:snake'];
+    const n0 = document.querySelectorAll('#toasts .toast').length; g.wuhouAcc = 1; g.wuhouTick(0.01); const n1 = document.querySelectorAll('#toasts .toast').length;
+    ok('v0.9.21: the first day of an event says so once (驚蟄: 蟄蟲驚而出走, snakes double) and not again that year', /驚蟄/.test(tst) && /蟄蟲驚而出走/.test(tst) && v1 !== undefined && n1 === n0, { v1, n0, n1 });
+    // 雀啄：換日的算法照季節與人在不在附近；看得見的雀落在田上啄
+    { const fx = p.x + 30, fy = p.y, near = p.x + 2, keepCells = [[fx, fy], [near, fy]].map(([x, y]) => [x, y, w.diff.has(x + ',' + y) ? w.diff.get(x + ',' + y) : null]);
+      const plant = (x) => { w.set(x, fy, '田'); w.crops.delete(x + ',' + fy); w.plant(x, fy, '黍'); const r = w.crops.get(x + ',' + fy); r.t = w.time - 20 * D; w.set(x, fy, '秀'); return r; };
+      at(10, 5, 0.5); const rf = plant(fx), rn = plant(near); U.trueRand = () => 0; w.cropDay = w.dayIdx() - 1; w.cropTick();
+      const farPeck = rf.pk, nearPeck = rn.pk;
+      at(16, 10, 0.5); rf.pk = 0; rf.t = w.time - 20 * D; w.cropDay = w.dayIdx() - 1; w.cropTick(); const winterPeck = rf.pk;
+      at(4, 8, 0.5); const mice0 = rf.ms = 0; rf.t = w.time - 20 * D; w.set(fx, fy, '秀'); w.cropDay = w.dayIdx() - 1; w.cropTick(); const qingMice = rf.ms;
+      U.trueRand = keepNow;
+      ok('v0.9.21: overnight 雀害 still hits fields far from you, but not the ones within 二十四格 (the visible 雀 do that) nor any field from 寒露二候 to 立春; 清明二候 no 田鼠', farPeck >= 1 && nearPeck === 0 && winterPeck === 0 && qingMice === 0, { farPeck, nearPeck, winterPeck, qingMice });
+      at(10, 5, 0.5); rn.pk = 0; rn.shed = 0; delete rn.rt; rn.t = w.time - 20 * D; w.set(near, fy, '秀'); const fn = g.ents.fieldNear(near - 1, fy, 8);
+      const bird = g.ents.add('雀', near, fy, { moveT: 9 }); g.fx = []; g.livePeck(bird, near, fy); const live = rn.pk === 1 && g.fx.some(f => f.text === '啄');
+      const keepScared = w.scared; w.scared = () => true; const blocked = !w.peckAt(near, fy) && g.ents.fieldNear(near - 1, fy, 8) === null; w.scared = keepScared;
+      at(17, 5, 0.5); const winterLive = !w.peckAt(near, fy);
+      g.ents.remove(bird);
+      ok('v0.9.21: a 雀 finds a ripening field nearby, lands, and pecks it — a floating 啄, one less handful; a 稻草人 keeps it off; after 寒露二候 it does not peck', fn && fn.x === near && fn.y === fy && live && blocked && winterLive, { fn, live, blocked, winterLive });
+      for (const [x, y, v] of keepCells) { w.crops.delete(x + ',' + y); if (v === null) w.diff.delete(x + ',' + y); else w.diff.set(x + ',' + y, v); } w.ver++; }
+    // 彈弓打雀（v0.9.22 使用者定）：打得著；打中驚飛、三十息不落田；再打一下死了、不掉東西；面前有別的獸先打別的
+    { const keepTools = p.tools, keepTool = p.tool, keepBag = p.bag, keepList = g.ents.list.slice(), keepMult = g.dmgMult, keepF = [p.fx, p.fy], cells = [];
+      for (let dx = 1; dx <= 7; dx++) { const k = (p.x + dx) + ',' + p.y; cells.push([p.x + dx, p.y, w.diff.has(k) ? w.diff.get(k) : null]); w.set(p.x + dx, p.y, '草'); }
+      g.ents.list = []; p.tools = [{ n: '彈弓', c: 1, dur: 80 }]; p.tool = 0; p.bag = [{ n: '石子', c: 9 }]; p.sel = 0; g.barSig = ''; p.fx = 1; p.fy = 0; g.dmgMult = () => 1;
+      const sp = g.ents.add('雀', p.x + 3, p.y, { moveT: 99 }), wolf = g.ents.add('狼', p.x + 6, p.y, { moveT: 99 });
+      const pick = g.slingTarget(); g.ents.remove(wolf); const pick2 = g.slingTarget();
+      const keepRnd = U.trueRand; sp.field = { x: sp.x, y: sp.y }; sp.hp = 10; p.atkT = 0; p.sta = 100;
+      U.trueRand = () => 0.9; g.slingShot(sp); const missed = sp.hp === 10 && !!sp.field && !(sp.scareUntil > w.time) && g.count('石子') === 8 && p.atkT > 0;
+      ok('v0.9.23: a 雀 dodges — even aimed right, a stone hits only a quarter of the time; a miss costs the stone and the cooldown, does no harm, and the 雀 stays on the field', missed, { missed, hp: sp.hp });
+      U.trueRand = keepRnd; let hits = 0; for (let i = 0; i < 400; i++) { sp.hp = 1e9; p.atkT = 0; p.sta = 100; p.bag = [{ n: '石子', c: 9 }]; p.tools[0].dur = 80; g.slingShot(sp); if (sp.hp < 1e9) hits++; }
+      ok('v0.9.23: over four hundred real (true-random) shots at a 雀, about a quarter hit', hits >= 60 && hits <= 140, hits);
+      sp.hp = 10; sp.field = { x: sp.x, y: sp.y }; sp.scareUntil = 0; p.bag = [{ n: '石子', c: 8 }]; p.tools[0].dur = 80; g.barSig = '';
+      U.trueRand = () => 0.1; p.atkT = 0; g.slingShot(sp); const scared = g.ents.list.includes(sp) && !sp.field && sp.scareUntil > w.time && sp.hp === 4;
+      const k0 = g.stats.kills; p.atkT = 0; g.slingShot(sp); U.trueRand = keepRnd; const dead = !g.ents.list.includes(sp) && g.stats.kills === k0 + 1 && g.count('石子') === 6 && !p.bag.some(s => s.n === '肉');
+      g.dmgMult = keepMult; p.tools = keepTools; p.tool = keepTool; p.bag = keepBag; g.barSig = ''; g.ents.list = keepList; p.fx = keepF[0]; p.fy = keepF[1]; p.atkT = 0;
+      for (const [x, y, v] of cells) { const k = x + ',' + y; if (v === null) w.diff.delete(k); else w.diff.set(k, v); } w.ver++;
+      ok('v0.9.22: the 彈弓 hits a 雀 — a wolf in front is shot first; a hit 雀 flies off and keeps off fields for thirty breaths; a second stone kills it and nothing drops', pick === wolf && pick2 === sp && scared && dead, { pick: pick && pick.type, pick2: pick2 && pick2.type, scared, dead }); }
+    // 霜降：狼白天不散、追鹿，追上了擺在地上留一塊肉
+    { at(17, 1, 0.5); g.ents.list = []; const wolf = g.ents.add('狼', p.x + 6, p.y, { moveT: 0, calm: 5 }), deer = g.ents.add('鹿', p.x + 7, p.y, { moveT: 9 });
+      const keepCalm = wolf.calm; g.ents.update(0.01, g); const stays = g.ents.list.indexOf(wolf) >= 0;
+      g.fx = []; const dx0 = deer.x, dy0 = deer.y; g.wolfFeast(wolf, deer); let meat = null;
+      for (let dy = -4; dy <= 4 && !meat; dy++) for (let dx = -4; dx <= 4 && !meat; dx++) if (w.get(dx0 + dx, dy0 + dy) === '囊') { const b = w.bags.get((dx0 + dx) + ',' + (dy0 + dy)); if (b && b.some(s => s.n === '肉')) meat = [dx0 + dx, dy0 + dy]; }
+      { const fx0 = deer.x, fy0 = deer.y + 2, cells = []; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const x = fx0 + dx, y = fy0 + dy, k = x + ',' + y; cells.push([x, y, w.diff.has(k) ? w.diff.get(k) : null, w.crops.get(k)]); w.set(x, y, '田'); w.plant(x, y, '黍'); }
+        const d2 = g.ents.add('鹿', fx0, fy0, { moveT: 9 }); g.wolfFeast(wolf, d2); let onField = false, laid = null;
+        for (const [x, y] of cells) if (w.get(x, y) === '囊') onField = true;
+        for (let dy = -4; dy <= 4 && !laid; dy++) for (let dx = -4; dx <= 4 && !laid; dx++) if (w.get(fx0 + dx, fy0 + dy) === '囊') laid = [fx0 + dx, fy0 + dy];
+        const cropsKept = cells.every(([x, y]) => w.crops.has(x + ',' + y));
+        g.ents.remove(d2); if (laid) { w.bags.delete(laid[0] + ',' + laid[1]); w.set(laid[0], laid[1], '土'); }
+        for (const [x, y, v, cr] of cells) { const k = x + ',' + y; if (cr) w.crops.set(k, cr); else w.crops.delete(k); if (v === null) w.diff.delete(k); else w.diff.set(k, v); } w.ver++;
+        ok('v0.9.21 自查: a deer caught standing in a planted field is laid out beside it, not on it — the crops stay', !onField && !!laid && cropsKept, { onField, laid, cropsKept }); }
+      at(17, 6, 0.5); g.ents.list = [wolf]; g.ents.update(0.01, g); const goneAfter = g.ents.list.indexOf(wolf) < 0;
+      ok('v0.9.21: during 豺乃祭獸 wolves stay out by day; a wolf that catches a deer lays it out (祭) and leaves a piece of meat there; after the three days they scatter at dawn again', stays && !!meat && g.fx.some(f => f.text === '祭') && goneAfter, { stays, meat, goneAfter });
+      if (meat) { w.bags.delete(meat[0] + ',' + meat[1]); w.diff.delete(meat[0] + ',' + meat[1]); w.ver++; } g.ents.list = []; }
+    // 冬至一夜無魄
+    { const keepNG = g.diff.ghost; g.diff.ghost = 1; at(21, 1, 0.97); const sol = g.solsticeNight(), gn = g.ghostNight();
+      w.time += D * 0.05; g.evC = null; const sol2 = g.solsticeNight(); at(21, 2, 0.97); const after = g.solsticeNight(), gn2 = g.ghostNight();
+      at(21, 1, 0.97); g.ents.list = []; const gh = g.ents.add('魄', p.x + 5, p.y, { moveT: 9 }); g.ents.update(0.01, g); const fades = gh.fade !== undefined && gh.fade < 1;
+      p.visits = {}; g.wuhouAcc = 1; g.wuhouTick(0.01); const said = /日短至/.test(document.getElementById('toasts').textContent);
+      g.diff.ghost = keepNG; g.ents.list = [];
+      ok('v0.9.21: the night of 冬至 (dusk to the next dawn) has no 魄 — none come, those out fade; it says 日短至; the next night is normal', sol && !gn && sol2 && !after && gn2 && fades && said, { sol, gn, sol2, after, gn2, fades, said }); }
+    // 冬夜讀書
+    { g.indoors = () => true; w.lightNear = () => true; w.rainUntil = 0; w.wx = ''; p.readNight = undefined; p.readRain = undefined;
+      at(19, 3, 0.95); p.san = 50; const r1 = g.rainRead(), s1 = p.san; const r2 = g.rainRead();
+      w.time += D; g.evC = null; const r3 = g.rainRead();
+      at(19, 3, 0.5); p.readNight = undefined; const day = g.rainRead();
+      at(8, 3, 0.95); p.readNight = undefined; const summer = g.rainRead();
+      g.indoors = keepIn; w.lightNear = keepLight;
+      ok('v0.9.21: a winter night (立冬 to 立春) indoors by a lamp counts as 晴耕雨讀, once a night; not by day, not on a summer night', r1 && s1 > 50 && !r2 && r3 && !day && !summer, { r1, s1, r2, r3, day, summer }); }
+    w.time = keepT; g.evC = null; p.visits = keepV; p.x = keepX; p.y = keepY; p.san = keepSan; g.ents.list = keepList; U.trueRand = keepNow; }
+  // ============ v0.9.21 窯借灶火、埴與陶：陶釜陶甑、甕、缸、瓦簷、甓 ============
+  { const D = XIEYI.DAY, keepT = w.time, keepBag = p.bag, keepSel = p.sel, keepNow = U.trueRand, keepX = p.x, keepY = p.y, keepFx = p.fx, keepFy = p.fy, touched = new Set();
+    const put = (x, y, ch) => { const k = x + ',' + y; if (!touched.has(k)) touched.add(k + '|' + (w.diff.has(k) ? w.diff.get(k) : '\u0000')); w.set(x, y, ch); };
+    const face = (dx, dy) => { p.fx = dx; p.fy = dy; };
+    const ox = p.x, oy = p.y + 4;   // 在人下面四格開一塊地
+    for (let y = oy - 1; y <= oy + 4; y++) for (let x = ox - 3; x <= ox + 6; x++) put(x, y, '土');
+    const rc = G.RECIPES.find(r => r.out === '窯');
+    ok('v0.9.21: the 窯 is a 居所 recipe (石八土四) and the pottery is in the tables (埴、陶釜、陶甑、甕、缸、瓦、甓)', rc && rc.need['石'] === 8 && rc.need['土'] === 4 && rc.cat === '居所' && ['埴', '陶釜', '陶甑', '瓦'].every(n => G.item(n)) && ['窯', '甕', '缸', '甓'].every(n => G.DB[n] && G.DB[n].place) && Object.keys(G.KILN).length === 7, rc);
+    // 埴：淡水邊鋤土三成、沼裡鋤五成
+    { p.x = ox; p.y = oy + 2; put(ox + 2, oy + 2, '湖'); put(ox + 1, oy + 2, '土'); face(1, 0); p.bag = []; p.sel = 0; p.tools = [{ n: '石鋤', c: 1, dur: 40 }]; p.tool = 0; p.sta = 100; g.barSig = '';
+      U.trueRand = () => 0; g.action = null; g.pressGather(); if (g.action) { g.action.t = g.action.dur; g.updateAction && g.updateAction(1); } const clay1 = g.count('埴'), field = w.get(ox + 1, oy + 2) === '田';
+      put(ox + 2, oy + 2, '土'); put(ox + 1, oy + 2, '土'); p.bag = []; g.action = null; g.pressGather(); const clayDry = g.count('埴');
+      put(ox + 1, oy + 2, '沼'); p.bag = []; g.action = null; g.pressGather(); const clayBog = g.count('埴'), stillBog = w.get(ox + 1, oy + 2) === '沼';
+      U.trueRand = keepNow; put(ox + 1, oy + 2, '土');
+      ok('v0.9.21: hoeing soil within two tiles of fresh water turns up 埴 (thirty percent); away from water none; hoeing a 沼 gives 埴 (fifty percent) and leaves the bog', clay1 === 1 && field && clayDry === 0 && clayBog === 1 && stillBog, { clay1, field, clayDry, clayBog, stillBog }); }
+    // 窯：借旁邊灶的火
+    { const kx = ox + 2, ky = oy, sx = ox + 3, sy = oy; put(kx, ky, '窯'); put(sx, sy, '灶'); w.stoves.set(sx + ',' + sy, 0); p.x = kx - 1; p.y = ky; face(1, 0);
+      p.bag = [{ n: '埴', c: 4 }]; g.barSig = ''; g.pressPlace(); const opened = !!g.kilnAt && !document.getElementById('kiln').classList.contains('hidden') && /冷著/.test(document.getElementById('kiln-fire').textContent);
+      const halted = g.panelOpen(); const btns = document.querySelectorAll('#kiln-make button').length;
+      g.kilnStart('陶釜'); const rec = w.kilns.get(kx + ',' + ky), used = g.count('埴') === 2;
+      const secs = rec ? rec.left : 0; for (let i = 0; i < 20; i++) w.step(p.x, p.y); const coldLeft = rec.left;
+      w.addFuel(sx, sy, 500); const f0 = w.stoveFuel(sx, sy); for (let i = 0; i < 20; i++) w.step(p.x, p.y); const f1 = w.stoveFuel(sx, sy), burned = U.r4(f0 - f1), progress = U.r4(coldLeft - rec.left);
+      g.closeKiln(); g.messages = []; let n = 0; while (!rec.done && n++ < 2000) w.step(p.x, p.y); const done = rec.done === 1;
+      g.openKiln({ x: kx, y: ky }); const takeBtn = !!document.getElementById('kiln-take'); g.kilnTake(); const got = g.count('陶釜') === 1 && !w.kilns.has(kx + ',' + ky); g.closeKiln();
+      ok('v0.9.21: F on a 窯 opens its panel (the game stops); with the 灶 beside it cold nothing fires; once the 灶 burns the batch fires and that 灶 burns twice as fast; when done, 取出 gives the pots', opened && halted && btns === 7 && used && secs > 0 && coldLeft === secs && progress > 0 && Math.abs(burned - 2 * progress) < 1e-6 && done && takeBtn && got, { opened, halted, btns, secs, coldLeft, progress, burned, done, takeBtn, got });
+      // 拆窯：還沒燒好退料
+      g.openKiln({ x: kx, y: ky }); g.kilnStart('陶甑'); g.closeKiln(); const before = g.count('埴'); g.takeOk = true; g.action = { type: 'gather', x: kx, y: ky, ch: '窯', t: 0, dur: 0.1 }; g.finishGather(g.action); g.takeOk = false;
+      ok('v0.9.21: taking down a 窯 mid-firing breaks up the unfired pot and gives the clay back', g.count('埴') === before + 2 && g.count('窯') === 1 && !w.kilns.size, { before, after: g.count('埴') });
+      put(sx, sy, '土'); }
+    // 陶釜陶甑：灶上煮，用一次少一點，到頭碎了
+    { const sx = ox + 3, sy = oy; put(sx, sy, '灶'); w.addFuel(sx, sy, 300); p.x = sx - 1; p.y = sy; face(1, 0);
+      p.bag = [{ n: '陶釜', c: 1, dur: 2 }, { n: '陶甑', c: 1, dur: 30 }, { n: '稷', c: 4, ds: [g.day() - 60, g.day() - 60, g.day() - 60, g.day() - 60] }, { n: '淡水瓶', c: 2 }]; g.barSig = ''; g.openStove({ x: sx, y: sy });
+      const potShown = /釜甑/.test(document.getElementById('stove-cook').textContent); g.stovePot('稷粥'); const d1 = (p.bag.find(s => s.n === '陶釜') || {}).dur;
+      g.stovePot('稷粥'); const broke = !p.bag.some(s => s.n === '陶釜') && g.count('稷粥') === 4; g.closeStove();
+      ok('v0.9.21: clay pots cook in the 灶 like iron ones; each use wears a point; at zero the 陶釜 cracks', potShown && d1 === 1 && broke, { potShown, d1, broke });
+      ok('v0.9.22: a 陶釜 and a 陶甑 last a hundred uses (thirty in v0.9.21)', G.item('陶釜').dur === 100 && G.item('陶甑').dur === 100 && /一百次/.test(G.KILN['陶釜'].note), [G.item('陶釜').dur, G.item('陶甑').dur]);
+      put(sx, sy, '土'); }
+    // 甕：只裝吃的；果不醉、穀變陳慢一半
+    { const jx = ox, jy = oy + 1; put(jx, jy, '甕'); w.chests.set(jx + ',' + jy, []); p.x = jx - 1; p.y = jy; face(1, 0); const today = g.day();
+      p.bag = [{ n: '果', c: 2, ds: [today, today] }, { n: '黍', c: 2, ds: [today, today] }, { n: '石', c: 3 }]; g.barSig = ''; g.openChest({ x: jx, y: jy });
+      const title = document.getElementById('chest-title').textContent, cells = document.querySelectorAll('#chest-grid .slot').length;
+      const iStone = p.bag.findIndex(s => s.n === '石'); g.moveStack('bag', iStone); const stoneKept = g.count('石') === 3;
+      g.moveStack('bag', p.bag.findIndex(s => s.n === '果')); g.moveStack('bag', p.bag.findIndex(s => s.n === '黍')); const box = w.chests.get(jx + ',' + jy);
+      g.jarAge(10); const fr = box.find(s => s.n === '果'), gr = box.find(s => s.n === '黍');
+      ok('v0.9.21: a 甕 holds twelve stacks of food only; ten days in it the fruit has not aged at all and the grain only five days', title === '甕' && cells === 12 && stoneKept && fr && fr.ds[0] === today + 10 && gr && gr.ds[0] === today + 5, { title, cells, stoneKept, fr: fr && fr.ds, gr: gr && gr.ds });
+      g.closeChest(); }
+    // 缸：屋外下雨接水；空瓶舀
+    { const cx = ox + 5, cy = oy + 3; put(cx, cy, '缸'); w.jars.set(cx + ',' + cy, 0); w.rainUntil = w.time + D; w.wx = 'rain'; const keepDry = w.dryAt; w.dryAt = () => false; const keepCov = w.covered; w.covered = () => false;
+      for (let i = 0; i < Math.ceil(D / 16 / 0.5) + 2; i++) w.step(p.x, p.y); const water = w.jarWater(cx, cy);
+      p.x = cx - 1; p.y = cy; face(1, 0); p.bag = [{ n: '玻璃瓶', c: 1 }]; p.sel = 0; g.barSig = ''; g.pressPlace(); const filled = g.count('淡水瓶') === 1 && w.jarWater(cx, cy) === water - 1;
+      w.rainUntil = 0; w.dryAt = keepDry; w.covered = keepCov;
+      ok('v0.9.21: a 缸 outdoors collects rain (a bottle per sixteenth of a day); an empty bottle scoops a 淡水瓶 out', water >= 1 && filled, { water, filled }); }
+    // 瓦簷：簷下的燈不壞；拆磚瓦退回；大風吹不垮
+    { const bx = ox + 5, by = oy, lx = ox + 5, ly = oy + 1, l2x = ox - 2, l2y = oy + 3; put(bx, by, '磚'); put(lx, ly, '燈'); put(l2x, l2y, '燈'); p.x = bx - 1; p.y = by; face(1, 0);
+      p.bag = [{ n: '瓦', c: 2 }]; p.sel = 0; g.barSig = ''; g.pressPlace(); const eave = w.eaves.has(bx + ',' + by) && g.count('瓦') === 1;
+      const keepDry = w.dryAt, keepCov = w.covered; w.dryAt = () => false; w.covered = () => false; U.trueRand = () => 0; w.rainLampP = 1; w.rainLamps(); U.trueRand = keepNow; w.dryAt = keepDry; w.covered = keepCov; w.rainLampP = g.diff.lampP;
+      const keptLamp = w.get(lx, ly) === '燈', lostLamp = w.get(l2x, l2y) !== '燈';
+      const ram = g.ents.rammable(bx, by);
+      g.takeOk = true; g.action = { type: 'gather', x: bx, y: by, ch: '磚', t: 0, dur: 0.1 }; g.finishGather(g.action); g.takeOk = false; const back = g.count('瓦') === 2 && !w.eaves.has(bx + ',' + by);
+      ok('v0.9.21: 瓦 laid on a 磚 makes an eave — the lamp under it survives rain that ruins one in the open; taking the 磚 down gives the 瓦 back', eave && keptLamp && lostLamp && ram && back, { eave, keptLamp, lostLamp, back }); }
+    // 甓：耐撞一倍半，算屋子的四面
+    { const ex = ox + 4, ey = oy + 2; put(ex, ey, '甓'); const hits = []; for (let i = 0; i < 6; i++) { const r = w.hitWall(ex, ey); hits.push(r); if (r === 'broken' || w.get(ex, ey) !== '甓') break; }
+      const ruinedAt = hits.indexOf('ruined') + 1;
+      ok('v0.9.21: 甓 (fired brick, 青磚) takes three rams before it crumbles to 墟 (a 磚 takes two) and counts as a wall for rooms and rams', ruinedAt === 3 && g.ents.rammable(ex, ey) && G.DB['甓'].opaque, { hits }); }
+    // 收拾
+    for (const s of touched) { const [k, v] = s.split('|'); if (v === '\u0000') w.diff.delete(k); else w.diff.set(k, v); const [x, y] = k.split(',').map(Number); w.chests.delete(k); w.kilns.delete(k); w.jars.delete(k); w.eaves.delete(k); w.stoves.delete(k); w.lamps.delete(k); w.crops.delete(k); }
+    w.ver++; w.time = keepT; p.bag = keepBag; p.sel = keepSel; p.x = keepX; p.y = keepY; p.fx = keepFx; p.fy = keepFy; U.trueRand = keepNow; g.barSig = ''; }
+  // ============ v0.9.21 鮫人與鯤 ============
+  { const C = window.CAL, D = XIEYI.DAY, keepT = w.time, keepBag = p.bag, keepSel = p.sel, keepX = p.x, keepY = p.y, keepWorn = Object.assign({}, p.worn), keepJ = p.jiao, keepK = p.kun, keepNow = U.trueRand, keepSky = g.harpySky, keepSpot = g.jiaoSpot, keepList = g.ents.list.slice(), keepFeats = (p.feats || []).slice(), keepFirsts = Object.assign({}, p.firsts || {});
+    const nightAt = (d, fr) => { w.time = d * D + D * (fr === undefined ? 0.95 : fr); g.evC = null; g.sunC = null; };
+    ok('v0.9.21: 鮫人, 鮫綃 (an inner layer), 鮫珠 (a lamp that never goes out, tile 珠) and 鯤 are in the tables', G.DB['鮫'] && G.item('鮫綃').slot === '襯' && G.item('鮫珠').tile === '珠' && G.DB['珠'].light === 6 && G.DB['珠'].place && G.item('鯤').food && /魚子/.test(G.item('鯤').flavor));
+    // 南邊的夜裡出現
+    { p.jiao = {}; g.ents.list = []; g.jiaoRoll = -1; g.jiaoP = 1; g.harpySky = () => true; const sx = p.x + 6, sy = p.y, kc = w.diff.has(sx + ',' + sy) ? w.diff.get(sx + ',' + sy) : null; w.set(sx, sy, '淼'); g.jiaoSpot = () => [sx, sy];
+      nightAt(30); g.jiaoAcc = 1; g.jiaoTick(0.01); const e = g.ents.list.find(o => o.type === '鮫');
+      g.jiaoAcc = 1; g.jiaoTick(0.01); const once = g.ents.list.filter(o => o.type === '鮫').length === 1;
+      ok('v0.9.21: on a night in the south a 鮫人 appears sitting in the water (one at a time; she is not hostile)', !!e && once && !g.ents.isHostile(e) && e.x === sx, { e: !!e, once });
+      // 說話：給棉麻織；明夜得鮫綃；穿著回來泣珠
+      p.bag = [{ n: '棉', c: 3 }, { n: '麻', c: 2 }]; p.sel = 0; g.barSig = ''; p.x = sx - 1; p.y = sy; p.fx = 1; p.fy = 0; p.tools = []; p.tool = -1;
+      g.talkJiao(e); const lack = g.talking && g.talking.choices[0].off === true && /棉三、麻三/.test(document.getElementById('talk-text').textContent); g.talkPick('last');
+      p.bag = [{ n: '棉', c: 3 }, { n: '麻', c: 3 }]; g.talkJiao(e); g.talkPick(0); const given = p.jiao.weave === g.nightNo() && g.count('棉') === 0 && g.count('麻') === 0;
+      g.talkJiao(e); const notYet = /明夜才織得好/.test(document.getElementById('talk-text').textContent); g.talkPick('last');
+      nightAt(31); g.talkJiao(e); const got = g.count('鮫綃') === 1; g.talkPick('last');
+      p.worn['襯'] = { n: '鮫綃', c: 1 }; p.azure = false; const sk = g.swimK(); g.talkJiao(e); const pearl = g.count('鮫珠') === 1 && !!p.jiao.shown; g.talkPick('last');
+      g.talkJiao(e); const onlyOnce = g.count('鮫珠') === 1; g.talkPick('last');
+      ok('v0.9.21: talk to her — without 棉三麻三 the weaving choice is off; give them and the 鮫綃 is ready the next night; wear it back to her and she weeps a 鮫珠 (once)', lack && given && notYet && got && pearl && onlyOnce, { lack, given, notYet, got, pearl, onlyOnce });
+      p.azure = false; ok('v0.9.21: wearing 鮫綃 halves the drowning debuffs (like 水性)', sk === 0.5, sk);
+      // 守夜
+      p.jiao.vigil = undefined; g.jiaoStay = (1 - C.dayFrac(w.dayIdx())) * D * 0.6; g.jiaoWatch = g.jiaoStay; const before = g.count('鮫珠'); w.time = 32 * D + D * 0.5; g.evC = null; g.sunC = null; g.jiaoAcc = 1; g.jiaoTick(0.01);
+      const vig = g.count('鮫珠') === before + 1 && !g.ents.list.some(o => o.type === '鮫') && !!p.jiao.vigil;
+      ok('v0.9.21: keeping watch by her through the night — at dawn she weeps a 鮫珠 before sinking back', vig, { vig, before, after: g.count('鮫珠') });
+      // 打她：按 E 一律是說話（v0.9.21 自查：原本具欄裡有刀，E 就變成打她）；手上有兵器時說話裡多一個「動手」，還要再確認一次
+      nightAt(33); g.jiaoRoll = -1; g.jiaoAcc = 1; g.jiaoTick(0.01); const e2 = g.ents.list.find(o => o.type === '鮫'); p.tools = [{ n: '石刀', c: 1, dur: 40 }]; p.tool = 0; p.atkT = 0; p.sta = 100;
+      const tt = () => document.getElementById('talk-text').textContent, act = () => g.talking ? g.talking.choices.findIndex(c => /動手/.test(c.label)) : -1;
+      document.getElementById('talk').classList.add('hidden'); g.talking = null; p.fx = Math.sign(e2.x - p.x); p.fy = Math.sign(e2.y - p.y); g.pressGather(); const eTalks = !!g.talking && document.getElementById('talk-title').textContent === '鮫人' && g.ents.list.includes(e2) && !p.jiao.hit; if (g.talking) g.talkPick('last');
+      ok('v0.9.21 自查: E next to her talks even with a knife in the tool bar (it used to strike her)', eTalks, { eTalks, d: [e2.x - p.x, e2.y - p.y] });
+      g.talkJiao(e2); const ai = act(); g.talkPick('last'); p.tool = -1; g.talkJiao(e2); const unarmedNo = act() < 0; g.talkPick('last'); p.tool = 0;
+      g.talkJiao(e2); g.talkPick(act()); const asked = !!g.talking && /當真要動手/.test(tt()); g.talkPick(0); const spared = g.ents.list.includes(e2) && !p.jiao.hit;
+      ok('v0.9.21 自查: with a knife in hand, talking to her has a 動手 choice only when armed, and it asks again (當真要動手？) — 不了 leaves her be', ai >= 0 && unarmedNo && asked && spared, { ai, unarmedNo, asked, spared });
+      g.talkJiao(e2); g.talkPick(act()); g.talkPick(1); const dove = !g.ents.list.includes(e2) && p.jiao.hit === 1 && !p.jiao.gone;
+      nightAt(34); g.jiaoRoll = -1; g.jiaoAcc = 1; g.jiaoTick(0.01); const e3 = g.ents.list.find(o => o.type === '鮫'); let warned = false; if (e3) { g.talkJiao(e3); g.talkPick(act()); warned = /再也不來/.test(tt()); g.talkPick(1); }
+      nightAt(35); g.jiaoRoll = -1; g.jiaoAcc = 1; g.jiaoTick(0.01); const never = !!p.jiao.gone && !g.ents.list.some(o => o.type === '鮫');
+      ok('v0.9.21: hitting her makes her dive with a warning; a second time (the confirm says she will never come back) she is gone for good and never comes back', !!e2 && dove && !!e3 && warned && never, { dove, e3: !!e3, warned, never });
+      if (kc === null) w.diff.delete(sx + ',' + sy); else w.diff.set(sx + ',' + sy, kc); w.ver++; }
+    // 鮫珠：地上的燈，滅不了；行船帶著，船邊魄近不了
+    { const lx = p.x + 2, ly = p.y + 2, kc = w.diff.has(lx + ',' + ly) ? w.diff.get(lx + ',' + ly) : null; w.set(lx, ly, '土'); p.x = lx - 1; p.y = ly; p.fx = 1; p.fy = 0; p.bag = [{ n: '鮫珠', c: 1 }]; p.sel = 0; g.barSig = ''; g.pressPlace();
+      const placed = w.get(lx, ly) === '珠' && w.lightNear(lx + 1, ly, 3); U.trueRand = () => 0; w.rainLampP = 1; w.rainUntil = w.time + D; w.wx = 'rain'; w.rainLamps(); w.startHail(); w.hail = null; w.rainUntil = 0; U.trueRand = keepNow; w.rainLampP = g.diff.lampP; const stays = w.get(lx, ly) === '珠';
+      if (kc === null) w.diff.delete(lx + ',' + ly); else w.diff.set(lx + ',' + ly, kc); w.ver++;
+      nightAt(40); p.bag = [{ n: '鮫珠', c: 1 }]; const keepSail = p.sailing; p.sailing = true; const ship = g.pearlShip(); g.ents.list = []; const gh = g.ents.add('魄', p.x + 2, p.y, { moveT: 9 }); g.ents.update(0.01, g); const burned = gh.fade !== undefined && gh.fade < 1; p.sailing = keepSail; g.ents.list = [];
+      ok('v0.9.21: a 鮫珠 set on the ground is a lamp rain and hail cannot put out; carried on a ship at night, 魄 within three tiles of the boat burn away', placed && stays && ship && burned, { placed, stays, ship, burned }); }
+    // 鯤：北冥深海釣起；離水兩日乾；吃了沒了；放回北冥；缸裡養
+    { const ny = -Math.round(0.75 * G.WORLD_R); let kx = null; for (let x = -200; x <= 200 && kx === null; x++) if (w.raw(x, ny) === '淼' && w.deepSea(x, ny)) kx = x;
+      // v0.9.22：還了願才釣得到
+      p.kun = undefined; g.kunP = 1; const keepPY = p.y, keepPX = p.x, keepRd = p.redeemed; p.redeemed = undefined; const locked = g.rollFish(kx, ny, 'deep'); p.redeemed = { day: 1 }; const f = g.rollFish(kx, ny, 'deep'); const south = g.rollFish(kx, -ny, 'deep');
+      p.x = kx; p.y = ny; const keepSail = p.sailing; p.sailing = true; const place = g.placeName();
+      // v0.9.21 自查：走提竿那一下（原本鯤沒有 reels，提了竿就卡在「1／undefined」收不上來）
+      g.fishing = { phase: 'bite', fish: f, rod: { n: '大鉤', c: 1, dur: 80 }, x: kx, y: ny, L: 'deep' }; p.bag = [g.fishing.rod]; g.rodPress(); const caught = g.count('鯤') === 1 && p.kun && p.kun.st === 'bag' && p.fishLog['鯤'] === 1;
+      const again = g.rollFish(kx, ny, 'deep') !== f;
+      w.time = (p.kun.at + 2) * D + D * 0.3; g.kunDay(); const dried = g.count('鯤') === 0 && p.kun.st === 'dry' && g.rollFish(kx, ny, 'deep') === f;   // 乾了還釣得到別粒
+      p.kun = { st: 'bag', at: g.day() }; p.bag = [{ n: '鯤', c: 1 }]; p.sel = 0; g.useItem(); const ate = p.kun.st === 'ate' && g.count('鯤') === 0 && g.rollFish(kx, ny, 'deep') !== f;
+      p.kun = { st: 'bag', at: g.day() }; p.bag = [{ n: '鯤', c: 1 }]; p.sel = 0; g.barSig = ''; g.pressPlace(); const released = p.kun.st === 'sea' && g.count('鯤') === 0;
+      p.kun = { st: 'dry', day: g.day() }; p.bag = [{ n: '鯤', c: 1 }]; p.sel = 0; g.barSig = ''; g.pressPlace(); const dryGone = p.kun.st === 'dry' && g.count('鯤') === 0;   // 乾了的那一粒從小囊撿回來：放不回去、一碰就散（v0.9.21 自查）
+      ok('v0.9.21 自查: a 鯤 that already dried (picked back up from a 小囊 or 荷包) cannot be released or kept in a 缸 — it crumbles', dryGone, { dryGone, st: p.kun.st });
+      p.sailing = keepSail; p.x = keepPX; p.y = keepPY; g.kunP = undefined; p.redeemed = keepRd;
+      ok('v0.9.22: the 鯤 only comes up after 還願 — before that the deep 北冥 gives no 鯤', !locked || locked.n !== '鯤', locked && locked.n);
+      ok('v0.9.21: in 北冥 (the far north, beyond 玄洲) a deep-sea line now and then brings up a 鯤 — a single fish egg (one at a time); out of water it dries in two days (then another can be caught); eaten it is gone for good; released into 北冥 it lives', f && f.n === '鯤' && (!south || south.n !== '鯤') && /北冥/.test(place) && caught && again && dried && ate && released, { f: f && f.n, place, caught, again, dried, ate, released });
+      // 缸裡養
+      { const cx = p.x + 2, cy = p.y + 3, kc = w.diff.has(cx + ',' + cy) ? w.diff.get(cx + ',' + cy) : null; w.set(cx, cy, '缸'); w.jars.set(cx + ',' + cy, 2); p.x = cx - 1; p.y = cy; p.fx = 1; p.fy = 0;
+        p.kun = { st: 'bag', at: g.day() }; p.bag = [{ n: '鯤', c: 1 }]; p.sel = 0; g.barSig = ''; g.pressPlace(); const inJar = p.kun.st === 'jar' && g.count('鯤') === 0;
+        w.time += 5 * D; g.kunDay(); const alive = p.kun.st === 'jar';
+        p.bag = []; g.barSig = ''; g.pressPlace(); const back = p.kun.st === 'bag' && g.count('鯤') === 1;
+        g.useJar({ x: cx, y: cy }, p.bag[0]); w.jars.set(cx + ',' + cy, 0); g.kunDay(); const dry = p.kun.st === 'dry';
+        if (kc === null) w.diff.delete(cx + ',' + cy); else w.diff.set(cx + ',' + cy, kc); w.jars.delete(cx + ',' + cy); w.ver++;
+        ok('v0.9.21: a 鯤 kept in a 缸 with water does not dry; F with empty hands takes it back out; a jar run dry kills it', inJar && alive && back && dry, { inJar, alive, back, dry }); }
+      // 影子一次比一次大，六月化鵬
+      { p.x = kx; p.y = ny; p.sailing = true; const today = g.day(); p.kun = { st: 'sea', day: today - 130, seen: 0 }; g.fx = []; g.kunShadow(); const sh = g.fx.find(x => x.type === 'kun');
+        let jd = null; for (let d = 300; d < 800 && jd === null; d++) if (C.month(d).m === 5) jd = d;
+        w.time = jd * D + D * 0.5; g.evC = null; g.sunC = null; p.kun = { st: 'sea', day: jd + 1 - 250, seen: 3 }; p.feats = []; g.fx = []; g.kunAcc = 1; g.kunTick(0.01);
+        const rose = p.kun.st === 'peng' && p.kun.rise === 1 && p.feats.some(f2 => f2.id === '圖南') && g.fx.some(x => x.type === 'peng');
+        p.y = 0; p.sailing = false; let jl = null; for (let d = jd; d < jd + 40 && jl === null; d++) if (C.month(d).m === 6) jl = d;
+        w.time = jl * D + D * 0.5; g.evC = null; g.sunC = null; p.kun = { st: 'sea', day: jd - 260, june: 1 }; const keepIn = g.indoors; g.indoors = () => false; g.kunAcc = 1; g.kunTick(0.01); g.indoors = keepIn;
+        const passed = p.kun.st === 'peng' && p.kun.rise === 0;
+        ok('v0.9.21: a released 鯤 shows as a shadow under the sea, larger each stage; in the sixth month after two hundred forty days it rises from 北冥 as the 鵬 (圖南); if you were not there, the 鵬 passes over you in the seventh month', sh && sh.size === 12 && rose && passed, { size: sh && sh.size, rose, passed }); }
+      p.sailing = keepSail; }
+    w.time = keepT; g.evC = null; g.sunC = null; p.bag = keepBag; p.sel = keepSel; p.x = keepX; p.y = keepY; p.worn = keepWorn; p.jiao = keepJ; p.kun = keepK; U.trueRand = keepNow; g.harpySky = keepSky; g.jiaoSpot = keepSpot; g.jiaoP = undefined; g.ents.list = keepList; p.feats = keepFeats; p.firsts = keepFirsts; g.fishing = null; g.barSig = ''; }
+  // ============ v0.9.21 見聞錄：到過的地域、少見的生靈、觀星看到的當季星宿 ============
+  { const C = window.CAL, D = XIEYI.DAY, keepT = w.time, keepX = p.x, keepY = p.y, keepR = p.rare, keepRg = p.regions, keepX2 = p.xiu, keepZ = p.zhong, keepC = p.creatures.slice(), keepK = p.kun;
+    p.rare = {}; p.regions = {}; p.xiu = {}; p.zhong = {};
+    g.saw('龜'); g.saw('龜'); g.saw('鹿'); const rare = p.rare['龜'] && p.rare['龜'].day === g.day() && typeof p.rare['龜'].at === 'string' && !p.rare['鹿'];
+    // 地域：找一格大陸上的陸地站上去
+    let spot = null; for (let r = 200; r < 700 && !spot; r += 23) for (let a = 0; a < 6.28 && !spot; a += 0.4) { const x = Math.round(Math.cos(a) * r), y = Math.round(Math.sin(a) * r); if (G.DB[w.get(x, y)].kind !== 'water' && !G.zoneAt(x, y, g.seed) && G.regionAt(x, y, g.seed)) spot = [x, y]; }
+    if (spot) { p.x = spot[0]; p.y = spot[1]; } g.wuhouAcc = 1; g.wuhouTick(0.01); const rn = G.regionAt(p.x, p.y, g.seed).name, region = !!p.regions[rn];
+    // 觀星：照二十八宿的位置記
+    let xs = []; if (g.sky && g.sky.xiuNow) { w.time = 100 * D + D * 0.95; g.sunC = null; xs = g.sky.xiuNow(g); }
+    const added = g.noteXiu(xs), q = g.season(), vis = xs.filter(a => a.alt >= 25).length;
+    const html = g.travelHtml();
+    ok('v0.9.21: the 見聞錄 now keeps where you have been (地域 by name and day), the rare creatures you have met (day and place; common ones are not listed) and the 宿 seen when stargazing, by season, with the one at the meridian', rare && region && xs.length === 28 && added === vis && vis > 0 && Object.keys(p.xiu[q]).length === vis && !!p.zhong[q] && /到過的地方/.test(html) && /少見的生靈/.test(html) && /龜/.test(html) && /觀星/.test(html) && html.indexOf(p.zhong[q]) >= 0 && html.indexOf(rn) >= 0, { rare, region, rn, xs: xs.length, added, vis, zhong: p.zhong[q] });
+    p.kun = { st: 'peng', day: 300, rise: 1, seen: 4 }; const kh = g.travelHtml();
+    ok('v0.9.21: the 鯤 shadows and the 鵬 are written in too, with the note that 《列子》 does not have the 鯤 turn into the 鵬', /鯤影/.test(kh) && /列子/.test(kh) && /鵬/.test(kh));
+    { g.save(); const s = XIEYI.Game.readSave(g.slot); s.player.creatures = ['鳥', '鹿']; g.load(s); const mig = p.creatures.indexOf('雀') >= 0 && p.creatures.indexOf('鳥') < 0;
+      s.player.creatures = ['鳥', '雀']; g.load(s); const dup = p.creatures.filter(c => c === '雀').length === 1 && p.creatures.indexOf('鳥') < 0;
+      ok('v0.9.21 自查: an old save that met the 鳥 reads as having met the 雀 (no second 初見, no 鳥 left in the 見聞錄)', mig && dup, { mig, dup, c: p.creatures }); }
+    w.time = keepT; g.sunC = null; p.x = keepX; p.y = keepY; p.rare = keepR; p.regions = keepRg; p.xiu = keepX2; p.zhong = keepZ; p.creatures = keepC; p.kun = keepK; }
+  // ============ v0.9.21 作物字一筆一筆長 ============
+  { const D = XIEYI.DAY, keepT = w.time, R = g.renderer, S = G.STROKES;
+    const counts = Object.fromEntries(Object.keys(S).map(k => [k, S[k].length]));
+    const okCounts = counts['稻'] === 15 && counts['黍'] === 12 && counts['稷'] === 15 && counts['麥'] === 11 && counts['菽'] === 12;   // 筆畫數照台灣標準（艹四畫：菽十二畫）
+    const okCoords = Object.values(S).every(list => list.every(st => st.length >= 4 && st.length % 2 === 0 && st.every(v => v >= 0 && v <= 100)));
+    const fx = p.x + 3, fy = p.y + 3, kc = w.diff.has(fx + ',' + fy) ? w.diff.get(fx + ',' + fy) : null; w.set(fx, fy, '田'); w.crops.delete(fx + ',' + fy); w.plant(fx, fy, '稻');
+    const r = w.crops.get(fx + ',' + fy), fr = []; for (const k of [0, 0.25, 0.5, 0.75, 0.99]) { r.t = U.r4(w.time - k * G.CROPS['稻'].grow * D); fr.push(U.r4(w.cropFrac(fx, fy))); }
+    const mono = fr.every((v, i) => i === 0 || v > fr[i - 1]) && fr[0] < 0.05 && fr[4] > 0.95;
+    const c1 = R.partGlyph('稻', '#3f6a2a', 3), c2 = R.partGlyph('稻', '#3f6a2a', 3), cached = c1 === c2 && c1.width === 128;
+    const ink = (c) => { const d = c.getContext('2d').getImageData(0, 0, 128, 128).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 40) n++; return n; };
+    const grows = ink(R.partGlyph('稻', '#3f6a2a', 2)) < ink(R.partGlyph('稻', '#3f6a2a', 8)) && ink(R.partGlyph('稻', '#3f6a2a', 8)) < ink(R.glyph('稻', '#3f6a2a'));
+    r.t = U.r4(w.time - 0.5 * G.CROPS['稻'].grow * D); w.cropTick && (w.cropDay = w.dayIdx() - 1, w.cropTick()); R.atlas.delete('稻|' + G.DB[w.get(fx, fy)].ink + '|' + 7); g.renderer.draw(g, 0.016, performance.now() / 1000);
+    const drawn = [...R.atlas.keys()].some(k => /^稻\|.*\|\d+$/.test(k));
+    w.endCrop(fx, fy, 0); if (kc === null) w.diff.delete(fx + ',' + fy); else w.diff.set(fx + ',' + fy, kc); w.ver++; w.time = keepT;
+    ok('v0.9.21: a growing field writes its grain character stroke by stroke (稻15 黍12 稷15 麥11 菽12 strokes, Taiwan counts) — the share written follows the days grown, more strokes show more ink, and the map draws it', okCounts && okCoords && mono && cached && grows && drawn, { counts, fr, cached, grows, drawn }); }
+  // ============ v0.9.21 存檔瘦身：差異層與計時器寫成兩串字（dz、tz），舊寫法照讀 ============
+  { const W = window.World, keepDiff = new Map(w.diff), keepTimers = new Map(w.timers);
+    const cells = [[-37, -5, '土'], [-36, -5, '田'], [-35, -5, '磚'], [-30, -5, '門'], [12, -5, '白'], [-3, 0, '路'], [500, 4, '磚'], [-800, 799, '沙'], [3, 3, '木屋']];
+    for (const [x, y, ch] of cells) w.diff.set(x + ',' + y, ch);
+    w.timers.set('-7,9', { to: '木', at: U.r4(w.time + 123.4567), from: '土' }); w.timers.set('8,-2', { to: '草', at: U.r4(w.time + 0.0001), from: '灰' }); w.timers.set('9,-2', { to: '林', at: U.r4(w.time + 0.0001), from: '木屋' });
+    const sv = JSON.parse(JSON.stringify(w.serialize())), packed = typeof sv.dz === 'string' && typeof sv.tz === 'string' && sv.diff === undefined && sv.timers === undefined && !!sv.dp;
+    const w2 = new W(w.seed); w2.restore(JSON.parse(JSON.stringify(sv)), g.day());
+    const sameD = w2.diff.size === w.diff.size && [...w.diff].every(([k, v]) => w2.diff.get(k) === v);
+    const sameT = w2.timers.size === w.timers.size && [...w.timers].every(([k, v]) => { const b = w2.timers.get(k); return b && b.to === v.to && (b.from || '灰') === (v.from || '灰') && Math.abs(b.at - v.at) < 1e-9; });
+    const old = W.loosen(JSON.parse(JSON.stringify(sv))), w3 = new W(w.seed); w3.restore(old, g.day()); const oldOk = typeof old.diff === 'object' && w3.diff.size === w.diff.size && w3.timers.size === w.timers.size;
+    const big = new Map(); for (let i = 0; i < 3000; i++) big.set(((i * 37) % 160 - 80) + ',' + (Math.floor(i / 40) - 40), i % 5 ? '土' : '磚');
+    const oldLen = JSON.stringify(Object.fromEntries(big)).length, newLen = JSON.stringify(W.packWorld(big, new Map()).dz).length;
+    ok('v0.9.21: the save writes the diff layer and the regrowth timers as two packed strings (rows of runs; timers sorted by time, deltas to a ten-thousandth of a second); they read back exactly — multi-char tiles, negative and far coordinates — and the old {"x,y": …} form still loads', packed && sameD && sameT && oldOk && newLen * 3 < oldLen, { packed, sameD, sameT, oldOk, oldLen, newLen });
+    { const both = JSON.parse(JSON.stringify(sv)); both.diff = { '-37,-5': '沙', '777,777': '磚' }; W.loosen(both);   // 手改過的存檔兩種寫法都有：舊寫法的那幾格蓋在上面，其餘照 dz
+      const merged = both.diff['-37,-5'] === '沙' && both.diff['777,777'] === '磚' && both.diff['-35,-5'] === '磚' && both.dz === undefined;
+      const X = XIEYI.Xfer, newer = X.parse(JSON.stringify({ v: 7, ver: 'v9.9', seed: 1, world: {}, player: {} })), v5 = X.parse(JSON.stringify({ v: 5, seed: 1, world: { diff: {} }, player: {} })), v6 = X.parse(JSON.stringify({ v: 6, seed: 1, world: { dz: '' }, player: {} }));
+      ok('v0.9.21 自查: a save that has both dz and an old diff keeps both (the old cells on top); saves are now v6 — an older build (which only knows v5) refuses them instead of reading an empty world; v5 and v6 both import here, a newer v7 is refused with a word about it', merged && !!newer.why && /新的版本/.test(newer.why) && !!v5.save && !!v6.save, { merged, newer: newer.why, v5: !!v5.save, v6: !!v6.save }); }
+    w.diff = keepDiff; w.timers = keepTimers; w.ver++; }
   // ============ v0.9.3 存檔瘦身：走過的地圖存成一串字（滿塊兩字、沒滿的一列一列記），舊的十六進位寫法照樣讀得進來 ============
   { const w = g.world, keep = w.explored; let sd = 11; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
     const same = (a, b) => { const live = (m) => [...m].filter(([, v]) => v.some(x => x)), la = live(a); if (la.length !== live(b).length) return false; for (const [k, v] of la) { const c = b.get(k); if (!c) return false; for (let i = 0; i < 32; i++) if (c[i] !== v[i]) return false; } return true; };   // 全空的塊不算（舊寫法會留著）
@@ -4178,7 +4460,7 @@ try {
       const g = XIEYI.game, sp = g.spawn, gt = G.gateNet(31).list.find(o => o.type === 'land' && !o.home), hb = [sp.x + 2, sp.y + 2];
       g.world.set(hb[0], hb[1], '磚'); g.save();   // 本島上砌一塊磚
       const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(5))), gen0 = sv.world.gen, W = sv.world, P = sv.player;
-      delete W.gen;   // 當作第一版（2500 的紙）的舊存檔：外面蓋了灶與櫃、停了一艘孤帆、點亮過兩處傳送點，人在遠處
+      window.World.loosen(W); delete W.gen;   // v0.9.21：先把 dz 解開成 diff。當作第一版（2500 的紙）的舊存檔：外面蓋了灶與櫃、停了一艘孤帆、點亮過兩處傳送點，人在遠處
       W.diff['600,600'] = '灶'; W.diff['600,601'] = '櫃'; W.diff['600,602'] = '鼎'; W.diff['600,603'] = '灶'; W.shelves = Object.assign(W.shelves || {}, { '600,602': [['木', 9]], '600,603': [['木', 7], ['精煤', 1]] });   // v0.9.8：一個鼎、一個灶的柴架上有柴
       W.chests = Object.assign(W.chests || {}, { '600,601': [{ n: '木', c: 5 }] });
       W.ships = Object.assign(W.ships || {}, { '610,610': { kind: '孤帆', hp: 80, skulls: [], repairs: 1, dir: 'v', cells: [[610, 610], [610, 611]] } }); W.diff['610,610'] = W.diff['610,611'] = '舟';

@@ -13,7 +13,8 @@
   const PECK_P = 0.15, PECK_MAX = 2, FENCE_ROOM = 400;   // 五穀（v0.9.18）：秀了、熟了的田沒有稻草人看著，每日 PECK_P 的機會被雀啄一口（收成少一把，最多 PECK_MAX）；籬圍起來 FENCE_ROOM 格以內不生獸
   const morning = (d) => (root.CAL ? root.CAL.dawn(d) : 0.25) + 0.01;   // 大清早：那天日出後一點（v0.9.16 以前固定 0.26；v0.9.17 起日出照節氣）
   // 牆的耐久（v0.6.2，不顯示，只計算）：野牛撞一下扣 1。磚 4，撞到剩一半就成了「墟」；墟（村裡的殘垣也是）2；窗、門 2，剩一半時字變色
-  const WALL_HP = { '磚': 4, '墟': 2, '窗': 2, '門': 2, '籬': 2, '扉': 2 };   // 籬與扉（v0.9.18）兩下就碎          // 開局、讀舊存檔時的時刻：大清早（天亮之後一點點）
+  const KILN_T = 0.25, KILN_PULL = 1, JAR_CAP = 6, JAR_FILL = 1 / 16;   // 窯（v0.9.21）：一窯燒 t × KILN_T 日；燒的時候借火的灶每息多耗 KILN_PULL 息；缸最多 JAR_CAP 瓶，雨雪裡每 JAR_FILL 日接一瓶
+  const WALL_HP = { '磚': 4, '甓': 6, '墟': 2, '窗': 2, '門': 2, '籬': 2, '扉': 2 };   // 籬與扉（v0.9.18）兩下就碎          // 開局、讀舊存檔時的時刻：大清早（天亮之後一點點）
   const EX_BASE = 0x4E00, EX_OFF = 8192;   // 走過的地圖存成一串字（v0.9.3，見 packExplored）：字從「一」起，塊的座標加 EX_OFF 免得是負數
   const STOVE_CAP = 999, SHELF_SLOTS = 4;   // 灶與鼎的火最多存 999 息（v0.5.1，原 900）；灶的柴架四格
   const NET_DUR = { 1: 30, 2: 90, 3: 240 };   // 漁網的耐久：小中大各能取幾條魚（v0.4.12），取完就破、不再進魚，棉麻加固回滿
@@ -57,6 +58,33 @@
   // 霧障會動（v0.6.4 起是連續地飄：每息 1/FOG_STEP 格，方向每 FOG_STEP 息上下重新定一次）。以下是 v0.4.13 的舊說明：每 FOG_STEP 息上下挪一格（v0.4.13 起間隔六到十四成之間抖動），速度慢；FOG_LIGHT_R 格內有光（燈、火、旺灶、玩家手裡的光）就往反方向躲，沒光就順著自己的風向慢慢飄，風向有慣性、偶爾轉；挪完偶爾換形（尾巴掉一格、前頭長一格）
   const FOG_STEP = 6, FOG_LIGHT_R = 10;
 
+  // 存檔瘦身（v0.9.21 使用者定）：差異層與草木長回來的計時器原本是 {"x,y": …}，一格十幾二十個字；改成兩串字——
+  //   dz 差異層：一列一列（y 由小到大），每列寫「跟上一列差幾列:」，再寫一段段「跟上一段的尾巴差幾格」＋這段連續的字；數字 36 進位
+  //   tz 計時器：照長回來的時刻排，每個寫「x,y,跟上一個差幾（萬分之一息）」＋長成什麼＋原本什麼；用 ; 隔開
+  //   dp 多字的字（例如雙字之物）用私用區的一個字代，這張表記怎麼換回來；單字的字照寫
+  // 讀的時候 loosen() 換回舊的寫法；舊存檔（有 diff、timers）照舊讀
+  const PU = 0xE000;
+  function packWorld(diff, timers) {
+    const dp = {}, inv = {}, code = (t) => { if (t.length === 1) return t; if (!(t in inv)) { const c = String.fromCharCode(PU + Object.keys(dp).length); inv[t] = c; dp[c] = t; } return inv[t]; };
+    const rows = new Map(); for (const [k, v] of diff) { const i = k.indexOf(','), x = +k.slice(0, i), y = +k.slice(i + 1); let r = rows.get(y); if (!r) rows.set(y, r = []); r.push([x, v]); }
+    const out = []; let py = 0;
+    for (const y of [...rows.keys()].sort((a, b) => a - b)) {
+      const r = rows.get(y).sort((a, b) => a[0] - b[0]); let s = (y - py).toString(36) + ':', px = 0, ex = null;
+      for (const [x, v] of r) { if (ex !== null && x === ex) s += code(v); else s += (x - px).toString(36) + code(v); px = x + 1; ex = x + 1; }
+      out.push(s); py = y;
+    }
+    const tl = []; for (const [k, v] of timers) { const i = k.indexOf(','); tl.push([+k.slice(0, i), +k.slice(i + 1), v.to, Math.round(v.at * 1e4), v.from || '灰']); }
+    tl.sort((a, b) => a[3] - b[3]); let pt = 0;
+    const tz = tl.map(([x, y, to, at, from]) => { const d = at - pt; pt = at; return x.toString(36) + ',' + y.toString(36) + ',' + d.toString(36) + code(to) + code(from); }).join(';');
+    return { dz: out.join('|'), tz, dp };
+  }
+  function loosen(w) {   // 存檔裡的 dz、tz 換回 diff、timers（就地改；本來就是舊寫法的不動）
+    if (!w || typeof w.dz !== 'string') return w;
+    const dp = w.dp || {}, un = (c) => dp[c] || c, diff = {}, timers = {};
+    let y = 0; for (const row of w.dz ? w.dz.split('|') : []) { const j = row.indexOf(':'); y += parseInt(row.slice(0, j), 36); let x = 0; const re = /(-?[0-9a-z]+)([^\x00-\x7f]+)/g; let m; while ((m = re.exec(row.slice(j + 1)))) { x += parseInt(m[1], 36); for (const c of m[2]) { diff[x + ',' + y] = un(c); x++; } } }
+    let t = 0; for (const e of w.tz ? w.tz.split(';') : []) { const m = /^(-?[0-9a-z]+),(-?[0-9a-z]+),(-?[0-9a-z]+)([^\x00-\x7f])([^\x00-\x7f])$/.exec(e); if (!m) continue; t += parseInt(m[3], 36); timers[parseInt(m[1], 36) + ',' + parseInt(m[2], 36)] = [un(m[4]), t / 1e4, un(m[5])]; }
+    w.diff = Object.assign(diff, w.diff || {}); w.timers = Object.assign(timers, w.timers || {}); delete w.dz; delete w.tz; delete w.dp; return w;   // 兩種寫法都有時（手改過的存檔），舊寫法那幾格蓋在上面
+  }
   class World {
     constructor(seed) {
       this.seed = seed | 0;
@@ -75,7 +103,11 @@
       this.fenceCache = new Map(); this.fences = new Set(); this.onCrop = null;   // fences：放著籬、扉的格子（沒有就不用漫延）   // onCrop(type, x, y, rec)：遊戲端說一聲（凍死、落穗、雀啄）
       this.ores = new Map();       // "x,y" -> 鑿掉的鐵礦幾時長回來（世界時間）
       this.oreBlocked = () => false;   // 回調：那格上有人或生靈站著，等走開再長（免得把誰封在礦裡）
-      this.chests = new Map();   // "x,y" -> 櫃裡的東西
+      this.chests = new Map();   // "x,y" -> 櫃、甕（v0.9.21）裡的東西
+      this.kilns = new Map();    // "x,y" -> 窯裡燒著的那一窯 { out, left 還要幾息, done 燒好了 }（v0.9.21）
+      this.jars = new Map();     // "x,y" -> 缸裡的水（瓶，帶小數）（v0.9.21）
+      this.eaves = new Set();    // 蓋了瓦的磚、甓（v0.9.21）
+      this.kilnT = KILN_T; this.jarCap = JAR_CAP;
       this.nets = new Map();     // 錨點 "x,y" -> { size, x, y, fish, t }：漁網（一乘一、二乘二、三乘三）
       this.netCells = new Map(); // 每一格 -> 錨點
       this.stoves = new Map();   // "x,y" -> 灶裡剩餘的柴火（秒）
@@ -195,6 +227,13 @@
       if (r.c === '麥') return el >= 100 && term >= 7 && term <= 14 ? 3 : el >= 80 && term >= 6 && term <= 14 ? 2 : 1;
       const g = G.CROPS[r.c].grow; return el >= g ? 3 : el >= g * 0.55 ? 2 : 1;
     }
+    cropFrac(x, y) {   // 作物字寫到幾成（v0.9.21）：自種的照下種到熟的日數（麥照到來年小滿），野生的照節氣（苗那一節的頭一日到熟那一節的頭一日）；熟了是 1
+      const k = U.key(x, y), r = this.crops.get(k), C = root.CAL;
+      if (r) { const el = (this.time - r.t) / DAY; if (r.c === '麥') { const left = this.cropDaysLeft(r); return U.clamp(el / Math.max(1, el + left), 0, 1); } return U.clamp(el / G.CROPS[r.c].grow, 0, 1); }
+      const kind = this.cropKind(x, y); if (!kind || !G.CROPS[kind]) return 1;
+      const b = G.CROPS[kind].wild, S = C.START_DAY, Y = C.SOLAR, d = ((this.dayIdx() % Y) + Y) % Y, a = S[b[0]], span = ((S[b[2]] - a) % Y + Y) % Y || Y;
+      return U.clamp((((d - a) % Y) + Y) % Y / span, 0, 1);
+    }
     cropDaysLeft(r) {   // 還要幾日熟（給提示用；麥是到來年小滿）
       if (r.c !== '麥') return Math.max(0, Math.ceil(G.CROPS[r.c].grow - (this.time - r.t) / DAY));
       const d = this.dayIdx(); if (r._dl && r._dl[0] === d) return r._dl[1];
@@ -210,7 +249,7 @@
     }
     cropTick() {   // 換日（或時間跳過去）時：長、凍、落、雀啄
       const d = this.dayIdx(); if (d === this.cropDay) return; const days = this.cropDay < 0 ? 1 : Math.max(1, d - this.cropDay); this.cropDay = d;
-      const term = root.CAL.term(d).k, frost = term >= G.CROP_FROST[0] || term < G.CROP_FROST[1];
+      const term = root.CAL.term(d).k, frost = term >= G.CROP_FROST[0] || term < G.CROP_FROST[1], ev = root.CAL.events(d);   // ev：節氣事件（v0.9.21：寒露二候到立春雀不啄、清明二候田鼠不偷）
       for (const [k, r] of [...this.crops]) {
         const [x, y] = U.unkey(k), ch = this.get(x, y), cd = DB[ch];
         if (!cd || !cd.crop) { this.crops.delete(k); continue; }
@@ -218,8 +257,8 @@
         const st = this.cropStage(r, term);
         if (st < 3 && frost && r.c !== '麥') { this.endCrop(x, y, 0); this.set(x, y, '田'); if (this.onCrop) this.onCrop('frost', x, y, r); continue; }
         if (st === 3) { if (r.rt === undefined) r.rt = U.r4(r.c === '麥' ? this.time : Math.min(this.time, r.t + G.CROPS[r.c].grow * DAY)); if (this.time - r.rt >= G.CROP_HOLD * DAY) { r.shed = 1; this.set(x, y, '穗'); if (this.onCrop) this.onCrop('shed', x, y, r); continue; } }
-        if (st >= 2 && !this.scared(x, y)) for (let i = 0; i < days && (r.pk || 0) < PECK_MAX; i++) if (U.trueRand() < PECK_P) { r.pk = (r.pk || 0) + 1; if (this.onCrop) this.onCrop('peck', x, y, r); }
-        if (st >= 2 && !this.catNear(x, y)) for (let i = 0; i < days && (r.ms || 0) < MOUSE_MAX; i++) if (U.trueRand() < MOUSE_P) { r.ms = (r.ms || 0) + 1; if (this.onCrop) this.onCrop('mouse', x, y, r); }   // 田鼠（v0.9.19）
+        if (st >= 2 && !ev.sparrow && !this.scared(x, y) && !(this.peckLive && this.peckLive(x, y))) for (let i = 0; i < days && (r.pk || 0) < PECK_MAX; i++) if (U.trueRand() < PECK_P) { r.pk = (r.pk || 0) + 1; if (this.onCrop) this.onCrop('peck', x, y, r); }
+        if (st >= 2 && !ev.noMouse && !this.catNear(x, y)) for (let i = 0; i < days && (r.ms || 0) < MOUSE_MAX; i++) if (U.trueRand() < MOUSE_P) { r.ms = (r.ms || 0) + 1; if (this.onCrop) this.onCrop('mouse', x, y, r); }   // 田鼠（v0.9.19）
         const want = st === 1 ? '苗' : st === 2 ? '秀' : r.c; if (ch !== want) this.set(x, y, want);
       }
       if (this.locust && this.time >= this.locust.at) this.locustLand();
@@ -235,6 +274,12 @@
         this.endCrop(x, y, 0); this.set(x, y, '田'); eaten++;
       }
       if (this.onCrop) this.onCrop('locustLand', L.x, L.y, { eaten, saved });
+    }
+    // 雀落在田上啄一口（v0.9.21）：人在附近時看得見、趕得走的雀害；人不在附近的田照換日算（peckLive 由遊戲端給：人二十四格內的田換日不另算）
+    peckAt(x, y) {
+      const r = this.crops.get(U.key(x, y)); if (!r || r.shed || (r.pk || 0) >= PECK_MAX || this.scared(x, y) || root.CAL.events(this.dayIdx()).sparrow) return false;
+      const cd = DB[this.get(x, y)]; if (!cd || !(cd.crop >= 2 && cd.crop <= 3)) return false;
+      r.pk = (r.pk || 0) + 1; if (this.onCrop) this.onCrop('peck', x, y, r); return true;
     }
     catNear(x, y) { for (const c of this.cats.values()) if (U.cheb(x, y, c.x, c.y) <= CAT_R) return true; return false; }   // 方圓十二格內有守田的狸（v0.9.19）
     cropNear(x, y, r) { if (!this.crops.size) return false; for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (this.crops.has(U.key(x + dx, y + dy))) return true; return false; }   // 附近有自己種的田
@@ -270,7 +315,10 @@
       if ((old === '包' || old === '囊') && ch !== old) this.bags.delete(k);   // 荷包、小囊（v0.8）拿走了，裡面的記錄也清掉
       if (old === '偶' && ch !== '偶') this.scarecrows.delete(k);
       if ('網罟罾'.indexOf(old) >= 0 && '網罟罾'.indexOf(ch) < 0 && this.netCells.has(k)) { const rec = this.nets.get(this.netCells.get(k)); if (rec) this.removeNet(rec); }
-      if (old === '櫃' && ch !== '櫃') this.chests.delete(k);
+      if ((old === '櫃' || old === '甕') && ch !== old) this.chests.delete(k);
+      if (old === '窯' && ch !== '窯') this.kilns.delete(k);
+      if (old === '缸' && ch !== '缸') this.jars.delete(k);
+      if (this.eaves.size && this.eaves.has(k) && ch !== '磚' && ch !== '甓') this.eaves.delete(k);   // 磚塌了、拆了，瓦也沒了（拆的時候遊戲端先退瓦）
       if (ch === '燈') this.lamps.add(k); else if (old === '燈') this.lamps.delete(k);
       if (old === '舟' && ch !== '舟' && this.shipCells.has(k)) { const ak = this.shipCells.get(k); this.shipCells.delete(k); this.removeShip(ak); }   // 船身一格被改掉，整艘沒了
       if (old === '漁' && ch !== '漁') this.weirs.delete(k);
@@ -343,6 +391,11 @@
     stoveLit(x, y) { const c = this.get(x, y); return (c === '灶' || c === '鼎') && this.stoveFuel(x, y) > 0; }
     addFuel(x, y, sec) { const k = U.key(x, y); this.stoves.set(k, Math.min(STOVE_CAP, (this.stoves.get(k) || 0) + sec)); }
     stoveRoom(x, y) { return STOVE_CAP - this.stoveFuel(x, y); }   // 還能添幾息
+    // 窯（v0.9.21）：借旁邊（八方）有火的灶；沒有就回 null
+    kilnFire(x, y) { for (const [dx, dy] of N8) { const nx = x + dx, ny = y + dy; if (this.get(nx, ny) === '灶' && this.stoveFuel(nx, ny) > 0) return { x: nx, y: ny }; } return null; }
+    kilnStove(x, y) { for (const [dx, dy] of N8) if (this.get(x + dx, y + dy) === '灶') return { x: x + dx, y: y + dy }; return null; }
+    eaveNear(x, y) { if (!this.eaves.size) return false; if (this.eaves.has(U.key(x, y))) return true; for (const [dx, dy] of N8) if (this.eaves.has(U.key(x + dx, y + dy))) return true; return false; }   // 簷下（v0.9.21）
+    jarWater(x, y) { return Math.floor((this.jars.get(U.key(x, y)) || 0) + 1e-9); }
     shelf(x, y) { const k = U.key(x, y); if (!this.shelves.has(k)) this.shelves.set(k, []); return this.shelves.get(k); }
 
     // ---------- 探索：看過的格子才會畫到地圖上 ----------
@@ -655,7 +708,7 @@
     hailAt(x, y) { return this.hailing() && !this.dryAt(x, y); }
     startHail() {   // 冰雹一起頭就砸一回：屋外的田、燈、稻草人
       this.hail = { until: U.r4(this.time + HAIL_LEN * DAY) }; let crops = 0, lamps = 0, scares = 0;
-      const out = (x, y) => !this.covered(x, y) && !this.dryAt(x, y);
+      const out = (x, y) => !this.covered(x, y) && !this.dryAt(x, y) && !this.eaveNear(x, y);   // 瓦簷下砸不著（v0.9.21）
       for (const [k, r] of [...this.crops]) { const [x, y] = U.unkey(k), cd = DB[this.get(x, y)]; if (r.shed || !cd || !cd.crop || !out(x, y) || U.trueRand() >= HAIL_CROP) continue; if (cd.crop >= 3) { r.shed = 1; this.set(x, y, '穗'); } else { this.endCrop(x, y, 0); this.set(x, y, '田'); } crops++; }
       for (const k of [...this.lamps]) { const [x, y] = U.unkey(k); if (this.get(x, y) !== '燈' || !out(x, y) || U.trueRand() >= HAIL_LAMP) continue; this.set(x, y, '白'); lamps++; if (this.onLampRuined) this.onLampRuined(x, y); }
       for (const k of [...this.scarecrows.keys()]) { const [x, y] = U.unkey(k); if (this.get(x, y) !== '偶' || !out(x, y) || U.trueRand() >= HAIL_SCARE) continue; this.set(x, y, this.info(x, y).to || '白'); this.scarecrows.delete(k); scares++; }
@@ -686,7 +739,7 @@
       while (q.length) {
         if (seen.size > HOUSE_MAX) { over = true; break; }
         const [cx, cy] = q.shift();
-        for (const [dx, dy] of N4) { const nx = cx + dx, ny = cy + dy, k = U.key(nx, ny); if (seen.has(k)) continue; if (this.passable(nx, ny)) { seen.add(k); q.push([nx, ny]); } else if ('磚門窗墟'.indexOf(this.get(nx, ny)) >= 0) made = true; }
+        for (const [dx, dy] of N4) { const nx = cx + dx, ny = cy + dy, k = U.key(nx, ny); if (seen.has(k)) continue; if (this.passable(nx, ny)) { seen.add(k); q.push([nx, ny]); } else if ('磚甓門窗墟'.indexOf(this.get(nx, ny)) >= 0) made = true; }
       }
       const r = !over && made;
       if (over) this.houseCache.set(k0, false); else for (const k of seen) this.houseCache.set(k, r);
@@ -723,7 +776,7 @@
       const ch = this.get(x, y), full = WALL_HP[ch]; if (!full) return null;
       const k = U.key(x, y), hp = (this.wallHp.has(k) ? this.wallHp.get(k) : full) - 1;
       if (hp <= 0) return 'broken';
-      if (ch === '磚' && hp <= full / 2) { this.set(x, y, '墟'); this.wallHp.set(k, hp); return 'ruined'; }
+      if ((ch === '磚' || ch === '甓') && hp <= full / 2) { this.set(x, y, '墟'); this.wallHp.set(k, hp); return 'ruined'; }
       this.wallHp.set(k, hp); return hp <= full / 2 && (ch === '窗' || ch === '門') ? 'cracked' : 'hit';
     }
     wallHurt(x, y) { const k = U.key(x, y), full = WALL_HP[this.get(x, y)]; return !!full && this.wallHp.has(k) && this.wallHp.get(k) <= full / 2; }   // 窗門剩一半：畫成另一個顏色
@@ -761,7 +814,7 @@
       for (const k of Array.from(this.lamps)) {
         const [x, y] = U.unkey(k);
         if (this.get(x, y) !== '燈') { this.lamps.delete(k); continue; }
-        if (this.covered(x, y) || this.dryAt(x, y) || U.trueRand() >= this.rainLampP) continue;   // 乾地上不下雨（v0.9.17）
+        if (this.covered(x, y) || this.dryAt(x, y) || this.eaveNear(x, y) || U.trueRand() >= this.rainLampP) continue;   // 乾地上不下雨（v0.9.17）；瓦簷下淋不著（v0.9.21）
         this.set(x, y, '白');
         if (this.onLampRuined) this.onLampRuined(x, y);
       }
@@ -819,6 +872,10 @@
       this.roomCache.clear(); this.houseCache.clear(); this.fenceCache.clear();
       // —— 灶裡的柴
       for (const [k, f] of this.stoves) { if (f > 0) this.stoves.set(k, Math.max(0, f - STEP)); }
+      // —— 窯（v0.9.21）：旁邊的灶有火才燒，燒的時候那個灶多耗一份柴
+      for (const [k, r] of this.kilns) { if (r.done) continue; const [x, y] = U.unkey(k), f = this.kilnFire(x, y); if (!f) continue; r.left = U.r4(Math.max(0, r.left - STEP)); const fk = U.key(f.x, f.y); this.stoves.set(fk, Math.max(0, this.stoves.get(fk) - STEP * KILN_PULL)); if (r.left <= 0) { r.done = 1; if (this.onKiln) this.onKiln(x, y, r); } }
+      // —— 缸（v0.9.21）：屋外下雨下雪就接水
+      if (this.jars.size && this.precip()) for (const [k, v] of this.jars) { if (v >= JAR_CAP) continue; const [x, y] = U.unkey(k), wx = this.wxAt(x, y); if ((wx === 'rain' || wx === 'snow' || wx === 'thunder') && !this.covered(x, y)) this.jars.set(k, U.r4(Math.min(JAR_CAP, v + STEP / (JAR_FILL * DAY)))); }
       // —— 火勢蔓延
       const spread = [];
       for (const [k, b] of this.burn) {
@@ -892,12 +949,13 @@
 
     // ---------- 存檔：只存差異層，世界本身可以從種子重新長出來 ----------
     serialize() {
-      const diff = {}; for (const [k, v] of this.diff) diff[k] = v;
+      const pk = packWorld(this.diff, this.timers);   // v0.9.21 存檔瘦身：差異層與計時器寫成兩串字
       const burn = {}; for (const [k, v] of this.burn) burn[k] = [U.r4(v.t), v.lvl];
-      const timers = {}; for (const [k, v] of this.timers) timers[k] = [v.to, U.r4(v.at), v.from || '灰'];
       const scarecrows = {}; for (const [k, v] of this.scarecrows) scarecrows[k] = U.r4(v);
       const chests = {}; for (const [k, v] of this.chests) chests[k] = v;
       const shelves = {}; for (const [k, v] of this.shelves) if (v.length) shelves[k] = v.map(s => [s.n, s.c]);
+      const kilns = {}; for (const [k, r] of this.kilns) kilns[k] = [r.out, U.r4(r.left), r.done ? 1 : 0];   // v0.9.21
+      const jars = {}; for (const [k, v] of this.jars) jars[k] = U.r4(v);
       const nets = {}; for (const [k, v] of this.nets) nets[k] = [v.size, v.x, v.y, v.fish, U.r4(v.t), (v.under || []).join(''), v.dur === undefined ? NET_DUR[v.size] : v.dur, v.rf || 0];
       const stoves = {}; for (const [k, v] of this.stoves) stoves[k] = U.r4(v);
       const bags = {}; for (const [k, v] of this.bags) bags[k] = v;
@@ -908,7 +966,7 @@
       const crops = {}; for (const [k, r] of this.crops) crops[k] = [r.c, U.r4(r.t), r.f, r.pk || 0, r.rt === undefined ? -1 : U.r4(r.rt), r.shed ? 1 : 0, r.ms || 0];   // 五穀（v0.9.18）；田鼠偷了幾把（v0.9.19）
       const fert = {}; for (const [k, r] of this.fert) fert[k] = [r.v, U.r4(r.t), r.b ? 1 : 0];
       const cats = [...this.cats.values()].map(c => [c.x, c.y, U.r4(c.t)]);
-      return { crops, fert, cats, locust: this.locust ? [this.locust.x, this.locust.y, U.r4(this.locust.at)] : undefined, hail: this.hail ? U.r4(this.hail.until) : undefined, cropDay: this.cropDay, seed: this.seed, gen: G.GEN, wx: this.wx, gale: this.gale ? { until: U.r4(this.gale.until), dir: this.gale.dir, day: this.gale.day } : undefined, breezeDay: this.breezeDay, purses: Object.fromEntries(this.purses), dayLen: DAY, time: U.r4(this.time), wallHp, diff, burn, timers, stoves, shelves, bags, weirs, ex, seen, scarecrows, ores: Object.fromEntries([...this.ores].map(([k, v]) => [k, U.r4(v)])), chests, nets, rainUntil: U.r4(this.rainUntil), nextRainAt: U.r4(this.nextRainAt),
+      return { kilns, jars, eaves: [...this.eaves], crops, fert, cats, locust: this.locust ? [this.locust.x, this.locust.y, U.r4(this.locust.at)] : undefined, hail: this.hail ? U.r4(this.hail.until) : undefined, cropDay: this.cropDay, seed: this.seed, gen: G.GEN, wx: this.wx, gale: this.gale ? { until: U.r4(this.gale.until), dir: this.gale.dir, day: this.gale.day } : undefined, breezeDay: this.breezeDay, purses: Object.fromEntries(this.purses), dayLen: DAY, time: U.r4(this.time), wallHp, dz: pk.dz, tz: pk.tz, dp: Object.keys(pk.dp).length ? pk.dp : undefined, burn, stoves, shelves, bags, weirs, ex, seen, scarecrows, ores: Object.fromEntries([...this.ores].map(([k, v]) => [k, U.r4(v)])), chests, nets, rainUntil: U.r4(this.rainUntil), nextRainAt: U.r4(this.nextRainAt),
         fogs: [...this.fogs.values()].map(f => [U.r4(f.until), [...f.cells].join(';'), f.sea ? 1 : 0, f.shape, [U.r4(f.x), U.r4(f.y), U.r4(f.age || 0), U.r4(f.ang || 0)]]), fogPlan: this.fogPlan.map(U.r4), fogDay: this.fogDay,
         ships: Object.fromEntries([...this.ships].map(([k, v]) => [k, { kind: v.kind, hp: U.r4(v.hp), skulls: (v.skulls || []).map(([n, e]) => [n, U.r4(e)]), repairs: v.repairs || 0, cells: v.cells, fid: v.fid, dir: v.dir, t: v.t }])) };   // t：下水的時刻（v0.8.21）   // fid：洞庭那一場用過這艘（v0.8.16）
     }
@@ -922,6 +980,7 @@
         this.time = U.r4(d * DAY + DAY * morning(d)); this.timeShift = U.r4(this.time - t0);
       }
       const sh = (v) => typeof v === 'number' && v > 0 ? U.r4(v + this.timeShift) : v;
+      loosen(s);   // v0.9.21 的兩串字換回來
       this.diff = new Map(Object.entries(s.diff || {})); this.ver = (this.ver || 0) + 1;
       for (const [k, v] of this.diff) if (v === '牆') this.diff.set(k, '墟'); else if (v === '橋') this.diff.set(k, '棧');   // v0.6.2 前的殘牆字；v0.8.22 橋與棧併成棧
       this.wallHp = new Map(Object.entries(s.wallHp || {}));
@@ -982,6 +1041,8 @@
       this.ores = new Map(Object.entries(s.ores || {}).map(([k, v]) => [k, sh(v)]));
       this.chests = new Map(Object.entries(s.chests || {}));
       this.shelves = new Map(Object.entries(s.shelves || {}).map(([k, v]) => [k, v.map(([n, c]) => ({ n, c }))]));
+      this.kilns = new Map(Object.entries(s.kilns || {}).map(([k, a]) => [k, { out: a[0], left: a[1], done: a[2] ? 1 : 0 }]));   // 窯、缸、瓦簷（v0.9.21）
+      this.jars = new Map(Object.entries(s.jars || {})); this.eaves = new Set(s.eaves || []);
       this.nets = new Map(); this.netCells = new Map();
       for (const [k, v] of Object.entries(s.nets || {})) { const rec = { size: v[0], x: v[1], y: v[2], fish: v[3], t: sh(v[4]), under: v[5] ? Array.from(v[5]) : [], dur: v[6] === undefined ? NET_DUR[v[0]] : v[6], rf: v[7] || 0 }; rec.tidal = rec.under.indexOf('灘') >= 0; this.nets.set(k, rec); for (let j = 0; j < rec.size; j++) for (let i = 0; i < rec.size; i++) this.netCells.set(U.key(rec.x + i, rec.y + j), k); }
       this.stoves = new Map(Object.entries(s.stoves || {}));
@@ -1010,6 +1071,7 @@
   World.newShip = (kind) => ({ kind: SHIPS[kind] ? kind : '孤帆', hp: (SHIPS[kind] || SHIPS['孤帆']).hp, skulls: [], repairs: 0 });
   World.DEEP_R = DEEP_R;
   root.World = World;
+  World.loosen = loosen; World.packWorld = packWorld;
   root.World.CH = CH;
   Object.defineProperty(root.World, 'DAY', { get: () => DAY, configurable: true });
   root.World.setDay = setDay;

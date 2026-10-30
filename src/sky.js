@@ -85,6 +85,13 @@
     }
     // 赤道 → 地平：恆星時 theta（弧度）
     hor(x, y, z, th, out) { const c = x * Math.cos(th) + y * Math.sin(th), s = x * Math.sin(th) - y * Math.cos(th); out[0] = CP * z - SP * c; out[1] = -s; out[2] = SP * z + CP * c; return out; }
+    // 二十八宿此刻在哪（v0.9.21 見聞錄記當季看過的宿）：各宿星的平均方向換成地平座標；alt 高度（度）、south 在南半天、mer 離子午線多遠（東西分量，越小越接近中天）
+    xiuNow(g) {
+      const E = this.ephem(g), out = [], tmp = [0, 0, 0];
+      for (const a of this.S.cn) { if (!(a.g >= 0) || !a.s || !a.s.length) continue; let x = 0, y = 0, z = 0; for (const i of a.s) { x += this.x[i]; y += this.y[i]; z += this.z[i]; }
+        const n = Math.hypot(x, y, z) || 1; this.hor(x / n, y / n, z / n, E.th, tmp); out.push({ n: a.n, g: a.g, alt: Math.asin(Math.max(-1, Math.min(1, tmp[2]))) / D2R, south: tmp[0] < 0, mer: Math.abs(tmp[1]) }); }
+      return out;
+    }
     // 天上的位置：太陽黃經、恆星時、太陽、月（v0.9.17 起太陽照真的赤緯；時角照遊戲的時辰，正午在正南）
     ephem(g) {
       const w = g.world, DAY = window.XIEYI ? window.XIEYI.DAY : 360, t = w.time / DAY, dayT = g.dayT();
