@@ -9,7 +9,7 @@
   const SAVE_KEY = 'xieyi.save.v5', CARRY_KEY = 'xieyi.carry', SLOT_KEY = 'xieyi.slot', SAVE_SLOTS = 8, SLOT_NAMES = ['', '一', '二', '三', '四', '五', '六', '七', '八'];
   // v0.8.10 測試服（使用者定）：這一份遊戲是哪一服由 src/server.js 定（正式服沒有測試格）。測試服的第六、七、八格是測試格：錦囊用滿、送神兵（不掉耐久）、
   // 膽氣無窮（TEST_LEVEL，顯示 ∞；山海衣的攻擊照卅一重算）、命飽暖力愜一直是滿的、挨打只有特效不掉命、採到的東西在囊裡櫃裡都是無數個、灶鼎手工做的都是滿級（成不成的一律成、不掉耐久）
-  const GAME_VER = 'v0.9.23';   // 版號（吐槽時附上；每次改版號跟著改）
+  const GAME_VER = 'v0.9.24';   // 版號（吐槽時附上；每次改版號跟著改）
   // 存檔格式（v0.9.21 自查）：世界的差異層換成 dz／tz 的寫法，改記 6——舊版（只認 5）讀到 6 會當成沒有存檔、匯入時拒絕，不會把世界讀成空的再存回去；這裡 5、6 都認
   const SAVE_V = 6, saveV = (s) => s.v === 5 || s.v === 6;
   const SERVER = window.XIEYI_SERVER || { name: '', test: [] }, TEST_SLOTS = (SERVER.test || []).filter(n => n >= 1 && n <= SAVE_SLOTS), TEST_LEVEL = 99, TEST_BAG = 30;   // TEST_BAG：測試格的囊多三十格（v0.8.14）
@@ -53,6 +53,7 @@
     shen: ['雉入大水為蜃', '立冬三候。古人說雉入海化成了蜃。這一候海上的蜃多五成。'],
     solstice: ['冬至 · 日短至', '一年最長的一夜（《呂氏春秋·仲冬紀》「是月也，日短至」）。這一夜魄不出來。']
   };
+  const TRAP_GROUND = '土草花沙田', TRAP_STA = 4;   // 陷阱（v0.9.24）：阱挖得下去的地；挖一個耗力
   const PECK_NEAR = 24;   // 雀（v0.9.21）：人二十四格內的田，換日時不另算雀啄——看得見的雀自己來啄、趕得走
   const VISITORS = [
     { k: '獺', name: '獺祭魚', when: '雨水初候', text: '獺把魚一條條擺在岸上，留了兩條給你。', hint: '雨水初候，白天在水邊。' },
@@ -3504,6 +3505,8 @@
       if (ent && ent.type === '狸' && name === '魚') { this.feedCat(ent); return; }   // v0.9.19
       if (it.seed) { this.sow(t, it.seed); return; }   // 五穀：面向田下種（v0.9.18）
       if (name === '灰' && (base === '田' || bd.crop)) { this.ashField(t); return; }   // 草木灰撒在田裡，地力 +1
+      if (name === '阱') { this.digTrap(t); return; }   // 陷阱（v0.9.24）
+      if (name === '草' && base === '阱') { this.coverTrap(t); return; }
       if (it.slot) { this.wearItem(p.sel); return; }
       if (it.tool && it.dur) { this.equipFromBag(p.sel); return; }
       if (it.tool || it.kind === 'wear') { this.message('「' + name + '」' + (it.light ? '拿在手上就亮。' : '在囊中即生效。')); return; }
@@ -3685,6 +3688,37 @@
       const w = this.world, at = this.nearestTile(deer.x, deer.y, (x, y) => { const d = w.info(x, y), ch = w.get(x, y); return d.walk > 0 && d.kind !== 'object' && d.kind !== 'place' && d.kind !== 'water' && DB[w.raw(x, y)].kind !== 'water' && w.raw(x, y) !== '灘' && !d.crop && ch !== '田' && !w.cropKind(x, y) && !w.stele(x, y) && !this.ents.at(x, y); }, 4);   // v0.9.21 自查：不擺在田上（鹿常在田裡被追上）、不擺在灘上
       if (at) { const k = U.key(at[0], at[1]), list = w.get(at[0], at[1]) === '囊' ? (w.bags.get(k) || []) : []; const m = list.find(s => s.n === '肉' && s.dur === undefined); if (m) m.c++; else list.push({ n: '肉', c: 1 }); w.set(at[0], at[1], '囊'); w.bags.set(k, list); }
       if (U.cheb(deer.x, deer.y, this.player.x, this.player.y) <= 14) { this.fx.push({ type: 'float', x: deer.x, y: deer.y - 0.3, text: '祭', color: G.INK.red, t: 0, dur: 1.6 }); this.message('狼把鹿擺在地上（豺乃祭獸）。' + (at ? '那裡留了一塊肉。' : '')); }
+    }
+    // ---------- 獸的預警與陷阱（v0.9.24 使用者定）----------
+    pounceMiss(e) {   // 預警時人換了一格：這一撲撲空
+      const p = this.player; if (U.cheb(e.x, e.y, p.x, p.y) > 12) return;
+      this.fx.push({ type: 'float', x: e.x, y: e.y - 0.3, text: '撲空', color: G.INK.black, t: 0, dur: 0.8 });
+      const w0 = p.warned || (p.warned = {});
+      if (!w0.pounce) { w0.pounce = true; this.toast('撲了個空', '「' + this.beastName(e) + '」撲過來之前，字會一縮、發紅——看到就往旁邊跨一步，這一撲就撲空。', 8000); }
+      else this.message('「' + this.beastName(e) + '」撲了個空。');
+    }
+    trapSprung(e) {   // 踩塌了穽，掉進阱裡
+      const p = this.player;
+      if (U.cheb(e.x, e.y, p.x, p.y) <= 16) {
+        this.fx.push({ type: 'float', x: e.x, y: e.y - 0.3, text: '陷', color: G.INK.red, t: 0, dur: 1.0 });
+        this.message('「' + this.beastName(e) + '」踩塌了草，掉進阱裡：困八息、命 −10。阱露出來了，再蓋一把草才能再用。'); SFX.ram && SFX.ram();
+      }
+      if (e.hp <= 0) this.kill(e);
+    }
+    digTrap(t) {      // 選中阱按 F：拿鋤挖坑、插上竹籤
+      const p = this.player, w = this.world, ch = w.get(t.x, t.y);
+      if (!p.tools.some(s => (ITEMS[s.n] || {}).tool === '鋤')) { this.message('挖阱要有鋤：具欄裡帶一把。'); SFX.fail(); return; }
+      if (TRAP_GROUND.indexOf(ch) < 0 || w.cropKind(t.x, t.y)) { this.message('阱挖在土、草、花、沙或空田上。'); SFX.fail(); return; }
+      if (this.ents.at(t.x, t.y)) { this.message('那裡有東西站著，挖不了。'); SFX.fail(); return; }
+      if (p.sta < TRAP_STA) { this.message('力有未逮，且歇一歇。'); return; }
+      p.sta = Math.max(0, p.sta - TRAP_STA); w.set(t.x, t.y, '阱'); this.removeItem('阱', 1); this.buildBag(); SFX.write();
+      this.fx.push({ type: 'write', x: t.x, y: t.y, ch: '阱', color: DB['阱'].ink, t: 0, dur: 0.35 });
+      this.message('拿鋤挖了個坑，插上竹籤。選中草面向它按 F 蓋上，獸就看不出來。');
+    }
+    coverTrap(t) {    // 選中草面向阱按 F：蓋上，成了穽
+      this.world.set(t.x, t.y, '穽'); this.removeItem('草', 1); this.buildBag(); SFX.write();
+      this.fx.push({ type: 'write', x: t.x, y: t.y, ch: '穽', color: DB['穽'].ink, t: 0, dur: 0.35 });
+      this.message('蓋上草，看不出是個阱了。鹿、野豬、狼、豹踩上去會掉下去；虎、野牛太大，掉不進去。你自己走過沒事。');
     }
     cropEaten(e, x, y) {   // 鹿、野豬、野牛走進田裡啃了苗（v0.9.18）
       const w = this.world, p = this.player, ch = w.get(x, y), kind = w.cropKind(x, y); if (!kind) return;
@@ -5327,6 +5361,8 @@
       else if (ch === '櫃') s = '櫃 · <kbd>E</kbd> 開';
       else if (ch === '甕') s = '甕（' + (w.chests.get(U.key(t.x, t.y)) || []).length + ' 樣吃的）· <kbd>E</kbd> 開 · 穀變陳慢一半，果不醉';   // v0.9.21
       else if (ch === '窯') { const r = w.kilns.get(U.key(t.x, t.y)), st = w.kilnStove(t.x, t.y), f = w.kilnFire(t.x, t.y); s = '窯' + (r ? (r.done ? '（燒好了：' + (G.KILN[r.out].label || r.out) + '）' : '（燒著' + (G.KILN[r.out].label || r.out) + '，還要約 ' + Math.ceil(r.left) + ' 息' + (f ? '' : '，灶冷了停著') + '）') : '') + ' · <kbd>F</kbd> 開窯' + (st ? (f ? '' : ' · 旁邊的灶冷著') : ' · <i>旁邊沒有灶，借不到火</i>'); }
+      else if (ch === '阱') s = '阱（插著竹籤的坑）· 選中草按 <kbd>F</kbd> 蓋上，獸就看不出來 · <kbd>E</kbd> 拆回';
+      else if (ch === '穽') s = '穽（蓋了草的阱）· 鹿、野豬、狼、豹踩上去會掉下去；你走過沒事 · <kbd>E</kbd> 拆回';
       else if (ch === '缸') s = '缸 · 水 ' + w.jarWater(t.x, t.y) + '/' + w.jarCap + (hs && hs.n === '玻璃瓶' ? ' · <kbd>F</kbd> 舀一瓶' : hs && hs.n === '鯤' ? ' · <kbd>F</kbd> 把鯤放進去養' : ' · 拿空瓶 <kbd>F</kbd> 舀');
       else if ((ch === '磚' || ch === '甓') && hs && hs.n === '瓦') s = (ch === '甓' ? '甓（青磚）' : '磚') + (w.eaves.has(U.key(t.x, t.y)) ? ' · 已經蓋了瓦' : ' · <kbd>F</kbd> 蓋瓦（簷下的燈不怕雨雹）');
       else if (ch === '舟') { const rec = w.shipAt(t.x, t.y); s = (rec ? this.shipText(rec) : '船') + ' · <kbd>E</kbd> 上船' + (hs && ITEMS[hs.n] && ITEMS[hs.n].ward ? ' · <kbd>F</kbd> 首骨放上船頭' : hs && hs.n === '木板' ? ' · <kbd>F</kbd> 補船' : rec && this.landBeside(rec.cells).length ? ' · <kbd>F</kbd> 收回船艙' : ' · 沒靠岸，收不回'); }
