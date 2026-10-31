@@ -699,8 +699,8 @@
         if (e.type === '牛') {       // 野牛一乘二（v0.7.2）：字跟著身子拉——橫著走拉扁、縱著走拉長；轉身時在兩樣之間漸變
           const kk = Math.min(1, dt * 10); e.rbx = e.rbx === undefined ? e.bx : e.rbx + (e.bx - e.rbx) * kk; e.rby = e.rby === undefined ? e.by : e.rby + (e.by - e.rby) * kk;
           const hw = Math.abs(e.rbx) / Math.max(1e-6, Math.abs(e.rbx) + Math.abs(e.rby)), cx = px - e.rbx * T / 2, cy = py - e.rby * T / 2;
-          const rl = g.ents.riled(e), big = rl ? 1.12 : 1;   // 惹了：發紅、大一圈（v0.7.3）
-          this.drawGlyph('牛', rl ? G.INK.red : d.ink, cx, cy, T * 0.95 * big, 0, 1, 0.8 + 1.15 * hw, 0.8 + 1.15 * (1 - hw));
+          const rl = g.ents.riled(e), wn = e.warnT > 0, big = wn ? 0.85 : rl ? 1.12 : 1;   // 惹了：發紅、大一圈（v0.7.3）；要撲之前縮一成五、發紅（v0.9.24）
+          this.drawGlyph('牛', rl || wn ? G.INK.red : d.ink, cx, cy, T * 0.95 * big, 0, 1, 0.8 + 1.15 * hw, 0.8 + 1.15 * (1 - hw));
           if (e.provoked > 0 && U.cheb(e.x, e.y, p.x, p.y) <= 7) { ctx.save(); ctx.fillStyle = G.INK.red; ctx.font = 'bold ' + Math.round(T * 0.42) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.fillText('怒', px + T * 0.4, py - T * 0.42); ctx.restore(); }
           continue;
         }
@@ -713,7 +713,10 @@
         if (e.type === '虎' && e.calm <= 0 && U.cheb(e.x, e.y, p.x, p.y) <= 8) {
           ctx.save(); ctx.fillStyle = 'rgba(180,57,42,0.12)'; ctx.beginPath(); ctx.arc(px, py, T * 0.6, 0, 7); ctx.fill(); ctx.restore();
         }
-        this.drawGlyph(e.type, ((e.type === '蟾' || e.type === '蛛') && e.venom) || riled ? G.INK.red : d.ink, px, py + bobY, T * size, rot, 1);
+        const warn = e.warnT > 0, sz = size * (warn ? 0.85 : 1) * (e.trapT > 0 ? 0.75 : 1);   // 要撲之前縮一成五、發紅；掉在阱裡縮小一圈（v0.9.24）
+        if (e.trapT > 0) { ctx.save(); ctx.globalAlpha = 0.9; ctx.fillStyle = this.pattern || '#efe6d2'; ctx.fillRect(px - T * 0.46, py - T * 0.46, T * 0.92, T * 0.92); ctx.restore(); }   // 掉在阱裡：蓋住底下的「阱」字，免得疊成一團
+        this.drawGlyph(e.type, ((e.type === '蟾' || e.type === '蛛') && e.venom) || riled || warn ? G.INK.red : d.ink, px, py + bobY, T * sz, rot, 1);
+        if (e.trapT > 0) { ctx.save(); ctx.fillStyle = G.INK.red; ctx.font = 'bold ' + Math.round(T * 0.38) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.fillText(L('陷'), px + T * 0.4, py - T * 0.38); ctx.restore(); }   // 標一個「陷」
         if (e.type === '鮫') this.drawGlyph(L('機'), '#5a4632', px + T * 0.62, py + T * 0.12 + Math.sin(now * 4) * 1.2, T * 0.42, Math.sin(now * 4) * 0.08, 0.85);   // 鮫人膝上的機（v0.9.21），梭子一來一回
         if (e.provoked > 0 && U.cheb(e.x, e.y, p.x, p.y) <= 7) { ctx.save(); ctx.fillStyle = G.INK.red; ctx.font = 'bold ' + Math.round(T * 0.42) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.fillText('怒', px + T * 0.4, py - T * 0.42); ctx.restore(); }   // 被彈弓惹惱、七格內要撲過來的
       }

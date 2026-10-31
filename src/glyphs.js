@@ -91,6 +91,8 @@
     '罾': { s: 17, walk: 0, kind: 'object', ink: INK.water, place: true, onWater: true, net: 3, flavor: '下在水上的大網（舊法）：十息一條魚、存二十條。面向按 E 取魚，空網收回。' },
     '籬': { s: 25, walk: 0, kind: 'object', fence: true, flam: 0.4, ink: INK.brown, yield: { '籬': 1 }, time: 0.8, place: true, flavor: '木枝麻繩紮的籬（v0.9.18）。擋獸、擋人，不擋光也不擋眼；圍起來不算屋子。開口處放一扇扉。野牛撞得壞。' },
     '扉': { s: 12, walk: 1.0, kind: 'object', gate: true, fence: true, flam: 0.4, ink: INK.brown, yield: { '扉': 1 }, time: 0.8, place: true, flavor: '柴扉，開在籬上：人過得去，獸過不去，不擋光（v0.9.18）。' },
+    '阱': { s: 7, walk: 0, kind: 'object', ink: INK.brown, yield: { '阱': 1 }, time: 1.0, place: true, flavor: '陷阱（v0.9.24）：用鋤挖開的坑，插著竹籤。選中草面向它按 F 蓋上，就成了「穽」，獸看不出來。鹿、野豬、狼、豹踩上去掉下去，困八息、命 −10；虎、野牛、魔王太大，掉不進去。面向按 E 拆回。' },
+    '穽': { s: 9, walk: 1.0, kind: 'object', ink: INK.field, yield: { '阱': 1 }, time: 1.0, flavor: '蓋了草的阱（v0.9.24）。獸看不出來，你看得出來，走在上面沒事。鹿、野豬、狼、豹踩上去會掉下去。' },
     '偶': { s: 11, walk: 0, kind: 'object', ink: INK.brown, yield: { '偶': 1 }, time: 1.0, place: true, flavor: '稻草人。四十五天內獸不近身：前半十格，後半七格。再放一個可以續到六十天；面向按 E 拆下，重放重計。' },
     '櫃': { s: 18, walk: 0, kind: 'object', ink: INK.brown, yield: { '櫃': 1 }, time: 1.0, place: true, flavor: '四角用石、四邊用木的櫃子。面向它按 E 開，二十四格。' },
     // —— 窯與陶（v0.9.21 使用者定：窯不另生火，借旁邊灶的火）
@@ -307,7 +309,7 @@
   // 製作欄的大類（左側選）：每條配方照 id 歸類，沒列到的進「材料」
   const CRAFT_CATS = ['全部', '居所', '工具', '神兵', '衣甲', '燈火', '漁船', '食藥', '材料'];
   const CAT_OF = {
-    '居所': ['brick', 'kiln', 'door', 'fence', 'gate', 'window', 'bed', 'chest', 'stove', 'cauldron', 'scarecrow', 'bridge', 'platform', 'steps'],
+    '居所': ['brick', 'kiln', 'door', 'fence', 'gate', 'window', 'bed', 'chest', 'stove', 'cauldron', 'scarecrow', 'trap', 'bridge', 'platform', 'steps'],
     '工具': ['grind', 'regrind', 'crush', 'forge', 'forgew', 'obsidian', 'fan', 'sling'],
     '神兵': ['hammer', 'seagod', 'skygod'],
     '衣甲': ['lining', 'pants', 'vest', 'cap', 'shoes', 'ironvest', 'helm', 'ironboots', 'wvest', 'whelm', 'wboots'],
@@ -477,6 +479,7 @@
     { id: 'pouch', out: '錦囊', n: 1, need: { '麻布': 3, '棉': 2 }, sta: 10, note: '用掉：囊多兩格、具欄多一格，最多八個（已用加囊裡的）' },
     { id: 'hemp', out: '麻布', n: 1, need: { '麻': 4, '棉': 2 }, sta: 4, note: '稻草人、船帆、燈帽都要' },
     { id: 'hat', out: '燈帽', n: 1, need: { '麻布': 2, '蠟燭': 1 }, sta: 5, note: '戴著就有光；一根蠟燭燒四百息' },
+    { id: 'trap', out: '阱', n: 1, need: { '竹': 3, '麻': 1 }, sta: 2, note: '竹籤陷阱：具欄裡要有鋤才挖得下去，蓋上草獸看不出來（v0.9.24）' },
     { id: 'scarecrow', out: '偶', n: 1, need: { '麻布': 2, '石子': 2, '木': 3, '草': 4 }, sta: 8, note: '四十五天內獸不近身' },
     { id: 'med', out: '藥', n: 1, need: { '草': 3, '果': 1 }, sta: 3, note: '療傷 +35，解毒' },
     { id: 'wine', out: '果酒', n: 1, need: { '醉果': 2, '淡水瓶': 1 }, sta: 2, note: '飽 +12，愜意 +20' },

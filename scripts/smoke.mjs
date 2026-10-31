@@ -4145,6 +4145,46 @@ const result = await page.evaluate(async () => {
     // 收拾
     for (const s of touched) { const [k, v] = s.split('|'); if (v === '\u0000') w.diff.delete(k); else w.diff.set(k, v); const [x, y] = k.split(',').map(Number); w.chests.delete(k); w.kilns.delete(k); w.jars.delete(k); w.eaves.delete(k); w.stoves.delete(k); w.lamps.delete(k); w.crops.delete(k); }
     w.ver++; w.time = keepT; p.bag = keepBag; p.sel = keepSel; p.x = keepX; p.y = keepY; p.fx = keepFx; p.fy = keepFy; U.trueRand = keepNow; g.barSig = ''; }
+  // ============ v0.9.24 獸的預警與陷阱 ============
+  { const keepBag = p.bag, keepSel = p.sel, keepTools = p.tools, keepTool = p.tool, keepX = p.x, keepY = p.y, keepFx = p.fx, keepFy = p.fy, keepList = g.ents.list.slice(), keepHp = p.hp, keepSta = p.sta, touched = new Map();
+    const put = (x, y, ch) => { const k = x + ',' + y; if (!touched.has(k)) touched.set(k, w.diff.has(k) ? w.diff.get(k) : null); w.set(x, y, ch); };
+    const PW = window.Entities.POUNCE_WARN, TR = window.Entities.TRAP, ox = p.x, oy = p.y;
+    for (let y = oy - 3; y <= oy + 3; y++) for (let x = ox - 3; x <= ox + 6; x++) put(x, y, '土');
+    // 預警：撲之前縮一下、發紅；人沒動就撲中，換了一格就撲空
+    g.ents.list = []; const tg = g.ents.add('虎', ox + 1, oy, { moveT: 99, calm: 0 }); p.hp = 100;
+    g.ents.maul(tg, g); const warned = tg.warnT === PW['虎'] && p.hp === 100 && !!tg.warnAt && tg.warnAt.x === p.x && tg.warnAt.y === p.y;
+    g.ents.pounce(tg, g); const stood = p.hp < 100 && tg.atk > 0;
+    p.hp = 100; tg.atk = 0; g.ents.maul(tg, g); p.y = oy + 1; document.getElementById('toasts').innerHTML = ''; g.fx = [];
+    g.ents.pounce(tg, g); const dodged = p.hp === 100 && g.fx.some(f => f.text === '撲空') && /往旁邊跨一步/.test(document.getElementById('toasts').textContent) && tg.atk > 0;
+    p.y = oy;
+    ok('v0.9.24: a tiger about to pounce first shrinks and goes red for 0.4 breaths; standing still you are hit; one step aside and it misses (撲空, a one-time tip); either way it has to wait for its next pounce', warned && stood && dodged, { warned, stood, dodged });
+    p.hp = 100; tg.atk = 0; tg.moveT = 0; tg.calm = 0; const tx0 = tg.x; g.ents.maul(tg, g);
+    g.ents.update(0.2, g); const holds = tg.warnT > 0 && tg.x === tx0 && p.hp === 100;
+    g.ents.update(0.25, g); const lands = !(tg.warnT > 0) && p.hp < 100;
+    ok('v0.9.24: through the frame update the wind-up holds still (no step, no strike) and the pounce lands when it runs out', holds && lands, { holds, lands, warnT: tg.warnT });
+    const kinds = ['虎', '豹', '狼', '豬', '牛'].every(k => PW[k] > 0 && PW[k] <= 0.4) && !PW['蛇'] && !PW['鷹'] && !PW['蛛'];
+    ok('v0.9.24: tigers, leopards, wolves, boars and angry bison warn (0.3–0.4 breaths); snakes, spiders and eagles do not', kinds, PW);
+    g.ents.remove(tg); p.hp = 100;
+    // 陷阱：配方；要有鋤；挖、蓋草、踩塌、困八息、命 −10、爬出來；虎太大；困著不撲
+    const rc = G.RECIPES.find(r => r.id === 'trap'), recOk = !!rc && rc.out === '阱' && rc.need['竹'] === 3 && rc.need['麻'] === 1;
+    const tx = ox + 1, ty = oy;
+    p.tools = []; p.tool = -1; p.bag = [{ n: '阱', c: 2 }, { n: '草', c: 3 }]; p.sel = 0; g.barSig = ''; p.fx = 1; p.fy = 0; p.sta = 100;
+    g.msgText = ''; g.pressPlace(); const needHoe = w.get(tx, ty) === '土' && /鋤/.test(g.msgText) && g.count('阱') === 2;
+    p.tools = [{ n: '石鋤', c: 1, dur: 40 }]; g.pressPlace(); const dug = w.get(tx, ty) === '阱' && g.count('阱') === 1 && p.sta === 96;
+    p.sel = p.bag.findIndex(s => s.n === '草'); g.pressPlace(); const covered = w.get(tx, ty) === '穽' && g.count('草') === 2;
+    const walkable = G.DB['穽'].walk > 0 && w.passable(tx, ty) && !(G.DB['阱'].walk > 0);
+    ok('v0.9.24: the 阱 is crafted from three bamboo and one hemp; it only goes in with a hoe in the tool bar (costs 4 stamina); a handful of grass covers it into a 穽 you can walk over', recOk && needHoe && dug && covered && walkable, { recOk, needHoe, dug, covered, walkable });
+    const boar = g.ents.add('豬', tx, ty, { moveT: 99 }), h0 = boar.hp; g.ents.update(0.01, g);
+    const fell = boar.trapT === TR.t && boar.hp === h0 - TR.dmg && w.get(tx, ty) === '阱';
+    p.hp = 100; boar.calm = 0; g.ents.update(1, g); const harmless = !(boar.warnT > 0) && p.hp === 100 && boar.x === tx && boar.y === ty;
+    g.ents.update(TR.t, g); const out = !(boar.trapT > 0) && (boar.x !== tx || boar.y !== ty) && w.get(tx, ty) === '阱';
+    ok('v0.9.24: a boar that steps on the 穽 falls in — stuck eight breaths, −10, the pit shows again; while stuck it does not strike even beside you; then it climbs out and the 阱 needs new grass', fell && harmless && out, { fell, harmless, out, trapT: boar.trapT });
+    g.ents.remove(boar);
+    put(tx + 2, ty, '穽'); const tig = g.ents.add('虎', tx + 2, ty, { moveT: 99, calm: 9 }); g.ents.update(0.01, g); const tooBig = !(tig.trapT > 0) && w.get(tx + 2, ty) === '穽'; g.ents.remove(tig);
+    put(tx + 3, ty, '穽'); const deer = g.ents.add('鹿', tx + 3, ty, { moveT: 99 }); deer.hp = 5; const k0 = g.stats.kills; g.ents.update(0.01, g); const killed = !g.ents.list.includes(deer) && g.stats.kills === k0 + 1;
+    ok('v0.9.24: a tiger is too big to fall in (the 穽 stays covered); a weak deer that falls in dies and counts as your kill', tooBig && killed, { tooBig, killed, kinds: TR.kinds });
+    g.ents.list = keepList; p.bag = keepBag; p.sel = keepSel; p.tools = keepTools; p.tool = keepTool; p.x = keepX; p.y = keepY; p.fx = keepFx; p.fy = keepFy; p.hp = keepHp; p.sta = keepSta; g.barSig = '';
+    for (const [k, v] of touched) { if (v === null) w.diff.delete(k); else w.diff.set(k, v); } w.ver++; }
   // ============ v0.9.21 鮫人與鯤 ============
   { const C = window.CAL, D = XIEYI.DAY, keepT = w.time, keepBag = p.bag, keepSel = p.sel, keepX = p.x, keepY = p.y, keepWorn = Object.assign({}, p.worn), keepJ = p.jiao, keepK = p.kun, keepNow = U.trueRand, keepSky = g.harpySky, keepSpot = g.jiaoSpot, keepList = g.ents.list.slice(), keepFeats = (p.feats || []).slice(), keepFirsts = Object.assign({}, p.firsts || {});
     const nightAt = (d, fr) => { w.time = d * D + D * (fr === undefined ? 0.95 : fr); g.evC = null; g.sunC = null; };

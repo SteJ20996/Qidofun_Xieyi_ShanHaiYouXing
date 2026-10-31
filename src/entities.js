@@ -9,6 +9,10 @@
   const SPARROW_SEEK = 0.3, SPARROW_PECK = 0.05;   // 雀（v0.9.21）：每回想一想，三成去找附近的田；落在田上每停一回，五分機會啄一口
   const SCARED = '虎豹狼蛇蛛蟾豬';         // 稻草人擋得住的（野豬也怕；野牛不怕）
   const HOSTILE = '虎豹狼蛇蛛蟾豬牛';       // 敵對獸：攻擊間隔放慢四分之一
+  // 獸的預警（v0.9.24 使用者定）：撲之前字縮一成五、發紅這麼多息；這段時間裡人換了一格，這一撲就撲空
+  const POUNCE_WARN = { '虎': 0.4, '豹': 0.3, '狼': 0.3, '豬': 0.35, '牛': 0.4 };
+  // 陷阱（v0.9.24 使用者定）：踩上蓋了草的阱（穽）掉下去，困 TRAP_T 息、命 −TRAP_DMG；虎、野牛、魔王太大，掉不進去
+  const TRAPPABLE = '鹿豬狼豹', TRAP_T = 8, TRAP_DMG = 10;
   const FOREST = '林森竹';
   // 彈弓挑釁（v0.5.2）：被石子打過的獸 provoked 秒內，到玩家 PROVOKE_R 格內就直撲過來（不管光、稻草人嚇不嚇、晝夜），一步 CHARGE_STEP 秒
   const TIGER_GAP = 12;   // 一山不容二虎（v0.5.2）：兩隻虎相距至少十二格——生的時候避開，走的時候不往十二格內靠，已經太近的走開
@@ -280,8 +284,23 @@
 
     // 咬人與打人：由遊戲端結算
     maul(e, g, dt) {       // 近身撲咬：敵對獸間隔 1.6 秒（原 1.2 秒放慢四分之一），鷹 1.2 秒
-      if (e.atk > 0) return;
+      if (e.atk > 0 || e.warnT > 0) return;
+      const wt = POUNCE_WARN[e.type];
+      if (wt && !e.tame) { e.warnT = wt; e.warnAt = { x: g.player.x, y: g.player.y }; return; }   // 先縮一下、發紅（v0.9.24），撲不撲得中看人動了沒
       g.hit(e, DB[e.type].atk); e.atk = HOSTILE.indexOf(e.type) >= 0 ? 1.6 : 1.2;
+    }
+    pounce(e, g) {         // 預警過了（v0.9.24）：人還在原地、還搆得著就撲中；換了一格就撲空。撲中撲空都照樣要等下一回
+      const p = g.player, at = e.warnAt; e.warnT = 0; e.warnAt = null; e.atk = HOSTILE.indexOf(e.type) >= 0 ? 1.6 : 1.2;
+      if (at && !p.dead && p.x === at.x && p.y === at.y && U.cheb(e.x, e.y, p.x, p.y) <= 1) g.hit(e, DB[e.type].atk);
+      else if (g.pounceMiss) g.pounceMiss(e);
+    }
+    springTrap(e, g) {     // 踩塌了穽（v0.9.24）：掉進阱裡，阱露出來
+      this.world.set(e.x, e.y, '阱'); e.trapT = TRAP_T; e.warnT = 0; e.warnAt = null; e.hp -= TRAP_DMG;
+      if (g.trapSprung) g.trapSprung(e);
+    }
+    climbOut(e) {          // 困滿了：爬到旁邊站得住的一格；四周都站不了就再待一息
+      for (const [dx, dy] of N8) { const nx = e.x + dx, ny = e.y + dy; if (this.canStand(e.type, nx, ny, true) && !this.beastAt(nx, ny, e) && !(nx === this.px && ny === this.py)) { e.x = nx; e.y = ny; e.moveT = 0.3; return; } }
+      e.trapT = 1;
     }
     bite(e, g) {           // 毒咬，間隔 2.67 秒（原 2 秒放慢四分之一）；無毒蛛只是咬一口
       if (e.atk > 0) return;
@@ -757,6 +776,11 @@
         if (e.atk > 0) e.atk -= dt * rate;
         if (e.calm > 0) e.calm -= dt;
         e.moveT -= dt * rate * (STAIRS.indexOf(w.get(e.x, e.y)) >= 0 && FLIERS.indexOf(e.type) < 0 ? 1 / STAIR_SLOW : 1);   // 走在階、台上腳步慢半倍（v0.6.8）
+        // 陷阱（v0.9.24）：掉在阱裡的困著不動、不撲；踩上穽的掉下去
+        if (e.trapT > 0) { e.trapT -= dt; if (e.trapT <= 0) this.climbOut(e); continue; }
+        if (TRAPPABLE.indexOf(e.type) >= 0 && !e.tame && !e.shade && w.get(e.x, e.y) === '穽') { this.springTrap(e, g); continue; }
+        // 獸的預警（v0.9.24）：縮著那一下不走，倒數完了才撲
+        if (e.warnT > 0) { e.warnT -= dt * rate; if (e.warnT <= 0) this.pounce(e, g); continue; }
         if (e.moveT > 0) continue;
 
         const sheltered = !!DB[w.get(p.x, p.y)].shelter;
@@ -971,5 +995,5 @@
     restore(arr) { for (const s of arr || []) { if (s.t === '蜃') continue; this.add(s.t, s.x, s.y, s.tame ? { hp: s.hp, sta: s.sta, tame: true } : {}); } }   // 蜃不跟著讀檔回來：沒解決的蜃由遊戲端扣膽氣
   }
 
-  root.Entities = Entities; Entities.SNAKE = SNAKE; Entities.WIND = WIND; Entities.BIRD = BIRD; Entities.GONG = GONG;
+  root.Entities = Entities; Entities.POUNCE_WARN = POUNCE_WARN; Entities.TRAP = { kinds: TRAPPABLE, t: TRAP_T, dmg: TRAP_DMG }; Entities.SNAKE = SNAKE; Entities.WIND = WIND; Entities.BIRD = BIRD; Entities.GONG = GONG;
 })();
