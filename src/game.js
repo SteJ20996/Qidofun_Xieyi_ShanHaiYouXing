@@ -9,7 +9,7 @@
   const SAVE_KEY = 'xieyi.save.v5', CARRY_KEY = 'xieyi.carry', SLOT_KEY = 'xieyi.slot', SAVE_SLOTS = 8, SLOT_NAMES = ['', '一', '二', '三', '四', '五', '六', '七', '八'];
   // v0.8.10 測試服（使用者定）：這一份遊戲是哪一服由 src/server.js 定（正式服沒有測試格）。測試服的第六、七、八格是測試格：錦囊用滿、送神兵（不掉耐久）、
   // 膽氣無窮（TEST_LEVEL，顯示 ∞；山海衣的攻擊照卅一重算）、命飽暖力愜一直是滿的、挨打只有特效不掉命、採到的東西在囊裡櫃裡都是無數個、灶鼎手工做的都是滿級（成不成的一律成、不掉耐久）
-  const GAME_VER = 'v0.9.24';   // 版號（吐槽時附上；每次改版號跟著改）
+  const GAME_VER = 'v0.9.27';   // 版號（吐槽時附上；每次改版號跟著改）
   // 存檔格式（v0.9.21 自查）：世界的差異層換成 dz／tz 的寫法，改記 6——舊版（只認 5）讀到 6 會當成沒有存檔、匯入時拒絕，不會把世界讀成空的再存回去；這裡 5、6 都認
   const SAVE_V = 6, saveV = (s) => s.v === 5 || s.v === 6;
   const SERVER = window.XIEYI_SERVER || { name: '', test: [] }, TEST_SLOTS = (SERVER.test || []).filter(n => n >= 1 && n <= SAVE_SLOTS), TEST_LEVEL = 99, TEST_BAG = 30;   // TEST_BAG：測試格的囊多三十格（v0.8.14）
@@ -72,6 +72,8 @@
   const RARE = ['龜', '狸', '鮫', '蜃', '齒', '雕', '畢', '青龍', '白虎', '朱雀', '玄武'], SEASONS = ['春', '夏', '秋', '冬'], XIU_ALT = 25;   // 見聞錄（v0.9.21）：少見的生靈、四季、觀星記下高過二十五度的宿
   // 鮫人與鯤（v0.9.21 使用者定：兩個都做；構思見 docs/DAILY.md〈十一〉）
   const JIAO_P = 0.3, JIAO_R = [6, 12], JIAO_NEED = { '棉': 3, '麻': 3 }, JIAO_WATCH_R = 8, JIAO_VIGIL = 0.85, JIAO_STAY = 0.4, JIAO_SWIM = 0.8;   // 南邊的夜裡三成碰得上；織一回棉麻各三；守夜：她在的時候八格內守著八成五、她待了夜裡四成以上；鮫綃落水倒數慢五分之一
+  // 騎鵬一程（v0.9.26 使用者定）：飛 FLIGHT_T 息（現實的秒，世界的時辰不走）到南冥（紙的南邊 KUN_NORTH + PENG_SOUTH 處）；沿路方圓 FLIGHT_SEEN 格記進大地圖；落腳處找 PENG_SEEK 格（船）、PENG_SEEK_LAND 格（岸）
+  const FLIGHT_T = 16, FLIGHT_SEEN = 14, PENG_SOUTH = 0.08, PENG_SEEK = 120, PENG_SEEK_LAND = 200;
   const KUN_NORTH = 0.7, KUN_P = 0.08, KUN_DRY = 2, KUN_GROW = 240, KUN_SEE_GAP = 25, KUN_SEE_P = 0.35, KUN_SIZE = [2, 5, 12, 40], KUN_FISH = { n: '鯤', reels: 1 };   // 北冥：紙的北邊七成以外；深海上鉤一成不到是鯤；離水兩日乾；放回去二百四十日後的六月化鵬；看見影子的間隔、機會、影子幾格   // 窯與陶（v0.9.21）：淡水邊鋤出埴的機會、沼裡鋤的機會；甕十二格
   const HAIL_GAP = 2, HAIL_HURT = 2;   // 冰雹（v0.9.19）：屋外每兩息挨一下
   const IDLE_KEYS = [['ghost', '魄不再越來越快'], ['purse', '荷包不過期'], ['death', '死了不減膽氣']];   // 閒遊（v0.9.19）
@@ -130,12 +132,17 @@
   // 魄（v0.5）：手裡的光被吹熄後 SNUFF_TIME 息才點得著；魄兩格內燈帽的蠟燭燒 HAT_GHOST_BURN 倍；
   // 屋裡（covered）沒燈、ROOM_DREAD_R 格內有魄，愜意每息掉 ROOM_DREAD；第 GHOST_FAST_NIGHT 夜起每四夜魄快一成，最多快 GHOST_FAST_MAX 倍
   const SNUFF_TIME = 8, HAT_GHOST_BURN = 3, ROOM_DREAD = 0.5, ROOM_DREAD_R = 8, GHOST_FAST_NIGHT = 20, GHOST_FAST_MAX = 2;
+  // 魄跟著夜長（v0.9.25）：一夜比春分秋分長（夜佔一天 NIGHT_EVEN 以上），魄的上限乘 NIGHT_EVEN ÷ 這一夜的長，四捨五入；冬至前後一般簡單八隻變七隻、困難十隻變九隻，一夜裡魄的總量跟春分秋分差不多。夜短的夏天不加
+  const NIGHT_EVEN = 0.5;
   // 彈弓（v0.5.2）：九格內、面前五十度、一下六（再乘攻擊倍率）、間隔 0.8 息、一顆石子；被打的獸惱 PROVOKE_TIME 息；站在台上越得過磚
   // 台：撲上來的獸撞在台邊，掉命上限的 PLATFORM_RECOIL、慢 PLATFORM_SLOW 息
   const SLING_RANGE = 9, SLING_DMG = 6, SLING_CD = 0.8, SLING_PREY = '鹿狸虎豹狼蛇蛛蟾鷹龜蜃豬牛齒雕豨畢雀', SPARROW_SCARE = 30, SPARROW_HIT = 0.25, PROVOKE_TIME = 20, PLATFORM_RECOIL = 0.1, PLATFORM_SLOW = 5;
   const SAN_REST = 0.1, CONTENT_AT = 90;   // 飽、暖、力都在九成以上：愜意不掉，反而每息回 0.1×倍率（v0.5.1）
-  const CRUSH_PEBBLES = 2, STONE_TOOLS = ['石刀', '石鎬', '石鋤', '石劍', '石斧'];   // 舊石器磨回石子（v0.6.4）
+  const CRUSH_PEBBLES = 2, STONE_TOOLS = ['石刀', '石鎬', '石鋤', '石劍', '石斧', '石戈'];   // 舊石器磨回石子（v0.6.4）
   const FARM_KINDS = '鎬鋤斧';
+  // 兵器有形（v0.9.27 使用者定：只改形、不改數）：刀橫掃面前三格、劍直刺兩格、戈往前突刺三格（使用者定：前兩格照原本的傷害、第三格戈尖 GE_TIP 一半，跟劍分開）；斧一下 AXE_K 倍、揮得也慢 AXE_K 倍（每息的傷害不變）
+  // 每隻挨中的照一下的數值算，同一隻（大身子的魔王）一揮只算一下；旁邊那幾格只打敵對的、惹惱了的與魔王影子，不會順手砍到半友好的獸
+  const AXE_K = 1.5, GE_REACH = 3, GE_TIP = 0.5, GE_NUM = ['', '', '兩', '三'], RING8 = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]], SIDE_SKIP = '魄魚雀龍鮫';
   const PATH_R = 40, PATH_NODES = 6000;   // 滑鼠點格子走過去（v0.6.5）：找路只在人四十格內、最多試六千格   // 具欄分兩段（v0.6.4）：武器（刀、劍、彈弓、神兵）在前、農具（鎬、鋤、斧）在後，共用原來的格數；P 換武器、O 換農具
   const REGRIND_CAP = 8, MEND_STA = 3, CAST_COST = [1, 2, 4, 7];   // CAST_COST：撒一網網到 0／1／2／3 條以上各耗幾點耐久   // 1、2、4、8 法則的上限：重磨的石子、加固漁網的棉麻（MEND_STA 是面向網按 F 加固的耗力）                      // 同一把工具重磨：第一次石子一、再來二、四、八，八為上限（rg 記在那把工具上）
   const CLOTH_FUEL = 50;                      // 舊布製品（內襯、布褲、布甲、布帽、布靴）丟進灶裡當柴：一件五十息（v0.5.1 前一百二十）
@@ -147,6 +154,13 @@
   // 人造物可以直接放在草、花、田、路上（v0.6.2）：一半機會順手收到底下的草、花或土
   const GREEN = '草花田路', GREEN_P = 0.5, GREEN_YIELD = { '草': '草', '花': '花', '田': '土', '路': '土' };
   const SLEEP_SAN = 20, WINDOW_SAN = [[1 / 5, 0.20], [1 / 7, 0.12], [1 / 9, 0.05]], SAN_BOOST = 0.05;
+  // 屋有其用（v0.9.26 使用者定）：睡在「居」裡愜意多 HOME_SAN；屋裡的擺設（屏、案、几、盆景）每樣再多 DECOR_SAN；門上掛了匾，每天頭一回進門愜意 +PLAQUE_SAN；題匾一批挑 PLAQUE_PICK 個
+  const HOME_SAN = 5, DECOR_SAN = 1, PLAQUE_SAN = 1, PLAQUE_PICK = 6;
+  const ROOM_TEXT = {
+    '居': ['認出是「居」', '這間屋子有床、有灶、有櫃（或甕），是「居」：在這裡睡一覺，愜意多 +' + HOME_SAN + '。屋裡的擺設（屏、案、几、盆景）每樣再 +' + DECOR_SAN + '。'],
+    '丹房': ['認出是「丹房」', '這間屋子有鼎、有燈，沒有床，是「丹房」：屋裡的鼎，柴燒得慢四分之一。（煉丹的成數不變）'],
+    '倉': ['認出是「倉」', '這間屋子只放著櫃、甕，沒有床、灶、鼎、窯，是「倉」：倉裡的櫃跟甕一樣，穀變陳慢一半、果不醉；什麼都裝得下。']
+  };
   const KILL_ONLY_LEVEL = 22, KILL_DAY = 0.8, KILL_NIGHT = 1.05;   // 廿二重起膽氣只從斃敵對生靈得來（製作採集讀碑都不長）；斃敵的膽氣白日八成、夜裡加半成（四捨五入）
   const WARN_LIGHT = 0.5, WARN_POP = 0.25;    // 五條數值不到五成亮燈、不到四分之一彈窗提醒（回到五成以上才會再提醒）
   const WEAR_CAP = 6, REPAIR_WM = 1.5, HAT_FUEL = 400;
@@ -342,6 +356,7 @@
         else if (what === 'ruin') { if (U.cheb(x, y, p.x, p.y) <= 20) { this.fx.push({ type: 'write', x, y, ch: '倒', color: G.INK.ash || G.INK.black, t: 0, dur: 0.8 }); this.message('一陣狂風，吹倒了一處墟。'); } }
         else if (what === 'scare') { this.fx.push({ type: 'write', x, y, ch: '飛', color: G.INK.brown || G.INK.black, t: 0, dur: 0.8 }); this.toast('稻草人被吹走了', '狂風把（' + x + ', ' + y + '）那裡的稻草人吹得無影無蹤。', 7000); }
       };
+      this.world.onPlaqueLost = (x, y, nm) => { if (U.cheb(x, y, this.player.x, this.player.y) <= 20) this.message('門倒了，「' + nm + '」的匾掉在地上摔裂了。'); };   // v0.9.26
       this.world.onCrop = (type, x, y, r) => this.cropNews(type, x, y, r);   // 五穀（v0.9.18）：凍死、落穗、雀啄
       this.world.onKiln = (x, y, r) => { if (U.cheb(x, y, this.player.x, this.player.y) <= 20) { this.message('窯裡的「' + (G.KILN[r.out].label || r.out) + '」燒好了。'); this.fx.push({ type: 'float', x, y, text: G.KILN[r.out].label || r.out, color: G.INK.red, t: 0, dur: 1.2 }); } };   // v0.9.21
       this.world.peckLive = (x, y) => !this.player.dead && U.cheb(x, y, this.player.x, this.player.y) <= PECK_NEAR;   // v0.9.21
@@ -465,7 +480,9 @@
     eagleHit(e, t) { this.fx.push({ type: 'float', x: t.x, y: t.y, text: '−20', color: G.INK.red, t: 0, dur: 0.7 }); }
     companionDied(e, killer) { this.ents.remove(e); this.toast('鷹死了', (killer ? '「' + killer.type + '」殺了你的鷹。' : '你的鷹死了。')); SFX.fail(); }
     gatherCompanions() { const p = this.player; for (const e of this.ents.tamed()) { const at = this.freeNear(p.x, p.y, true); e.x = e.rx = at.x; e.y = e.ry = at.y; } }
-    ghostCap() { return Math.min(this.diff.ghostMax, 2 + Math.floor((this.nightNo() - this.diff.ghost) / 2)); }   // 一般簡單最多八隻、困難十隻（v0.5 前六隻）
+    ghostCap() { const n = Math.min(this.diff.ghostMax, 2 + Math.floor((this.nightNo() - this.diff.ghost) / 2)); return Math.max(1, Math.round(n * this.nightK())); }   // 一般簡單最多八隻、困難十隻（v0.5 前六隻）；v0.9.25 照夜長打折
+    nightLen(n) { return 1 - (CAL.dayFrac(n - 1) + CAL.dayFrac(n)) / 2; }   // 第 n 夜（第 n 日傍晚到隔天清早，dayFrac 的日從 0 起）佔一天的幾成
+    nightK() { return Math.min(1, NIGHT_EVEN / this.nightLen(this.nightNo())); }   // 魄的上限打幾折（v0.9.25）：夜比春分秋分長才打
     ghostSpeed() { const n = this.nightNo(); return n < GHOST_FAST_NIGHT || this.idleOn('ghost') ? 1 : Math.min(GHOST_FAST_MAX, 1 + 0.1 * (Math.floor((n - GHOST_FAST_NIGHT) / 4) + 1)); }   // 第廿夜 1.1、廿四夜 1.2……最多兩倍
     // ---------- 觀星（v0.9.16） ----------
     gazeBlock() {   // 看不了天的理由（空字串就是看得了）
@@ -843,7 +860,8 @@
     }
     frame(ts) {
       const dt = Math.min(0.05, (ts - this.last) / 1000 || 0.016); this.last = ts;
-      const p = this.player, halt = this.paused || this.panelOpen();
+      const p = this.player, halt = this.paused || this.panelOpen() || !!this.flight;   // 騎鵬（v0.9.26）飛著的時候世界停著，畫面照走
+      if (this.flight && !this.paused) { this.animT = (this.animT || 0) + dt; this.flightTick(dt); }
       if (halt !== this.halted) { this.halted = halt; document.body.classList.toggle('halted', halt); }   // v0.9.4：停著時 HUD 上一閃一閃的也停（style.css 的 body.halted）
       if (!halt) {
         this.animT = (this.animT || 0) + dt;   // 畫面動畫的鐘（v0.9.4）：只在遊戲走的時候走
@@ -856,7 +874,7 @@
           if (p.knock <= 0) this.wake();
         } else this.update(dt);
       }
-      const rdt = halt ? 0 : dt;   // v0.9.4 使用者定：開著任何介面（製作、大地圖、灶、鼎……）或暫停時，連畫面也停住——雨絲、水光、火苗、字的晃動都不動
+      const rdt = halt && !this.flight ? 0 : dt;   // v0.9.4 使用者定：開著任何介面（製作、大地圖、灶、鼎……）或暫停時，連畫面也停住——雨絲、水光、火苗、字的晃動都不動
       this.tiltTick(rdt);   // 共工的空：畫面斜三度（v0.9）
       this.renderer.draw(this, rdt, this.animT || 0);
       if (this.gaze) this.gazeTick(rdt, !halt);   // 觀星：天空畫在地上那張上面（v0.9.16）
@@ -883,6 +901,7 @@
       this.fishTick(dt);   // 垂釣（v0.9.17）
       this.wuhouTick(dt);   // 物候冊（v0.9.19）
       this.jiaoTick(dt); this.kunTick(dt);   // 鮫人、鯤（v0.9.21）
+      this.roomTick();   // 屋有其用、匾（v0.9.26）
       this.updateStats(dt);
       for (let i = this.fx.length - 1; i >= 0; i--) { const f = this.fx[i]; f.t += dt; if (f.t >= f.dur) this.fx.splice(i, 1); }
       this.saveAcc += dt; if (this.saveAcc > 20) { this.saveAcc = 0; this.save(); }
@@ -2643,6 +2662,59 @@
       this.fx.push({ type: 'peng', x: p.x, y: p.y, t: 0, dur: 12, rise: 1 });
       (p.firsts = p.firsts || {}).peng = this.day(); p.feats = p.feats || []; p.feats.push({ id: '圖南', text: '圖南 · 看著北冥的鯤化而為鵬', day: this.day() });
       this.toast('化而為鵬', '「北冥有魚，其名為鯤。鯤之大，不知其幾千里也。化而為鳥，其名為鵬。」（《莊子·逍遙遊》）<br>六月，北冥起了大風。你放回去的那條鯤離水而起，翅膀像垂到天邊的雲，往南冥去了。', 16000);
+      this.pengAsk();
+    }
+    // ---------- 騎鵬一程（v0.9.26 使用者定，〈十一〉鯤的乙案）：在北冥看著鯤化而為鵬，可以乘鵬南去——一口氣從北冥飛到南冥，整張紙從底下掠過；身下的船一起帶著，到了放回水上。一生只有這一回 ----------
+    southSea(x, y) { return y > KUN_NORTH * G.WORLD_R; }   // 南冥：紙的南邊七成以外
+    rideWhy() { const p = this.player; return p.dead ? '人已不在' : p.fight ? '戰事掛著，走不開' : p.trial ? '試煉還沒完' : ''; }
+    pengAsk() {
+      const why = this.rideWhy(), dest = why ? null : this.pengDest(), p = this.player;
+      const how = !dest ? '' : dest.ship === 'deck' ? '身下的' + dest.kind + '一起帶著，到了南冥放回水上。' : dest.ship === 'hold' ? '船艙裡的' + dest.kind + '帶著，到了南冥放下水、你站在船上。' : '到了南冥，落在最近的岸上。';
+      this.talk('乘鵬南去？', ['鵬背不知其幾千里，正往南冥去。' + (dest ? '要不要搭一程？' + how + '一去就是整張紙，只有這一回。' : '（' + (why || '南冥找不到落腳的地方') + '，這一回只能目送。）'), '<span class="dim small">「鵬之徙於南冥也，水擊三千里，摶扶搖而上者九萬里。」（《莊子·逍遙遊》）</span>'],
+        [{ label: '乘鵬南去', off: !dest, fn: () => this.pengFly(dest) }, { label: '目送牠走', fn: () => {} }]);
+    }
+    pengDest() {   // 南冥的落腳處：帶著船就找放得下船身的水（不在地界裡），沒帶船找最近的岸
+      const p = this.player, w = this.world, R = G.WORLD_R, seed = this.seed;
+      const tx = Math.round(U.clamp(p.x, -0.6 * R, 0.6 * R)), ty = Math.round((KUN_NORTH + PENG_SOUTH) * R);
+      const zoned = (x, y) => !!G.zoneAt(x, y, seed) || this.inBossLand(x, y);
+      const deck = p.sailing && p.ship, st = !deck && p.swimming ? (p.hold || [])[0] : null, kind = deck ? p.ship.kind : st ? st.n : null;
+      if (kind) {
+        const fit = (x, y) => zoned(x, y) ? null : ['h', 'v'].find(d => w.shipFits(kind, x, y, (a, b) => this.shipWater(a, b), d));
+        const at = this.nearestTile(tx, ty, (x, y) => !!fit(x, y), PENG_SEEK); if (!at) return null;
+        return { x: at[0], y: at[1], ship: deck ? 'deck' : 'hold', st, kind, r: { dir: fit(at[0], at[1]), x0: at[0], y0: at[1] } };
+      }
+      const free = (x, y) => { const d = w.info(x, y); return d.walk > 0 && d.kind !== 'water' && d.kind !== 'object' && d.kind !== 'place' && !d.bog && !zoned(x, y) && !this.ents.at(x, y); };
+      const at = this.nearestTile(tx, ty, free, PENG_SEEK_LAND); return at ? { x: at[0], y: at[1], ship: null } : null;
+    }
+    pengFly(dest) {
+      const p = this.player; if (!dest || this.rideWhy()) return;
+      this.stopWalk(); this.keys.clear(); this.action = null; if (this.fishing) this.fishing = null;
+      this.fx = this.fx.filter(f => f.type !== 'peng');
+      this.flight = { t: 0, dur: FLIGHT_T, x0: p.x, y0: p.y, x1: dest.x, y1: dest.y, dest, sy: p.y };
+      this.world.markSeen(p.x, p.y, FLIGHT_SEEN); SFX.thunder(); document.body.classList.add('flying');
+    }
+    flightTick(dt) {   // 每幀：照緩起緩停挪人與鏡頭，沿路記進大地圖；飛到了就落下
+      const f = this.flight, p = this.player; f.t += dt;
+      const k = Math.min(1, f.t / f.dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(2 - 2 * k, 2) / 2;
+      p.rx = f.x0 + (f.x1 - f.x0) * e; p.ry = f.y0 + (f.y1 - f.y0) * e;
+      this.renderer.camX = p.rx + 0.5; this.renderer.camY = p.ry + 0.5; this.renderer.camInit = true;
+      const cy = Math.round(p.ry); if (Math.abs(cy - f.sy) >= 6) { f.sy = cy; this.world.markSeen(Math.round(p.rx), cy, FLIGHT_SEEN); }
+      if (k >= 1) this.pengLand();
+    }
+    pengLand() {
+      const f = this.flight, p = this.player, w = this.world, d = f.dest; this.flight = null; document.body.classList.remove('flying');
+      if (d.ship === 'hold' && (p.hold || []).includes(d.st)) { this.takeStack(d.st); p.holdSel = -1; p.sailing = true; p.ship = Object.assign(this.newShipFrom(d.st, d.st.n), d.r, { t: U.r4(w.time) }); }
+      else if (d.ship === 'deck' && p.ship) Object.assign(p.ship, d.r);
+      else p.sailing = false;
+      p.swimming = false; p.shipMove = false; p.deploy = null;
+      p.x = p.rx = p.fromX = d.x; p.y = p.ry = p.fromY = d.y; p.moveT = 0; this.ents.px = p.x; this.ents.py = p.y;
+      this.renderer.camInit = false; this.renderer.shake = 0.5; this.barSig = ''; this.buildBag(); this.holdSig = '';
+      w.markSeen(p.x, p.y, FLIGHT_SEEN);
+      const R0 = p.regions || (p.regions = {}); if (!R0['南冥']) R0['南冥'] = { day: this.day(), at: '南冥' };
+      p.kun.rode = this.day(); (p.feats = p.feats || []).push({ id: '扶搖', text: '扶搖 · 乘鵬從北冥飛到南冥', day: this.day() });
+      const far = Math.round(Math.hypot(f.x1 - f.x0, f.y1 - f.y0));
+      this.toast('南冥', '「南冥者，天池也。」鵬在南冥的海上一折身，' + (d.ship ? '連人帶船把你放回水面' : '把你放在岸邊') + '，又往南去了。這一程約 ' + far + ' 格，整張紙從底下掠過，都記進了大地圖。', 14000);
+      SFX.learn(); this.save();
     }
     pengPass() {
       const p = this.player; p.kun = { st: 'peng', day: this.day(), rise: 0 }; SFX.thunder();
@@ -2683,7 +2755,7 @@
     buildDing() {
       if (!this.dingAt) return;
       const t = this.dingPos(), w = this.world, lit = w.stoveLit(t.x, t.y), p = this.player, pct = (v) => (this.test ? 100 : Math.round(v * 100)) + '%';
-      $('ding-fire').innerHTML = (lit ? '<i class="fire">火旺，還能燒 ' + Math.round(w.stoveFuel(t.x, t.y)) + ' 息</i>' : '<i>鼎冷火熄，先添柴</i>') + ' <small class="dim">（最多存 ' + w.stoveCap + ' 息）</small>';
+      $('ding-fire').innerHTML = (lit ? '<i class="fire">火旺，還能燒 ' + Math.round(w.stoveFuel(t.x, t.y) / (w.roomBy(t.x, t.y, '丹房') ? World.ROOM.dan : 1)) + ' 息</i>' : '<i>鼎冷火熄，先添柴</i>') + ' <small class="dim">（最多存 ' + w.stoveCap + ' 息' + (w.roomBy(t.x, t.y, '丹房') ? '；在丹房裡，柴燒得慢四分之一' : '') + '）</small>';
       this.shelfRows(t, 'ding-shelf', 'ding-fuel');
       $('ding-pillnote').textContent = '已煉 ' + p.pillsMade + ' 顆' + (p.pillsMade < 3 ? '；前三顆無毒肉 8%、有毒肉 12%，第四顆起 1%、2%' : '；第四顆起無毒肉 1%、有毒肉 2%') + '；耗力 3';
       $('ding-pill').innerHTML = ['蟾蜍肉', '毒蟾肉'].map(n => { const c = this.count(n); return '<button data-make="' + n + '"' + (lit && c > 0 ? '' : ' disabled') + '><span class="ch">' + n + '</span> ×' + num(c) + ' <small>煉丹：一塊 → 丹（這次 ' + pct(this.pillChance(n)) + '）</small></button>'; }).join('');
@@ -3122,6 +3194,7 @@
       }
       if (this.heldTool() === '弓') { const st = this.slingTarget(); if (st) { this.slingShot(st); return; } }   // 彈弓：面前九格內有獸就射，沒有就照常取
       if (this.heldTool() === '弋') { const st = this.skyTarget(); if (st) { this.bowShot(st); return; } }   // 青冥落羽（v0.8.25）：面前十格內有獸就射，沒有就照常取
+      if (!e) { const gt = this.geTarget(); if (gt) { this.attack(gt.e, gt.at); return; } }   // 戈（v0.9.27）：正前沒有獸，搆兩格、三格外最近的那一隻
       if (e) {
         if (e.type === '龍') { this.message('你的小龍。'); return; }
         if (e.type === '魄') { this.message('魄無形，打不著；用光。'); return; }
@@ -3190,6 +3263,7 @@
       const shelf = a.ch === '灶' || a.ch === '鼎' ? (w.shelves.get(U.key(a.x, a.y)) || []).slice() : null;   // 灶、鼎（v0.8.15）的柴架：拆下來記在囊裡那個灶、鼎上
       const kilnRec = a.ch === '窯' ? w.kilns.get(U.key(a.x, a.y)) : null, eave = w.eaves.has(U.key(a.x, a.y));   // 窯裡那一窯、磚上的瓦（v0.9.21）
       const under = w.base(a.x, a.y), onWater = d.onWater && (DB[under].kind === 'water' || under === '灘' || DB[under].bog);
+      const plq = a.ch === '門' && w.plaques.has(U.key(a.x, a.y)); if (plq) w.plaques.delete(U.key(a.x, a.y));   // 門上的匾（v0.9.26）跟門一起收回
       const to = onWater ? under : (d.to || '白');                       // 拆回棧、魚梁：底下原本是水、灘或沼就還原，不會憑空多出陸地
       w.set(a.x, a.y, to); w.extinguish(a.x, a.y);
       if (d.regrow) w.schedule(a.x, a.y, to, a.ch, d.regrow);         // 草木會長回來
@@ -3199,6 +3273,7 @@
       if (d.bonus) for (const n in d.bonus) if ((d.trueBonus ? U.trueRand() : Math.random()) < d.bonus[n]) { const at = this.giveNear(n, 1); got.push(n); if (at) this.message('囊滿了，' + n + '用小囊包著擱在' + at.where + '。'); }   // 鐵礦脈出鎢礦是真隨機（v0.6.3）
       if (a.useTool && '石山磊岩'.indexOf(a.ch) >= 0 && U.trueRand() < FLINT_P) { const at = this.giveNear('燧石', 1); got.push('燧石'); if (at) this.message('囊滿了，燧石用小囊包著擱在' + at.where + '。'); }   // 鑿石頭偶爾鑿出燧石（v0.8.6，真隨機）
       if (eave) { this.giveNear('瓦', 1); got.push('瓦'); }
+      if (plq) { this.giveNear('匾', 1); got.push('匾'); }
       if (a.ch === '缸' && p.kun && p.kun.st === 'jar' && p.kun.k === U.key(a.x, a.y)) { this.giveNear('鯤', 1); p.kun = { st: 'bag', at: this.day() }; this.message('缸裡的鯤撈出來帶著了，離了水兩日就乾。'); }   // v0.9.21
       if (kilnRec) this.message(this.kilnRefund(kilnRec) + '。');
       if (a.useTool) this.wearTool();
@@ -3216,29 +3291,69 @@
         this.ents.remove(e); this.addItem('魚', 1); this.addCourage(1); this.message('捉到一條魚。'); SFX.absorb();
       } else { this.message('魚溜了。'); e.moveT = 0; }
     }
-    attack(e) {
+    // 兵器有形（v0.9.27）：這一揮打到哪幾格——第一格是 at（正前，或戈搆到的那一格），刀再加正前左右斜的兩格，劍再加 at 後面一格；
+    // 戈是人正前一直線三格（中間有磚石山灶擋著就到那裡為止），第三格是戈尖、只吃 GE_TIP。每格 [x, y, 傷害的倍數]
+    swingCells(at) {
+      const p = this.player, tool = this.heldTool(), i = RING8.findIndex(([a, b]) => a === p.fx && b === p.fy);
+      if (tool === '戈') { const cells = [];
+        for (let n = 1; n <= GE_REACH; n++) { const x = p.x + p.fx * n, y = p.y + p.fy * n; if (n > 1 && !this.lineClear(p.x, p.y, x, y)) break; cells.push([x, y, n === GE_REACH ? GE_TIP : 1]); }
+        if (!cells.some(([x, y]) => x === at.x && y === at.y)) cells.unshift([at.x, at.y, 1]);
+        return cells; }
+      const cells = [[at.x, at.y, 1]];
+      if (tool === '刀' && i >= 0) for (const k of [7, 1]) { const [a, b] = RING8[(i + k) % 8]; cells.push([p.x + a, p.y + b, 1]); }
+      else if (tool === '劍') cells.push([at.x + p.fx, at.y + p.fy, 1]);
+      return cells;
+    }
+    sideOk(o) {   // 順勢砍到的旁邊那幾格：只打敵對的、惹惱了的、魔王與影子；寵物、魄、魚、雀、鮫人、神獸不打
+      if (o.tame || SIDE_SKIP.indexOf(o.type) >= 0 || ['青龍', '白虎', '朱雀', '玄武'].indexOf(o.type) >= 0) return false;
+      return this.ents.isHostile(o) || !!o.angry || !!o.riled || !!o.shade || !!this.bossGlyph(o.type) || MINI_TYPES.indexOf(o.type) >= 0;
+    }
+    geTarget() {   // 戈（v0.9.27）：正前沒有獸，搆再往前兩格、三格裡最近的那一隻（三格外是戈尖，只吃一半）；中間有磚石山灶擋著就搆不到
+      const p = this.player; if (this.heldTool() !== '戈' || this.ents.at(p.x + p.fx, p.y + p.fy)) return null;
+      for (let n = 2; n <= GE_REACH; n++) {
+        const x = p.x + p.fx * n, y = p.y + p.fy * n; if (!this.lineClear(p.x, p.y, x, y)) return null;
+        const o = this.ents.at(x, y); if (o) return !o.tame && SIDE_SKIP.indexOf(o.type) < 0 ? { e: o, at: { x, y }, n } : null;
+      }
+      return null;
+    }
+    // 打一下：e 是主要的那一隻（at 是打到牠的那一格，不給就是正前）；刀劍順勢打到的別隻各照一下算
+    attack(e, at) {
       if (e.type === '鮫') { this.jiaoHurt(e); return; }   // v0.9.21：鮫人打不得
       if (e.tame) { this.message('那是你的' + this.beastName(e) + '，下不了手。'); return; }   // v0.8.21 使用者定：什麼武器都打不中自己的寵物
-      const p = this.player, base = this.heldDmg();
+      const p = this.player, tool = this.heldTool(), base = U.r4(this.heldDmg() * (tool === '斧' ? AXE_K : 1));
       if (!base) { this.message('徒手打不了「' + this.beastName(e) + '」。石子磨石可成刀、劍，放進具欄。'); return; }
       if (p.atkT > 0 || this.afraid()) return;
       if (p.sta < 1) { this.message('力有未逮，且歇一歇。'); return; }
-      const ft = this.facing(), part = e.type === '修蛇' ? this.ents.snakePart(e, ft.x, ft.y) || 'head' : null;   // 修蛇：打在頭還是尾（v0.8.16）
-      const shield = this.ents.shielded(e, p.x, p.y), dmg = U.r4(base * this.dmgMult() * (shield ? TOOTH_SHIELD : 1) * (part ? this.ents.snakeK(e, part) : 1) * this.gongTake(e, this.heldTool()));   // 鑿齒的盾：正面只吃一成（v0.8.5）；共工照兵器打折（v0.9）
-      if (e.type === '鷹') e.angryT = 12;
-      p.atkT = 0.45; p.sta = Math.max(0, p.sta - this.workDrain());
-      e.hp -= dmg; e.angry = true; e.angryAt = this.world.time; this.wearTool(); SFX.write(); this.renderer.shake = 0.15;
-      this.fx.push({ type: 'float', x: e.x, y: e.y, text: '−' + this.shown('dmg', dmg, e), color: G.INK.red, t: 0, dur: 0.7 });
-      if (e.hp <= 0) { this.kill(e); return; }
-      const left = this.shownHp(e);
-      if (e.type === '鹿') e.moveT = 0;
-      else if (e.type === '虎' || e.type === '豹') { e.calm = 2; e.moveT = 0.3; this.message(e.type + '受創而退（還有 ' + left + '）。'); }
-      else if (e.type === '龜') { e.moveT = 0; this.message('龜挨了一下，往海裡逃（還有 ' + left + '）。'); }
-      else if (part === 'tail') this.message('打在' + this.beastName(e) + '的尾上，只吃' + (this.ents.snakeK(e, 'tail') < 0.5 ? '四分之一' : '四分之三') + '（還有 ' + left + '）。打頭吧。');
-      else if (part === 'head' && e.state === 'coil') this.message('牠纏著船，頭露在外面——多吃五成（還有 ' + left + '）。');
-      else if (e.type === '共工') this.message('打在' + this.beastName(e) + '身上' + this.gongTakeText(e, this.heldTool()) + '（還有 ' + left + '）。');
-      else if (e.type === '齒') this.message(shield ? '打在鑿齒的盾上，只有一成（還有 ' + left + '）。繞到牠身側或背後去。' : '繞過盾，打在鑿齒身上（還有 ' + left + '）。');
-      else this.message(this.beastName(e) + '（還有 ' + left + '）。');
+      const ft = at || this.facing(), cells = this.swingCells(ft), hits = [];
+      for (const [cx, cy, k] of cells) { const o = cx === ft.x && cy === ft.y ? e : this.ents.at(cx, cy); if (!o || hits.some(h => h.o === o) || (o !== e && !this.sideOk(o))) continue; hits.push({ o, x: cx, y: cy, k }); }
+      p.atkT = U.r4(0.45 * (tool === '斧' ? AXE_K : 1)); p.sta = Math.max(0, p.sta - this.workDrain());
+      this.wearTool(); SFX.write(); this.renderer.shake = tool === '斧' ? 0.22 : 0.15;
+      if (cells.length > 1 || at || tool === '斧') this.fx.push({ type: 'slash', tool, cells: cells.map(c => c.slice()), x: p.x, y: p.y, t: 0, dur: tool === '斧' ? 0.36 : 0.28 });   // 刀劍戈的一揮畫一道墨痕、斧一道粗短的劈痕（v0.9.27）
+      let main = null;
+      for (const h of hits) { const r = this.strike(h.o, h.x, h.y, U.r4(base * h.k)); if (h.o === e) main = r; }
+      const extra = hits.filter(h => h.o !== e).map(h => this.beastName(h.o) + (h.k < 1 ? '（戈尖，減半）' : ''));
+      const also = extra.length ? (tool === '刀' ? '　這一刀橫掃，也砍中了' : tool === '戈' ? '　這一戈刺過去，也刺中了' : '　這一劍穿過去，也刺中了') + extra.join('、') + '。' : '';
+      for (const h of hits) if (h.o !== e && h.o.hp <= 0) this.kill(h.o);
+      if (e.hp <= 0) { this.kill(e); if (also) this.message(also.trim()); return; }
+      const left = this.shownHp(e), part = main && main.part, shield = main && main.shield;
+      let msg;
+      if (e.type === '鹿') { e.moveT = 0; msg = also ? this.beastName(e) + '（還有 ' + left + '）。' : ''; }
+      else if (e.type === '虎' || e.type === '豹') { e.calm = 2; e.moveT = 0.3; msg = e.type + '受創而退（還有 ' + left + '）。'; }
+      else if (e.type === '龜') { e.moveT = 0; msg = '龜挨了一下，往海裡逃（還有 ' + left + '）。'; }
+      else if (part === 'tail') msg = '打在' + this.beastName(e) + '的尾上，只吃' + (this.ents.snakeK(e, 'tail') < 0.5 ? '四分之一' : '四分之三') + '（還有 ' + left + '）。打頭吧。';
+      else if (part === 'head' && e.state === 'coil') msg = '牠纏著船，頭露在外面——多吃五成（還有 ' + left + '）。';
+      else if (e.type === '共工') msg = '打在' + this.beastName(e) + '身上' + this.gongTakeText(e, tool) + '（還有 ' + left + '）。';
+      else if (e.type === '齒') msg = shield ? '打在鑿齒的盾上，只有一成（還有 ' + left + '）。繞到牠身側或背後去。' : '繞過盾，打在鑿齒身上（還有 ' + left + '）。';
+      else { const n = at && tool === '戈' ? U.cheb(at.x, at.y, p.x, p.y) : 0; msg = (n >= 2 ? '戈' + (n === GE_REACH ? '尖' : '') + '搆到' + GE_NUM[n] + '格外的' : '') + this.beastName(e) + (n === GE_REACH ? '，只吃一半' : '') + '（還有 ' + left + '）。'; }
+      if (msg || also) this.message(msg + also);
+    }
+    strike(o, cx, cy, base) {   // 一隻挨一下（v0.9.27 從 attack 拆出來）：盾、修蛇頭尾、共工的兵器成數照牠自己算
+      const p = this.player, part = o.type === '修蛇' ? this.ents.snakePart(o, cx, cy) || 'head' : null;   // 修蛇：打在頭還是尾（v0.8.16）
+      const shield = this.ents.shielded(o, p.x, p.y), dmg = U.r4(base * this.dmgMult() * (shield ? TOOTH_SHIELD : 1) * (part ? this.ents.snakeK(o, part) : 1) * this.gongTake(o, this.heldTool()));   // 鑿齒的盾：正面只吃一成（v0.8.5）；共工照兵器打折（v0.9）
+      if (o.type === '鷹') o.angryT = 12;
+      o.hp -= dmg; o.angry = true; o.angryAt = this.world.time;
+      this.fx.push({ type: 'float', x: o.x, y: o.y, text: '−' + this.shown('dmg', dmg, o), color: G.INK.red, t: 0, dur: 0.7 });
+      return { part, shield, dmg };
     }
     // 彈弓：面前五十度、九格內最近的獸；中間不能有磚石山灶這類擋路的東西（水與草木不擋），站在台上就越得過
     slingTarget() {
@@ -3379,7 +3494,7 @@
       if (MINI_TYPES.indexOf(e.type) >= 0 && !e.shade) { this.miniZero = (this.miniZero || []).concat([{ k: (this.miniN = (this.miniN || 0) + 1), name: this.beastName(e), max: e.max || DB[e.type].hp, until: performance.now() + ZERO_MS }]); }   // 小魔王的命條歸零停五秒（v0.8.21）
       if (e.shade) { this.shadeDown(e); return; }        // 玄武吐的墨影（v0.8.8）
       if (this.bossGlyph(e.type)) { this.bossDown(e); return; }   // 大魔王（v0.8.7 封豨、v0.8.16 修蛇）
-      if (e.type === '雀') { this.ents.remove(e); this.stats.kills++; this.addCourage(1, 'other'); this.message('雀落了下來，不動了。'); return; }   // v0.9.22：彈弓打得死雀，不掉東西，膽氣照非敵對的算
+      if (e.type === '雀') { this.sparrowDown(e); return; }   // v0.9.22：彈弓打得死雀，不掉東西，膽氣照非敵對的算；v0.9.25 田邊打得太兇招蝗
       const drops = { '鹿': ['肉', 2], '狸': ['肉', 1], '虎': ['肉', 3], '豹': ['肉', 2], '狼': ['肉', 2], '蛇': ['蛇肉', 1], '蟾': [e.venom ? '毒蟾肉' : '蟾蜍肉', 1], '龜': ['龜甲', 1], '豬': ['肉', 3], '牛': ['肉', 4] }[e.type];
       const cour = { '鹿': 3, '狸': 2, '虎': 30, '豹': 15, '狼': 15, '蛇': 7.5, '蛛': 5, '蟾': 3, '鷹': 5, '龜': 3, '蜃': 40, '豬': 15, '牛': 10, '齒': 40, '雕': 40, '畢': 40 }[e.type] || 2;   // v0.4.13：虎加倍、豹狼蛇一倍半；v0.6 野豬同豹、野牛十
       const hostile = e.type !== '鹿' && e.type !== '龜' && e.type !== '狸', gain = hostile ? cour * (this.isNight() ? KILL_NIGHT : KILL_DAY) : cour;   // 敵對的：白日八成、夜裡加半成；難度加成在 addCourage 裡乘，最後一次取整
@@ -3506,6 +3621,7 @@
       if (it.seed) { this.sow(t, it.seed); return; }   // 五穀：面向田下種（v0.9.18）
       if (name === '灰' && (base === '田' || bd.crop)) { this.ashField(t); return; }   // 草木灰撒在田裡，地力 +1
       if (name === '阱') { this.digTrap(t); return; }   // 陷阱（v0.9.24）
+      if (name === '匾') { this.hangPlaque(t); return; }   // 匾（v0.9.26）
       if (name === '草' && base === '阱') { this.coverTrap(t); return; }
       if (it.slot) { this.wearItem(p.sel); return; }
       if (it.tool && it.dur) { this.equipFromBag(p.sel); return; }
@@ -3677,8 +3793,8 @@
     cropNews(type, x, y, r) {   // 世界那邊換日時說一聲：凍死的照日數一回、落穗與雀啄只在附近說
       const p = this.player, near = U.cheb(x, y, p.x, p.y) <= 14;
       if (type === 'peck') { if (near) this.fx.push({ type: 'float', x, y, text: '雀', color: G.INK.brown, t: 0, dur: 1.4 }); return; }
-      if (type === 'locust') { this.toast('蝗', '天邊黃了一片：一群蝗明日半夜落到你的田上（方圓八格，「' + r.c + '」那一帶）。田邊點燈、生火、燒旺灶，燈火六格內的田保得住——《詩·小雅·大田》：「田祖有神，秉畀炎火。」', 12000); SFX.fail(); return; }   // v0.9.19
-      if (type === 'locustLand') { const near2 = U.cheb(x, y, this.player.x, this.player.y) <= 30; this.message(r.eaten ? '蝗群落下，' + r.eaten + ' 格田吃得只剩稈子' + (r.saved ? '；燈火邊的 ' + r.saved + ' 格保住了' : '') + '。' : r.saved ? '蝗群落下，撲進燈火裡燒死了一地，' + r.saved + ' 格田都保住了。' : '蝗群落下，四下沒有你種的田，又飛走了。'); if (!r.eaten && r.saved) this.addCourage(3); if (near2) this.fx.push({ type: 'float', x, y, text: r.eaten ? '蝗' : '焚', color: r.eaten ? G.INK.brown : G.INK.red, t: 0, dur: 1.6 }); return; }
+      if (type === 'locust') { this.toast('蝗', (r.sp ? '那一帶的雀打得太兇，少了吃蟲的——' : '') + '天邊黃了一片：一群蝗明日半夜落到你的田上（方圓八格，「' + (this.world.crops.get(U.key(x, y)) || { c: '田' }).c + '」那一帶）。田邊點燈、生火、燒旺灶，燈火六格內的田保得住——《詩·小雅·大田》：「田祖有神，秉畀炎火。」', 12000); SFX.fail(); return; }   // v0.9.19
+      if (type === 'locustLand') { const near2 = U.cheb(x, y, this.player.x, this.player.y) <= 30; this.message((r.eaten ? '蝗群落下，' + r.eaten + ' 格田吃得只剩稈子' + (r.saved ? '；燈火邊的 ' + r.saved + ' 格保住了' : '') + '。' : r.saved ? '蝗群落下，撲進燈火裡燒死了一地，' + r.saved + ' 格田都保住了。' : '蝗群落下，四下沒有你種的田，又飛走了。') + (r.sp && r.eaten ? '這一帶的雀打得太兇了。' : '')); if (!r.eaten && r.saved) this.addCourage(3); if (near2) this.fx.push({ type: 'float', x, y, text: r.eaten ? '蝗' : '焚', color: r.eaten ? G.INK.brown : G.INK.red, t: 0, dur: 1.6 }); return; }
       if (type === 'mouse') { if (near) this.fx.push({ type: 'float', x, y, text: '鼠', color: G.INK.brown, t: 0, dur: 1.4 }); if (near && !(this.player.tut || {}).mouse) { (this.player.tut = this.player.tut || {}).mouse = 1; this.toast('田鼠', '田鼠夜裡來偷穗，籬擋不住、稻草人也不怕。林竹間有狸，手持魚按 F 投一條，帶到田邊牠就留下來守著。'); } return; }   // v0.9.19
       if (type === 'frost') { const d = this.day(); this.frostN = this.frostDay === d ? (this.frostN || 0) + 1 : 1; this.frostDay = d; this.message('霜降了：田裡還沒熟的苗、秀凍死了 ' + this.frostN + ' 格（麥不怕）。'); return; }
       if (type === 'shed' && near) this.message('「' + r.c + '」熟過了頭，穗落在田裡，只拾得回一把。');
@@ -3690,11 +3806,18 @@
       if (U.cheb(deer.x, deer.y, this.player.x, this.player.y) <= 14) { this.fx.push({ type: 'float', x: deer.x, y: deer.y - 0.3, text: '祭', color: G.INK.red, t: 0, dur: 1.6 }); this.message('狼把鹿擺在地上（豺乃祭獸）。' + (at ? '那裡留了一塊肉。' : '')); }
     }
     // ---------- 獸的預警與陷阱（v0.9.24 使用者定）----------
+    sparrowDown(e) {   // 打死一隻雀（v0.9.22 不掉東西；v0.9.25 記下來：田邊一年內打死的過了三隻，小暑到處暑蝗多、專落那一帶）
+      const p = this.player, w = this.world, S = World.SPARROW; this.ents.remove(e); this.stats.kills++; this.addCourage(1, 'other');
+      const n = w.sparrowKill(e.x, e.y), field = w.cropNear(e.x, e.y, S.r), over = n - S.free;
+      if (!field || over <= 0) { this.message('雀落了下來，不動了。'); return; }
+      const k = Math.min(S.max, 1 + S.k * over);
+      if (!(p.tut || {}).sparrowLocust) { (p.tut = p.tut || {}).sparrowLocust = 1; this.toast('雀打得太兇', '這一帶一年裡打死了 ' + n + ' 隻雀。雀也吃蟲，少了雀，小暑到處暑蝗來得多（現在 ×' + U.r4(k) + '），蝗群也專落這一帶的田。田邊打死的雀過了 ' + S.free + ' 隻才算，每多一隻多四分之一、最多 ' + S.max + ' 倍，一年後就忘了。趕雀用稻草人，或打中嚇走就好。', 12000); }
+      else this.message('雀落了下來，不動了。這一帶一年裡打死了 ' + n + ' 隻雀，蝗 ×' + U.r4(k) + '。');
+    }
     pounceMiss(e) {   // 預警時人換了一格：這一撲撲空
       const p = this.player; if (U.cheb(e.x, e.y, p.x, p.y) > 12) return;
       this.fx.push({ type: 'float', x: e.x, y: e.y - 0.3, text: '撲空', color: G.INK.black, t: 0, dur: 0.8 });
-      const w0 = p.warned || (p.warned = {});
-      if (!w0.pounce) { w0.pounce = true; this.toast('撲了個空', '「' + this.beastName(e) + '」撲過來之前，字會一縮、發紅——看到就往旁邊跨一步，這一撲就撲空。', 8000); }
+      if (!(p.tut || {}).pounce) { (p.tut = p.tut || {}).pounce = 1; this.toast('撲了個空', '「' + this.beastName(e) + '」撲過來之前，字會一縮、發紅——看到就往旁邊跨一步，這一撲就撲空。', 8000); }
       else this.message('「' + this.beastName(e) + '」撲了個空。');
     }
     trapSprung(e) {   // 踩塌了穽，掉進阱裡
@@ -4146,15 +4269,58 @@
       w.time += slept;   // 晚上睡到次日清晨，凌晨睡到當日清晨
       if (p.azure) this.mendShips(slept);   // 睡過的這段，船也照樣回命
       for (let i = 0; i < 80; i++) w.step(p.x, p.y);
-      const win = this.windowShare(), bonus = this.windowBonus(win), san = U.r4(SLEEP_SAN * (1 + bonus));   // 窗多的屋子睡得舒坦
+      const room = w.houseRoom(p.x, p.y), homeSan = room ? (room.kind === '居' ? HOME_SAN : 0) + room.decor * DECOR_SAN : 0;   // 屋有其用（v0.9.26）：睡在居裡、屋裡有擺設
+      const win = this.windowShare(), bonus = this.windowBonus(win), san = U.r4(SLEEP_SAN * (1 + bonus) + homeSan);   // 窗多的屋子睡得舒坦
       p.warm = 100; p.sta = p.staMax; p.food = Math.max(0, p.food - 12 * this.diff.hunger); p.san = Math.min(100, p.san + san); p.hp = Math.min(p.hpMax, p.hp + 10);
       this.ents.list = this.ents.list.filter(e => '虎豹狼蛇蛛魄豬'.indexOf(e.type) < 0);
       this.gatherCompanions();
       this.stats.nights++; p.warned = {};
       if (bonus) p.sanBoostUntil = w.time + DAY;   // 窗夠的屋子睡過一覺：之後一整天愜意回得快 5%
       const yan = this.swallowVisit(win); if (yan) p.san = Math.min(100, p.san + yan);   // 春分「玄鳥至」（v0.9.19）
-      this.toast(yan ? '玄鳥至' : '一夜無夢', '天亮了。愜意 +' + this.shown('san', san) + (bonus ? '（窗是屋內面積的 ' + fmt(win * 100) + '%，多回 ' + Math.round(bonus * 100) + '%；今天一整天愜意回得快 5%）' : '') + '。' + (yan ? '屋簷下有燕子銜泥築巢，春分了。愜意再 +' + this.shown('san', yan) + '。' : ''));
+      this.toast(yan ? '玄鳥至' : '一夜無夢', '天亮了。愜意 +' + this.shown('san', san) + (bonus ? '（窗是屋內面積的 ' + fmt(win * 100) + '%，多回 ' + Math.round(bonus * 100) + '%；今天一整天愜意回得快 5%）' : '') + (homeSan ? '（' + [room.kind === '居' ? '睡在居裡 +' + HOME_SAN : '', room.decor ? '屋裡擺設 ' + room.decor + ' 樣 +' + room.decor * DECOR_SAN : ''].filter(Boolean).join('、') + '）' : '') + '。' + (yan ? '屋簷下有燕子銜泥築巢，春分了。愜意再 +' + this.shown('san', yan) + '。' : ''));
       this.save();
+    }
+
+    // ---------- 屋有其用（v0.9.26 使用者定）：自己蓋的三十八格以內的屋子照擺了什麼認居、丹房、倉；屋裡的擺設；門上的匾 ----------
+    roomHere() { const p = this.player; return p.sailing || p.swimming ? null : this.world.houseRoom(p.x, p.y); }
+    roomLabel() {   // 狀態列地名後面寫屋子：· 「觀復」居
+      const r = this.roomHere(); if (!r) return ''; const nm = this.world.roomPlaque(r);
+      return r.kind || nm ? ' · ' + (nm ? '「' + nm + '」' : '') + (r.kind || '屋') : '';
+    }
+    roomTick() {   // 走進一間屋子：頭一回認出居、丹房、倉說一聲；門上有匾的，每天頭一回進門愜意 +1
+      const p = this.player, w = this.world, at = p.x + ',' + p.y + ',' + w.ver + ',' + (p.sailing ? 1 : 0);
+      if (this.roomAt === at) return; this.roomAt = at;
+      const r = this.roomHere(), id = r ? r.id : null; if (id === this.roomId) return; this.roomId = id; if (!r) return;
+      if (r.kind && !(p.tut || {})['room' + r.kind]) { (p.tut = p.tut || {})['room' + r.kind] = 1; this.toast(ROOM_TEXT[r.kind][0], ROOM_TEXT[r.kind][1], 10000); }
+      const door = r.doors.find(k => w.plaques.has(k)); if (!door) return;
+      const pd = this.plaqueDay || (this.plaqueDay = {}); if (pd[door] === this.day()) return; pd[door] = this.day();
+      const nm = w.plaques.get(door), pl = G.PLAQUES.find(q => q.nm === nm); p.san = Math.min(100, p.san + PLAQUE_SAN);
+      this.message('進門抬頭，「' + nm + '」——' + (pl ? pl.src : '') + '　愜意 +' + PLAQUE_SAN + '。');
+    }
+    hangPlaque(t) {   // 選中匾、面向門按 F：門後得是自己蓋的屋子；一間屋子掛一塊
+      const w = this.world, k = U.key(t.x, t.y);
+      if (w.get(t.x, t.y) !== '門') { this.message('匾要掛在門上：面向自己蓋的屋子的「門」按 F。'); SFX.fail(); return; }
+      const r = w.roomBy(t.x, t.y); if (!r) { this.message('這扇門後面不是自己蓋的屋子（三十八格以內、四面是磚門窗），匾掛不上。'); SFX.fail(); return; }
+      const had = w.roomPlaque(r); if (had) { this.message('這間屋子已經掛了「' + had + '」。拆了那扇門，匾會一起收回來。'); SFX.fail(); return; }
+      this.plaquePage(k, 0);
+    }
+    plaqueList() {   // 能挑的字：照這張紙的種子打亂，已經掛在別的門上的不再出
+      const used = new Set(this.world.plaques.values());
+      return G.PLAQUES.map((q, i) => [q, U.rand2(i, 31, this.seed)]).sort((a, b) => a[1] - b[1]).map(a => a[0]).filter(q => !used.has(q.nm));
+    }
+    plaquePage(k, page) {
+      const all = this.plaqueList(); if (!all.length) { this.message('古書裡挑得出的字都掛完了。'); SFX.fail(); return; }
+      const n = Math.ceil(all.length / PLAQUE_PICK), pg = ((page % n) + n) % n, list = all.slice(pg * PLAQUE_PICK, pg * PLAQUE_PICK + PLAQUE_PICK);
+      const choices = list.map(q => ({ label: q.nm, fn: () => this.hangOk(k, q) }));
+      if (n > 1) choices.push({ label: '換一批', fn: () => this.plaquePage(k, pg + 1) });
+      choices.push({ label: '先不掛', fn: () => {} });
+      this.talk('題匾', ['從古書裡挑兩個字題在匾上（第 ' + (pg + 1) + '／' + n + ' 批）：'].concat(list.map(q => '<b>' + q.nm + '</b>　<span class="dim small">' + q.src + '</span>')), choices);
+    }
+    hangOk(k, q) {
+      const w = this.world, [x, y] = U.unkey(k); if (w.get(x, y) !== '門' || !this.has('匾') || [...w.plaques.values()].includes(q.nm)) return;
+      w.plaques.set(k, q.nm); this.removeItem('匾', 1); this.buildBag(); this.roomId = null; this.roomAt = null;   // 進門的愜意當天就算
+      this.fx.push({ type: 'float', x, y, text: q.nm, color: G.INK.red, t: 0, dur: 1.4 }); SFX.write();
+      this.message('門上掛起「' + q.nm + '」——' + q.src);
     }
 
     // ---------- 櫃 ----------
@@ -4174,7 +4340,7 @@
     // 甕（v0.9.21）：每過一日，甕裡的果的日子跟著往後挪一日（不醉），穀挪半日（變陳慢一半）——日子記在每一顆上，拿出來照挪過的算
     jarAge(n) {
       if (!(n > 0)) return; const w = this.world;
-      for (const [k, box] of w.chests) { const [x, y] = U.unkey(k); if (w.get(x, y) !== '甕') continue;
+      for (const [k, box] of w.chests) { const [x, y] = U.unkey(k), ch = w.get(x, y); if (ch !== '甕' && !(ch === '櫃' && w.roomBy(x, y, '倉'))) continue;   // 倉裡的櫃（v0.9.26）跟甕一樣
         for (const s of box) { if (!this.aged(s.n) || s.inf) continue; const ds = this.fruitDays(s);
           if (s.n === '果') { for (let i = 0; i < ds.length; i++) ds[i] += n; }
           else { s.half = (s.half || 0) + n; const sh = Math.floor(s.half / 2); s.half -= sh * 2; if (sh) for (let i = 0; i < ds.length; i++) ds[i] += sh; } } }
@@ -4183,7 +4349,7 @@
       this.chestAt = U.key(t.x, t.y);
       if (!this.world.chests.has(this.chestAt)) this.world.chests.set(this.chestAt, []);
       this.sortChest(this.world.chests.get(this.chestAt));
-      const jar = this.world.get(t.x, t.y) === '甕'; $('chest-title').textContent = jar ? '甕' : '櫃'; $('chest-in').textContent = jar ? '甕裡（只裝吃的；穀變陳慢一半，果不醉）' : '櫃裡';
+      const jar = this.world.get(t.x, t.y) === '甕', store = !jar && this.world.roomBy(t.x, t.y, '倉'); $('chest-title').textContent = jar ? '甕' : store ? '櫃（倉）' : '櫃'; $('chest-in').textContent = jar ? '甕裡（只裝吃的；穀變陳慢一半，果不醉）' : store ? '櫃裡（在倉裡：穀變陳慢一半，果不醉）' : '櫃裡';
       $('chest').classList.remove('hidden'); this.keys.clear(); this.buildChest();
     }
     chestKind() { if (!this.chestAt) return '櫃'; const [x, y] = U.unkey(this.chestAt); return this.world.get(x, y) === '甕' ? '甕' : '櫃'; }
@@ -4449,6 +4615,7 @@
       const p = this.player, z = G.zoneAt(p.x, p.y, this.seed), bio = G.biomeName(this.world.get(p.x, p.y));
       if (z) return z.name + ' · ' + bio;
       if (this.northSea(p.x, p.y) && DB[this.world.get(p.x, p.y)].kind === 'water') return '北冥 · ' + bio;   // v0.9.21
+      if (this.southSea(p.x, p.y) && DB[this.world.get(p.x, p.y)].kind === 'water') return '南冥 · ' + bio;   // v0.9.26
       if (G.GEN >= 3) { const m = G.massAt(p.x, p.y, this.seed), rg = G.isleOf(p.x, p.y, this.seed); if (m && m.area > G.MASS_MIN && !m.home && !m.zone) return this.massName(m.id) + ' · ' + (rg ? rg.name + ' · ' : '') + bio; return (G.skerryOf(p.x, p.y, this.seed) ? '孤嶼 · ' : '') + bio; }
       const isl = G.isleOf(p.x, p.y, this.seed), sk = isl ? null : G.skerryOf(p.x, p.y, this.seed); return (isl ? isl.name + ' · ' : sk ? '孤嶼 · ' : '') + bio;
     }
@@ -4661,7 +4828,7 @@
       if (!seen.length && !(k && (k.seen || k.st === 'peng'))) h += '<p class="dim">還沒碰上。龜、狸、鮫人、四方的神獸與小魔王，見過的記在這裡。</p>';
       else { h += '<ul>' + seen.map(t => '<li><b>' + esc((DB[t] && DB[t].name) || t) + '</b>　<span class="dim small">' + (rare[t] ? dayOf(rare[t]) + (rare[t].at ? '，' + esc(rare[t].at) : '') : '以前見過') + '</span></li>').join('');
         if (k && k.seen) h += '<li><b>鯤影</b>　<span class="dim small">北冥的海面下見過 ' + k.seen + ' 回，一回比一回大</span></li>';
-        if (k && k.st === 'peng') h += '<li><b>鵬</b>　<span class="dim small">第 ' + k.day + ' 日' + (k.rise ? '，在北冥看著牠離水而起' : '，從頭頂飛過') + '，往南冥去了。《列子·湯問》也記北冥有鯤、有鵬，卻沒說鯤化成鵬——說化的是《莊子·逍遙遊》。</span></li>';
+        if (k && k.st === 'peng') h += '<li><b>鵬</b>　<span class="dim small">第 ' + k.day + ' 日' + (k.rise ? '，在北冥看著牠離水而起' : '，從頭頂飛過') + (k.rode ? '，乘著牠飛到了南冥' : '') + '，往南冥去了。《列子·湯問》也記北冥有鯤、有鵬，卻沒說鯤化成鵬——說化的是《莊子·逍遙遊》。</span></li>';
         if (k && k.st === 'ate' && k.quiet) h += '<li><span class="dim small">那年六月，北冥沒有起風。</span></li>';
         if (p.jiao && p.jiao.gone) h += '<li><span class="dim small">鮫人去了，第 ' + p.jiao.gone + ' 日。</span></li>';
         h += '</ul>'; }
@@ -4755,17 +4922,18 @@
       let nx = 1; while (nx < 30 && CAL.term(d0 + nx).k === tm.k) nx++;
       h += '<p>下一個節氣：' + this.termName(tm.k + 1) + '，還有 ' + nx + ' 日。</p>';
       const now = this.sowNow(), st = [0, 0, 0, 0, 0]; for (const k of w.crops.keys()) { const [x, y] = U.unkey(k), cd = DB[w.get(x, y)]; if (cd && cd.crop) st[cd.crop]++; }
-      const ripe = Object.keys(G.CROPS).filter(k => this.inTerms(tm.k, G.CROPS[k].wild[2], G.CROPS[k].wild[3]));
+      const ripe = Object.keys(G.CROPS).filter(k => this.inTerms(tm.k, G.CROPS[k].wild[2], G.CROPS[k].wild[3])), lb = w.locustBoost();   // lb：田邊雀打得太兇，蝗多幾倍（v0.9.25）
       h += '<h3>這個節氣的田事</h3><ul>'
         + '<li>' + (now.length ? '下得了種：<b>' + now.join('、') + '</b>' : '這個節氣不下種') + '。</li>'
         + '<li>' + (ripe.length ? '野生的苗田熟著：' + ripe.join('、') + '（按 <kbd>E</kbd> 收）' : '野生的苗田這時沒有熟的') + '。</li>'
         + (w.crops.size ? '<li>你種著 ' + w.crops.size + ' 格：苗 ' + st[1] + '、秀 ' + st[2] + '、熟 ' + st[3] + (st[4] ? '、落穗 ' + st[4] : '') + '。' + (w.cats.size ? '守田的狸 ' + w.cats.size + ' 隻。' : '') + '</li>' : '')
         + (w.locust ? '<li class="warn">蝗群要落在「' + (w.crops.get(U.key(w.locust.x, w.locust.y)) || { c: '田' }).c + '」那一帶（方圓八格）：田邊點燈、生火，燈火六格內的田保得住。</li>' : '')
+        + (lb.over ? '<li class="warn">田邊一年裡打死了 ' + lb.n + ' 隻雀：蝗 ×' + U.r4(lb.k) + '，專落那一帶。</li>' : '')
         + '</ul><h3>要防的</h3><ul class="small">'
         + '<li><b>雀</b>：秀了、熟了的田白天來啄，稻草人看得住。</li>'
         + '<li><b>田鼠</b>：秀了、熟了的田夜裡來偷，籬與稻草人都擋不住，守田的狸方圓十二格內不敢來。</li>'
         + '<li><b>鹿、野豬、野牛</b>：走進田裡就啃，圍籬留扉。</li>'
-        + '<li' + (tm.k >= 10 && tm.k <= 13 ? ' class="now"' : '') + '><b>蝗</b>：小暑到處暑，種了六格以上偶有一群，前一天說，隔天半夜落；燈、火、旺灶六格內的田保得住。</li>'
+        + '<li' + (tm.k >= 10 && tm.k <= 13 ? ' class="now"' : '') + '><b>蝗</b>：小暑到處暑，種了六格以上偶有一群，前一天說，隔天半夜落；燈、火、旺灶六格內的田保得住。田邊打死的雀一年裡過了 ' + World.SPARROW.free + ' 隻，蝗來得多（多一隻多四分之一、最多 ' + World.SPARROW.max + ' 倍），專落那一帶。</li>'
         + '<li' + (tm.k >= HAIL_TERMS[0] && tm.k <= HAIL_TERMS[1] ? ' class="now"' : '') + '><b>冰雹</b>：立夏到處暑的雷雨極少夾著冰雹，屋外的人、苗、燈、稻草人都挨砸。</li>'
         + '<li' + (tm.k >= G.CROP_FROST[0] || tm.k < G.CROP_FROST[1] ? ' class="now"' : '') + '><b>霜</b>：霜降到雨水，還沒熟的苗、秀凍死；麥過冬不怕。</li></ul>'
         + '<p class="dim small">標了底色的是這個節氣該留意的。五穀怎麼種、菜怎麼做，翻「五穀」「料理」兩頁；<a href="#" id="nong-tutor">重看種田的教程</a>。</p>';
@@ -4817,6 +4985,7 @@
       const f = p.firsts || (p.firsts = {}), wx = this.wxHere(), day = this.day(), first = (k, n2) => { if (!f[k]) { f[k] = day; this.message('物候冊記下了：' + n2 + '。'); } };
       if (G.GEN >= 3 && DB[w.get(p.x, p.y)].kind !== 'water' && !G.zoneAt(p.x, p.y, this.seed)) { const rg = G.regionAt(p.x, p.y, this.seed), R0 = p.regions || (p.regions = {}); if (rg && rg.name && !R0[rg.name]) { R0[rg.name] = { day, at: this.placeName() }; this.message('見聞錄記下了：頭一回走進' + rg.name + '。'); } }   // 到過的地域（v0.9.21）
       if (this.northSea(p.x, p.y) && DB[w.get(p.x, p.y)].kind === 'water') { const R0 = p.regions || (p.regions = {}); if (!R0['北冥']) { R0['北冥'] = { day, at: '北冥' }; this.message('見聞錄記下了：到了北冥。'); } }
+      if (this.southSea(p.x, p.y) && DB[w.get(p.x, p.y)].kind === 'water') { const R0 = p.regions || (p.regions = {}); if (!R0['南冥']) { R0['南冥'] = { day, at: '南冥' }; this.message('見聞錄記下了：到了南冥。'); } }   // v0.9.26
       if (wx === 'snow') first('snow', '初雪'); if (wx === 'thunder' || wx === 'dry') first('thunder', '初雷');
       if (w.gale && w.time < w.gale.until) first('gale', '狂風'); if (w.breezeOn && w.breezeOn()) first('breeze', '和風'); if (this.hailing && this.hailing()) first('hail', '冰雹');
       { const ev = this.seasonEv(), sy = Math.floor(d0 / CAL.SOLAR), v0 = p.visits || (p.visits = {});   // 節氣事件（v0.9.21）：頭一回碰上說一聲，一個太陽年一回
@@ -4920,6 +5089,7 @@
         if (!$('start').classList.contains('hidden')) return;   // 起始頁的按鍵在 boot() 裡管
         if (Xfer.isOpen()) return;   // 匯出／匯入的視窗開著（v0.9.3）：打字、Esc 都歸它
         if (this.player.dead) { if (ev.code === 'Enter' || ev.code === 'Space') { ev.preventDefault(); this.respawn(); } return; }
+        if (this.flight) { ev.preventDefault(); return; }   // 騎鵬（v0.9.26）：飛的十六息裡按什麼都不作數
         if (this.naming) {   // 取名框：v0.8.28 數字鍵挑；v0.8.29 一批十二個，鍵盤最上一排 1–9、0、−、= 挑，空白鍵換一批；Enter／E／Esc 第一個（一定要有個名字）
           const i = NAME_KEYS.indexOf(ev.code.replace(/^Numpad(?=[0-9]$)/, 'Digit')); ev.preventDefault();
           if (i >= 0) { if (i < (this.naming.list || []).length) this.nameOk(i); }
@@ -5026,7 +5196,7 @@
       const cv = $('world');
       cv.addEventListener('contextmenu', (ev) => ev.preventDefault());
       cv.addEventListener('mousedown', (ev) => {
-        if (this.paused || this.player.dead || this.player.knock > 0) return;
+        if (this.paused || this.flight || this.player.dead || this.player.knock > 0) return;   // 騎鵬（v0.9.26）飛著的時候點了不算
         const r = this.renderer, T = r.tile, p = this.player, q = this.unTilt(ev.clientX, ev.clientY);   // 共工的空把畫面斜了，點的地方照轉回來算（v0.9）
         const fx = (q.x - (r.w / 2 - r.camX * T)) / T, fy = (q.y - (r.h / 2 - r.camY * T)) / T;
         let ent = null, bd = 0.75;   // 點到會動的生靈（照牠畫在哪裡算，魄摸不著不算）
@@ -5306,7 +5476,7 @@
         $('hplabel').innerHTML = '命<br>' + Math.round(p.hp) + (p.hpMax > 100 ? '<small>／' + Math.round(p.hpMax) + '</small>' : ''); $('foodlabel').innerHTML = '飽<br>' + Math.round(p.food); $('warmlabel').innerHTML = '暖<br>' + Math.round(p.warm) + (p.heatT > 0 ? '<small>熱 ' + Math.ceil(p.heatT) + '</small>' : ''); $('stalabel').innerHTML = '力<br>' + Math.round(p.sta); $('sanlabel').innerHTML = '愜<br>' + Math.round(p.san);
         const nn = this.nightNo();
         const d0 = this.day() - 1;   // v0.9.16 曆法：月日與節氣，候名放在指著時的提示裡
-        $('status').innerHTML = '<b>第 ' + this.day() + ' 日</b> <span class="cal" title="' + CAL.longLabel(d0) + '">' + CAL.label(d0) + '</span> &nbsp;' + this.shichen() + ' ' + (this.daylight() > 0.5 ? '日' : '月') + this.weatherLabel() + (this.isNight() ? '<span class="dim">（第 ' + nn + ' 夜' + (nn >= this.diff.ghost ? '，魄夜' : '') + '）</span>' : '') + ' &nbsp;·&nbsp; ' + w.tideName() + ' &nbsp;·&nbsp; ' + (p.sailing ? '船上 · ' + (this.zoneName() ? this.zoneName() + ' · ' : '') + (p.ship ? p.ship.kind + ' ' + Math.round(p.ship.hp) + '/' + this.shipMax(p.ship) : '') + (this.shipWarded() ? ' · 船頭' + this.shipSkullName() + ' ' + this.wardDays() + ' 日' : '') : p.swimming ? '<b style="color:#b4392a">落水 · 還有 ' + Math.ceil(p.swimT) + ' 息</b>' : this.placeName()) + (this.peaceDays() ? ' &nbsp;·&nbsp; <span class="dim">龜卜 · ' + this.peaceDays() + ' 日無魄</span>' : '') + (this.mealOn() ? ' &nbsp;·&nbsp; <span class="dim" title="' + G.MEALS[p.meal.k].text + '">食 · ' + G.MEALS[p.meal.k].dish + '</span>' : '') + ' &nbsp;·&nbsp; <span class="dim">(' + p.x + ', ' + p.y + ') · ' + this.diff.name + '</span>';
+        $('status').innerHTML = '<b>第 ' + this.day() + ' 日</b> <span class="cal" title="' + CAL.longLabel(d0) + '">' + CAL.label(d0) + '</span> &nbsp;' + this.shichen() + ' ' + (this.daylight() > 0.5 ? '日' : '月') + this.weatherLabel() + (this.isNight() ? '<span class="dim">（第 ' + nn + ' 夜' + (nn >= this.diff.ghost ? '，魄夜' : '') + '）</span>' : '') + ' &nbsp;·&nbsp; ' + w.tideName() + ' &nbsp;·&nbsp; ' + (p.sailing ? '船上 · ' + (this.zoneName() ? this.zoneName() + ' · ' : '') + (p.ship ? p.ship.kind + ' ' + Math.round(p.ship.hp) + '/' + this.shipMax(p.ship) : '') + (this.shipWarded() ? ' · 船頭' + this.shipSkullName() + ' ' + this.wardDays() + ' 日' : '') : p.swimming ? '<b style="color:#b4392a">落水 · 還有 ' + Math.ceil(p.swimT) + ' 息</b>' : this.placeName() + this.roomLabel()) + (this.peaceDays() ? ' &nbsp;·&nbsp; <span class="dim">龜卜 · ' + this.peaceDays() + ' 日無魄</span>' : '') + (this.mealOn() ? ' &nbsp;·&nbsp; <span class="dim" title="' + G.MEALS[p.meal.k].text + '">食 · ' + G.MEALS[p.meal.k].dish + '</span>' : '') + ' &nbsp;·&nbsp; <span class="dim">(' + p.x + ', ' + p.y + ') · ' + this.diff.name + '</span>';
       }
       const lv = this.level(), daysLeft = p.decayAt ? Math.max(1, Math.ceil((p.decayAt - w.time) / DAY - 1e-6)) : 0;
       const cs = p.cour + '|' + lv + '|' + daysLeft + '|' + (this.hasGod() ? 1 : 0) + '|' + (p.azure ? 1 : 0) + (p.bai ? 1 : 0) + (p.zhu ? 1 : 0) + '|' + BEADS.map(id => this.beadOf(id)).join(',') + '|' + Object.keys(p.bosses || {}).join(',') + '|' + this.buffLayers() + '|' + (p.trial ? p.trial.id : '');
@@ -5348,6 +5518,7 @@
       else if (e && e.type === '鮫') s = '鮫人 · 坐在水裡織東西。<kbd>E</kbd> 說話（她不是敵人）';
       else if (e && e.type === '魄') s = '魄 · 無形。身上的光只逼得退；燈、火、旺灶三格內才煙滅';
       else if (e && e.type === '鷹') s = '鷹' + (e.tame ? '（你的 · 命 ' + Math.round(e.hp) + ' 力 ' + Math.round(e.sta) + '）' : e.angry ? '（怒）' : '（半友好）') + (hs && hs.n === '魚' ? ' · <kbd>F</kbd> ' + (e.tame ? '餵魚（力 +40）' : '投魚馴服（' + Math.round(this.tameChance() * 100) + '%）') : ' · 手持魚按 F ' + (e.tame ? '餵' : '馴')) + ' · <kbd>E</kbd> 攻擊';
+      else if (!e && this.geTarget()) { const gt = this.geTarget(); s = '「' + this.beastName(gt.e) + '」在' + GE_NUM[gt.n] + '格外 · <kbd>E</kbd> 拿戈' + (gt.n === GE_REACH ? '尖點牠（一半）' : '搆牠') + '（' + this.activeTool().n + '）'; }   // 戈（v0.9.27）
       else if (e) s = '「' + this.beastName(e) + '」' + (e.type === '蟾' || e.type === '蛛' ? (e.venom ? '（有毒）' : '（無毒）') : e.type === '齒' ? (this.ents.shielded(e, p.x, p.y) ? '（你在盾前，打只有一成）' : '（盾不在這邊）') : '') + (e.hp > 1 ? '（' + this.shownHp(e) + '）' : '') + ' · <kbd>E</kbd> ' + (e.type === '魚' ? '捉' : e.type === '雀' ? '驚' : this.heldDmg() ? '攻擊（' + this.activeTool().n + '）' : '<i>徒手打不了，具欄裡選把刀劍</i>');
       else if (w.fogAt(t.x, t.y)) { const n = this.count('扇'); s = '霧障 · 走進去會問你要不要用扇子吹散' + (n ? '（囊中 ' + n + ' 把' + (hs && hs.n === '扇' ? '；<kbd>V</kbd> 現在就搧' : '') + '）' : '（沒有扇子：草四木一可紮一把）'); }
       else if (ch === '碑') s = '一塊古碑 · <kbd>E</kbd> 讀碑';

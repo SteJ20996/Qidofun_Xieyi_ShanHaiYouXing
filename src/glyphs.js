@@ -91,6 +91,10 @@
     '罾': { s: 17, walk: 0, kind: 'object', ink: INK.water, place: true, onWater: true, net: 3, flavor: '下在水上的大網（舊法）：十息一條魚、存二十條。面向按 E 取魚，空網收回。' },
     '籬': { s: 25, walk: 0, kind: 'object', fence: true, flam: 0.4, ink: INK.brown, yield: { '籬': 1 }, time: 0.8, place: true, flavor: '木枝麻繩紮的籬（v0.9.18）。擋獸、擋人，不擋光也不擋眼；圍起來不算屋子。開口處放一扇扉。野牛撞得壞。' },
     '扉': { s: 12, walk: 1.0, kind: 'object', gate: true, fence: true, flam: 0.4, ink: INK.brown, yield: { '扉': 1 }, time: 0.8, place: true, flavor: '柴扉，開在籬上：人過得去，獸過不去，不擋光（v0.9.18）。' },
+    '屏': { s: 9, walk: 0, kind: 'object', ink: INK.brown, yield: { '屏': 1 }, time: 1.0, place: true, flavor: '屏風（v0.9.26）。擺在自己蓋的屋裡算一樣擺設：屋裡擺設有幾樣（屏、案、几、盆景各算一樣），在這屋裡睡一覺愜意就多幾。' },
+    '案': { s: 10, walk: 0, kind: 'object', ink: INK.brown, yield: { '案': 1 }, time: 1.0, place: true, flavor: '案，長桌（v0.9.26）。擺在自己蓋的屋裡算一樣擺設，在這屋裡睡一覺愜意 +1。' },
+    '几': { s: 2, walk: 0, kind: 'object', ink: INK.brown, yield: { '几': 1 }, time: 0.8, place: true, flavor: '几，矮桌（v0.9.26）。擺在自己蓋的屋裡算一樣擺設，在這屋裡睡一覺愜意 +1。' },
+    '盆': { s: 9, walk: 0, kind: 'object', ink: INK.field, yield: { '盆景': 1 }, time: 0.8, place: true, flavor: '盆景（v0.9.26）：陶盆裡種了花。擺在自己蓋的屋裡算一樣擺設，在這屋裡睡一覺愜意 +1。' },
     '阱': { s: 7, walk: 0, kind: 'object', ink: INK.brown, yield: { '阱': 1 }, time: 1.0, place: true, flavor: '陷阱（v0.9.24）：用鋤挖開的坑，插著竹籤。選中草面向它按 F 蓋上，就成了「穽」，獸看不出來。鹿、野豬、狼、豹踩上去掉下去，困八息、命 −10；虎、野牛、魔王太大，掉不進去。面向按 E 拆回。' },
     '穽': { s: 9, walk: 1.0, kind: 'object', ink: INK.field, yield: { '阱': 1 }, time: 1.0, flavor: '蓋了草的阱（v0.9.24）。獸看不出來，你看得出來，走在上面沒事。鹿、野豬、狼、豹踩上去會掉下去。' },
     '偶': { s: 11, walk: 0, kind: 'object', ink: INK.brown, yield: { '偶': 1 }, time: 1.0, place: true, flavor: '稻草人。四十五天內獸不近身：前半十格，後半七格。再放一個可以續到六十天；面向按 E 拆下，重放重計。' },
@@ -226,6 +230,9 @@
     '釜': { s: 10, kind: 'item', flavor: '鐵釜（v0.9.18）。帶在囊裡，灶的界面就多一欄「釜」：煮稷粥、豆羹、魚羹。' },
     '甑': { s: 17, kind: 'item', flavor: '甑，底有孔，架在釜上蒸（v0.9.18）。釜甑都帶著，灶上就蒸得了稻飯、黍糕、麥餅。' },
     '鮫綃': { s: 30, kind: 'wear', slot: '襯', red: 0.02, warm: true, jiao: true, flavor: '鮫綃（v0.9.21）。「南海出鮫綃紗，泉先潛織，一名龍紗……以為服，入水不濡。」（《述異記》卷上）穿在裡面：落水的倒數慢五分之一，落水時的減益減半；跟內襯一樣禦寒減傷。' },
+    '盆景': { s: 21, kind: 'item', tile: '盆', flavor: '陶盆種了花（v0.9.26）。面向地上按 F 擺下；擺在自己蓋的屋裡算一樣擺設。' },
+    '陶盆': { s: 20, kind: 'item', flavor: '窯裡燒的陶盆（v0.9.26）。加兩朵花做成盆景。' },
+    '匾': { s: 11, kind: 'item', flavor: '匾（v0.9.26）。面向自己蓋的屋子的門按 F，從古書裡挑兩個字題上、掛在門上：狀態列與大地圖寫屋名，每天頭一回進門愜意 +1。拆門連匾一起收回。' },
     '鮫珠': { s: 27, kind: 'item', tile: '珠', flavor: '鮫人泣的珠（v0.9.21）。面向地上按 F 擱下，是一盞滅不了的燈（照六格、魄三格內煙滅，雨雹都不怕）；帶在囊裡行船，夜裡船邊三格魄近不了。' },
     '鯤': { s: 19, kind: 'food', single: true, food: { eat: 1 }, flavor: '鯤（v0.9.21）。「鯤，魚子。」（《爾雅·釋魚》）小得看不清的一粒魚子。離了水兩日就乾了：放進有水的缸裡養著，或回北冥選中它面向深海按 F 放回去。生吃一口就沒了。' },
     '埴': { s: 11, kind: 'item', flavor: '埴，黏土（v0.9.21）。拿鋤在淡水（川、湖、池、泉）邊兩格內鋤土、鋤草，三成的機會帶出一塊；在沼裡鋤，五成。「埏埴以為器，當其無，有器之用。」（《老子》第十一章）在窯裡燒成陶。' },
@@ -281,26 +288,29 @@
     '海水瓶': { s: 36, kind: 'item', flavor: '一瓶海水，鹹，喝不得。放在旺的灶上蒸餾成淡水。' },
     '淡水瓶': { s: 36, kind: 'food', food: { eat: 6, bottle: true }, flavor: '一瓶淡水。飲之解渴（飽 +6）。醉果二合淡水一成果酒。' },
     '果酒': { s: 18, kind: 'food', food: { eat: 12, san: 20, bottle: true }, flavor: '果酒。飽 +12，愜意 +20。' },
-    '曜刃': { s: 18, kind: 'tool', tool: '刀', dmg: 60, dur: 24, brittle: true, flavor: '黑曜石磨的刃。一下六十，比鋼刀還利；但脆，耐久只有二十四，鈍了就碎，磨不回來，再做一把。' },
-    '石刀': { s: 7, kind: 'tool', tool: '刀', dmg: 30, dur: 40, flavor: '一下三十。獵鹿一刀，蛇蛛蟾三刀，豹狼六刀，打虎十刀。' },
+    '曜刃': { s: 18, kind: 'tool', tool: '刀', dmg: 60, dur: 24, brittle: true, flavor: '黑曜石磨的刃。一下六十，比鋼刀還利；但脆，耐久只有二十四，鈍了就碎，磨不回來，再做一把。v0.9.27 起刀是橫掃：一揮砍到面前三格（正前與兩斜）的獸，每隻照一下算。' },
+    '石刀': { s: 7, kind: 'tool', tool: '刀', dmg: 30, dur: 40, flavor: '一下三十。獵鹿一刀，蛇蛛蟾三刀，豹狼六刀，打虎十刀。v0.9.27 起刀是橫掃：一揮砍到面前三格（正前與兩斜）的獸，每隻照一下算。' },
     '石鎬': { s: 23, kind: 'tool', tool: '鎬', dmg: 15, dur: 40, flavor: '鑿山採石、拆磚，快一倍。' },
     '石鋤': { s: 20, kind: 'tool', tool: '鋤', dmg: 15, dur: 40, flavor: '鋤在手，面向土或草按 E，鋤之成田。' },
-    '石劍': { s: 20, kind: 'tool', tool: '劍', dmg: 40, dur: 40, flavor: '一下四十。鹿一劍，蛇蛛蟾三劍，豹狼四劍，虎八劍。' },
-    '石斧': { s: 13, kind: 'tool', tool: '斧', dmg: 15, dur: 40, flavor: '伐木伐竹快一倍。' },
+    '石劍': { s: 20, kind: 'tool', tool: '劍', dmg: 40, dur: 40, flavor: '一下四十。鹿一劍，蛇蛛蟾三劍，豹狼四劍，虎八劍。v0.9.27 起劍是直刺：一劍穿過正前那隻、刺到後面一格的獸，每隻照一下算。' },
+    '石斧': { s: 13, kind: 'tool', tool: '斧', dmg: 15, dur: 40, flavor: '伐木伐竹快一倍。v0.9.27 起斧當兵器慢而重：一下是原本的一倍半，揮得也慢一倍半，每息的傷害不變。' },
+    '石戈': { s: 9, kind: 'tool', tool: '戈', dmg: 30, dur: 40, flavor: '石戈（v0.9.27）。長柄的兵器，往前一直線突刺三格：前兩格各一下三十（跟石刀一樣），第三格是戈尖、只吃一半。正前空著也搆得到後面的，中間有磚石山擋著就到那裡為止。' },
     // 鋼具：鐵二木一煤一鍛成，耐久與戰力是石具的 140%
-    '鋼刀': { s: 16, kind: 'tool', tool: '刀', dmg: 42, dur: 56, flavor: '鋼刀。一下四十二，耐久五十六。重磨用鐵 1、2、4、8（同一把第幾次）。' },
+    '鋼刀': { s: 16, kind: 'tool', tool: '刀', dmg: 42, dur: 56, flavor: '鋼刀。一下四十二，耐久五十六。重磨用鐵 1、2、4、8（同一把第幾次）。v0.9.27 起刀是橫掃：一揮砍到面前三格（正前與兩斜）的獸，每隻照一下算。' },
     '鋼鎬': { s: 16, kind: 'tool', tool: '鎬', dmg: 21, dur: 56, flavor: '鋼鎬。鑿山採礦，耐久五十六。重磨用鐵 1、2、4、8（同一把第幾次）。' },
     '鋼鋤': { s: 16, kind: 'tool', tool: '鋤', dmg: 21, dur: 56, flavor: '鋼鋤。鋤地成田，耐久五十六。重磨用鐵 1、2、4、8（同一把第幾次）。' },
-    '鋼劍': { s: 16, kind: 'tool', tool: '劍', dmg: 56, dur: 56, flavor: '鋼劍。一下五十六，耐久五十六。重磨用鐵 1、2、4、8（同一把第幾次）。' },
-    '鋼斧': { s: 16, kind: 'tool', tool: '斧', dmg: 21, dur: 56, flavor: '鋼斧。伐木伐竹，耐久五十六。重磨用鐵 1、2、4、8（同一把第幾次）。' },
+    '鋼劍': { s: 16, kind: 'tool', tool: '劍', dmg: 56, dur: 56, flavor: '鋼劍。一下五十六，耐久五十六。重磨用鐵 1、2、4、8（同一把第幾次）。v0.9.27 起劍是直刺：一劍穿過正前那隻、刺到後面一格的獸，每隻照一下算。' },
+    '鋼斧': { s: 16, kind: 'tool', tool: '斧', dmg: 21, dur: 56, flavor: '鋼斧。伐木伐竹，耐久五十六。重磨用鐵 1、2、4、8（同一把第幾次）。v0.9.27 起斧當兵器慢而重：一下是原本的一倍半，揮得也慢一倍半，每息的傷害不變。' },
+    '鋼戈': { s: 16, kind: 'tool', tool: '戈', dmg: 42, dur: 56, flavor: '鋼戈（v0.9.27）。往前突刺三格，前兩格各四十二、第三格戈尖減半。耐久五十六，跟鋼刀一樣。重磨用鐵 1、2、4、8（同一把第幾次）。' },
     // 鎢鋼具：鎢鋼二木一精煤一鍛成，強度是鋼具的 150%、耐久是鋼具的 200%；重磨要耗力也耗飽
-    '鎢鋼刀': { s: 21, kind: 'tool', tool: '刀', dmg: 63, dur: 112, tung: true, flavor: '鎢鋼刀。一下六十三，耐久一百一十二。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二，耗力八、飽十。' },
+    '鎢鋼刀': { s: 21, kind: 'tool', tool: '刀', dmg: 63, dur: 112, tung: true, flavor: '鎢鋼刀。一下六十三，耐久一百一十二。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二，耗力八、飽十。v0.9.27 起刀是橫掃：一揮砍到面前三格（正前與兩斜）的獸，每隻照一下算。' },
     '鎢鋼鎬': { s: 21, kind: 'tool', tool: '鎬', dmg: 32, dur: 112, tung: true, flavor: '鎢鋼鎬。耐久一百一十二。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二，耗力八、飽十。' },
     '鎢鋼鋤': { s: 21, kind: 'tool', tool: '鋤', dmg: 32, dur: 112, tung: true, flavor: '鎢鋼鋤。耐久一百一十二。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二，耗力八、飽十。' },
-    '鎢鋼劍': { s: 21, kind: 'tool', tool: '劍', dmg: 84, dur: 112, tung: true, flavor: '鎢鋼劍。一下八十四，耐久一百一十二。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二，耗力八、飽十。' },
-    '鎢鋼斧': { s: 21, kind: 'tool', tool: '斧', dmg: 32, dur: 112, tung: true, flavor: '鎢鋼斧。耐久一百一十二。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二，耗力八、飽十。' },
+    '鎢鋼劍': { s: 21, kind: 'tool', tool: '劍', dmg: 84, dur: 112, tung: true, flavor: '鎢鋼劍。一下八十四，耐久一百一十二。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二，耗力八、飽十。v0.9.27 起劍是直刺：一劍穿過正前那隻、刺到後面一格的獸，每隻照一下算。' },
+    '鎢鋼斧': { s: 21, kind: 'tool', tool: '斧', dmg: 32, dur: 112, tung: true, flavor: '鎢鋼斧。耐久一百一十二。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二，耗力八、飽十。v0.9.27 起斧當兵器慢而重：一下是原本的一倍半，揮得也慢一倍半，每息的傷害不變。' },
+    '鎢鋼戈': { s: 21, kind: 'tool', tool: '戈', dmg: 63, dur: 112, tung: true, flavor: '鎢鋼戈（v0.9.27）。往前突刺三格，前兩格各六十三、第三格戈尖減半。耐久一百一十二，跟鎢鋼刀一樣。重磨用鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二。' },
   };
-  const TOOL_NAMES = { '刀': '刀', '鎬': '鎬', '鋤': '鋤', '劍': '劍', '斧': '斧', '鎚': '九閽鳴雷', '焚': '燭龍焚溟', '弋': '青冥落羽' };   // v0.8.32：青冥落羽的字從「矰」改「弋」，射出去的仍是矰   // 石、鋼、鎢鋼都算
+  const TOOL_NAMES = { '刀': '刀', '鎬': '鎬', '鋤': '鋤', '劍': '劍', '斧': '斧', '戈': '戈', '鎚': '九閽鳴雷', '焚': '燭龍焚溟', '弋': '青冥落羽' };   // v0.8.32：青冥落羽的字從「矰」改「弋」，射出去的仍是矰   // 石、鋼、鎢鋼都算
   // 船：兩種。off 是行船時船身相對於人的格子（人站在船身裡）；hp 命；slots 船頭放得下幾個獸首骨
   const SHIPS = {
     '孤帆': { w: 1, h: 2, hp: 120, slots: 2, speed: 1 },   // v0.8.21 使用者定：孤帆改回一乘二、方舟改回二乘三（v0.8.18–v0.8.20 是二乘二、三乘三）；開船的方向定哪邊長
@@ -309,7 +319,7 @@
   // 製作欄的大類（左側選）：每條配方照 id 歸類，沒列到的進「材料」
   const CRAFT_CATS = ['全部', '居所', '工具', '神兵', '衣甲', '燈火', '漁船', '食藥', '材料'];
   const CAT_OF = {
-    '居所': ['brick', 'kiln', 'door', 'fence', 'gate', 'window', 'bed', 'chest', 'stove', 'cauldron', 'scarecrow', 'trap', 'bridge', 'platform', 'steps'],
+    '居所': ['brick', 'kiln', 'door', 'fence', 'gate', 'window', 'bed', 'chest', 'stove', 'cauldron', 'scarecrow', 'trap', 'screen', 'table', 'stool', 'bonsai', 'plaque', 'bridge', 'platform', 'steps'],
     '工具': ['grind', 'regrind', 'crush', 'forge', 'forgew', 'obsidian', 'fan', 'sling'],
     '神兵': ['hammer', 'seagod', 'skygod'],
     '衣甲': ['lining', 'pants', 'vest', 'cap', 'shoes', 'ironvest', 'helm', 'ironboots', 'wvest', 'whelm', 'wboots'],
@@ -376,6 +386,43 @@
       [52, 43, 79, 42, 65, 66, 45, 90], [56, 51, 68, 69, 92, 87]]
   };
   // 窯裡燒的（v0.9.21）：need 料、k 出幾個、t 燒幾個 KILN_T（四分之一日）；窯一次燒一窯
+  // 匾上的字（v0.9.26 使用者定：不打字，從古書挑）：nm 兩三個字，src 出處的原句。拿不準作者的照舊題寫明（〈陋室銘〉舊題劉禹錫、〈卜居〉舊題屈原）
+  const PLAQUES = [
+    { nm: '觀復', src: '萬物並作，吾以觀復。（《老子》第十六章）' },
+    { nm: '抱樸', src: '見素抱樸，少私寡欲。（《老子》第十九章）' },
+    { nm: '上善', src: '上善若水。（《老子》第八章）' },
+    { nm: '知足', src: '知人者智，自知者明……知足者富。（《老子》第三十三章）' },
+    { nm: '知止', src: '知止而後有定，定而後能靜。（《禮記·大學》）' },
+    { nm: '日新', src: '苟日新，日日新，又日新。（《禮記·大學》引湯之盤銘）' },
+    { nm: '慎獨', src: '莫見乎隱，莫顯乎微，故君子慎其獨也。（《禮記·中庸》）' },
+    { nm: '中和', src: '致中和，天地位焉，萬物育焉。（《禮記·中庸》）' },
+    { nm: '樂天', src: '樂天知命，故不憂。（《易·繫辭上》）' },
+    { nm: '自強', src: '天行健，君子以自強不息。（《易·乾·象》）' },
+    { nm: '厚德', src: '地勢坤，君子以厚德載物。（《易·坤·象》）' },
+    { nm: '三省', src: '吾日三省吾身。（《論語·學而》）' },
+    { nm: '不器', src: '君子不器。（《論語·為政》）' },
+    { nm: '有鄰', src: '德不孤，必有鄰。（《論語·里仁》）' },
+    { nm: '簞瓢', src: '一簞食，一瓢飲，在陋巷，人不堪其憂，回也不改其樂。（《論語·雍也》）' },
+    { nm: '曲肱', src: '飯疏食飲水，曲肱而枕之，樂亦在其中矣。（《論語·述而》）' },
+    { nm: '弘毅', src: '士不可以不弘毅，任重而道遠。（《論語·泰伯》）' },
+    { nm: '歲寒', src: '歲寒，然後知松柏之後彫也。（《論語·子罕》）' },
+    { nm: '舞雩', src: '浴乎沂，風乎舞雩，詠而歸。（《論語·先進》）' },
+    { nm: '浩然', src: '我善養吾浩然之氣。（《孟子·公孫丑上》）' },
+    { nm: '觀瀾', src: '觀水有術，必觀其瀾。（《孟子·盡心上》）' },
+    { nm: '寡欲', src: '養心莫善於寡欲。（《孟子·盡心下》）' },
+    { nm: '逍遙', src: '彷徨乎無為其側，逍遙乎寢臥其下。（《莊子·逍遙遊》）' },
+    { nm: '心齋', src: '唯道集虛。虛者，心齋也。（《莊子·人間世》）' },
+    { nm: '虛室', src: '瞻彼闋者，虛室生白，吉祥止止。（《莊子·人間世》）' },
+    { nm: '坐忘', src: '離形去知，同於大通，此謂坐忘。（《莊子·大宗師》）' },
+    { nm: '知魚', src: '子非魚，安知魚之樂？（《莊子·秋水》）' },
+    { nm: '守拙', src: '開荒南野際，守拙歸園田。（陶淵明〈歸園田居〉）' },
+    { nm: '結廬', src: '結廬在人境，而無車馬喧。（陶淵明〈飲酒〉）' },
+    { nm: '東籬', src: '采菊東籬下，悠然見南山。（陶淵明〈飲酒〉）' },
+    { nm: '寧靜', src: '非澹泊無以明志，非寧靜無以致遠。（諸葛亮〈誡子書〉）' },
+    { nm: '惜陰', src: '大禹聖者，乃惜寸陰；至於眾人，當惜分陰。（《晉書·陶侃傳》）' },
+    { nm: '陋室', src: '斯是陋室，惟吾德馨。（〈陋室銘〉，舊題劉禹錫）' },
+    { nm: '卜居', src: '屈原既放，三年不得復見。（《楚辭·卜居》，舊題屈原）' }
+  ];
   const KILN = {
     '陶釜': { need: { '埴': 2 }, k: 1, t: 1, note: '煮粥羹，用一百次' },
     '陶甑': { need: { '埴': 2 }, k: 1, t: 1, note: '架在釜上蒸，用一百次' },
@@ -383,7 +430,8 @@
     '缸': { need: { '埴': 6 }, k: 1, t: 2, note: '屋外接雨雪，存六瓶淡水' },
     '瓦': { need: { '埴': 1 }, k: 4, t: 1, note: '蓋在磚、甓上成瓦簷' },
     '燈': { need: { '埴': 1, '油脂': 1 }, k: 2, t: 1, label: '陶燈', note: '陶的油燈，一窯兩盞（跟石燈一樣）' },
-    '甓': { need: { '磚': 2 }, k: 2, t: 1, note: '燒過的磚（青磚），耐撞一倍半' }
+    '甓': { need: { '磚': 2 }, k: 2, t: 1, note: '燒過的磚（青磚），耐撞一倍半' },
+    '陶盆': { need: { '埴': 1 }, k: 1, t: 1, note: '加兩朵花做成盆景（v0.9.26）' }
   };
   const POT = {
     '稷粥': { vessel: '釜', verb: '煮', need: { '稷': 2, '淡水瓶': 1 }, k: 2 },
@@ -459,12 +507,12 @@
     { id: 'obsidian', out: '曜刃', n: 1, need: { '黑曜石': 2, '木': 1, '麻': 1 }, sta: 6, note: '一下六十、耐久二十四；脆，鈍了就碎，磨不回來（v0.7）' },
     { id: 'sling', out: '彈弓', n: 1, need: { '木': 2, '麻': 3 }, sta: 4, note: '射石子：九格內，一下六；被打的獸七格內撲過來' },
     { id: 'seagod', out: '燭龍焚溟', n: 1, need: { '鎢鋼': 4, '精煤': 6, '火把': 4, '海水瓶': 3 }, sta: 60, level: 31, note: '三格內諸獸同受灼燒：海中之物一百二十，陸上天上減半' },
-    { id: 'grind', out: null, need: { '石': 1, '石子': 1, '木': 1 }, sta: 8, note: '磨礪：選刀、鎬、鋤、劍、斧', choose: ['石刀', '石鎬', '石鋤', '石劍', '石斧'] },
+    { id: 'grind', out: null, need: { '石': 1, '石子': 1, '木': 1 }, sta: 8, note: '磨礪：選刀、鎬、鋤、劍、斧、戈', choose: ['石刀', '石鎬', '石鋤', '石劍', '石斧', '石戈'] },
     { id: 'regrind', out: null, need: { '石子': 1 }, sta: 3, note: '重磨手中的工具，耐久復滿。同一把第 n 次：石具石子 1、2、4、8；鋼具鐵 1、2、4、8；鎢鋼具鐵一、鐵二、鐵三鎢鋼一、鐵六鎢鋼二；之後照最後一檔', regrind: true },
     { id: 'crush', out: null, need: {}, sta: 2, note: '舊石器（手上那把石刀、石鎬、石鋤、石劍、石斧；手上不是石器就拿囊裡的）磨回石子二', crush: true },
-    { id: 'forge', title: '鍛鋼具', out: null, need: { '鐵': 2, '木': 1, '煤': 1 }, sta: 10, note: '鍛鋼具：耐久與戰力是石具的 140%', choose: ['鋼刀', '鋼鎬', '鋼鋤', '鋼劍', '鋼斧'] },
+    { id: 'forge', title: '鍛鋼具', out: null, need: { '鐵': 2, '木': 1, '煤': 1 }, sta: 10, note: '鍛鋼具：耐久與戰力是石具的 140%', choose: ['鋼刀', '鋼鎬', '鋼鋤', '鋼劍', '鋼斧', '鋼戈'] },
     { id: 'coke', out: '精煤', n: 1, need: { '煤': 8 }, sta: 4, note: '八煤成一精煤，煉鎢鋼用' },
-    { id: 'forgew', title: '鍛鎢鋼具', out: null, need: { '鎢鋼': 2, '木': 1, '精煤': 1 }, sta: 16, note: '鍛鎢鋼具：強度是鋼的 150%、耐久 200%', choose: ['鎢鋼刀', '鎢鋼鎬', '鎢鋼鋤', '鎢鋼劍', '鎢鋼斧'] },
+    { id: 'forgew', title: '鍛鎢鋼具', out: null, need: { '鎢鋼': 2, '木': 1, '精煤': 1 }, sta: 16, note: '鍛鎢鋼具：強度是鋼的 150%、耐久 200%', choose: ['鎢鋼刀', '鎢鋼鎬', '鎢鋼鋤', '鎢鋼劍', '鎢鋼斧', '鎢鋼戈'] },
     { id: 'lining', out: '內襯', n: 1, need: { '棉': 4, '麻': 2 }, sta: 6, note: '禦寒減半，減傷 2%' },
     { id: 'pants', out: '布褲', n: 1, need: { '麻布': 2, '棉': 2 }, sta: 5, note: '減傷 2%' },
     { id: 'vest', out: '布甲', n: 1, need: { '麻布': 3, '棉': 3 }, sta: 8, note: '減傷 3%' },
@@ -480,6 +528,11 @@
     { id: 'hemp', out: '麻布', n: 1, need: { '麻': 4, '棉': 2 }, sta: 4, note: '稻草人、船帆、燈帽都要' },
     { id: 'hat', out: '燈帽', n: 1, need: { '麻布': 2, '蠟燭': 1 }, sta: 5, note: '戴著就有光；一根蠟燭燒四百息' },
     { id: 'trap', out: '阱', n: 1, need: { '竹': 3, '麻': 1 }, sta: 2, note: '竹籤陷阱：具欄裡要有鋤才挖得下去，蓋上草獸看不出來（v0.9.24）' },
+    { id: 'screen', out: '屏', n: 1, need: { '木': 2, '麻布': 1 }, sta: 3, note: '屋裡的擺設：睡一覺愜意 +1（v0.9.26）' },
+    { id: 'table', out: '案', n: 1, need: { '木': 3 }, sta: 3, note: '屋裡的擺設：睡一覺愜意 +1（v0.9.26）' },
+    { id: 'stool', out: '几', n: 1, need: { '木': 2 }, sta: 2, note: '屋裡的擺設：睡一覺愜意 +1（v0.9.26）' },
+    { id: 'bonsai', out: '盆景', n: 1, need: { '陶盆': 1, '花': 2 }, sta: 1, note: '陶盆在窯裡燒；屋裡的擺設：睡一覺愜意 +1（v0.9.26）' },
+    { id: 'plaque', out: '匾', n: 1, need: { '木': 2, '煤': 1 }, sta: 3, note: '煤研成墨題字；掛在自己蓋的屋子的門上（v0.9.26）' },
     { id: 'scarecrow', out: '偶', n: 1, need: { '麻布': 2, '石子': 2, '木': 3, '草': 4 }, sta: 8, note: '四十五天內獸不近身' },
     { id: 'med', out: '藥', n: 1, need: { '草': 3, '果': 1 }, sta: 3, note: '療傷 +35，解毒' },
     { id: 'wine', out: '果酒', n: 1, need: { '醉果': 2, '淡水瓶': 1 }, sta: 2, note: '飽 +12，愜意 +20' },
@@ -1364,5 +1417,5 @@
   }
 
   RECIPES.forEach(r => { r.cat = '材料'; for (const c in CAT_OF) if (CAT_OF[c].indexOf(r.id) >= 0) r.cat = c; });
-  root.G = { STROKES, KILN, WILD_MIX, WILD_CELL, CROPS, POT, HARMONY_T, HARMONY_K, CROP_HOLD, CROP_FROST, FERT_MAX, FERT_REST, FERT_FALLOW, FERT_WILD, FERT_HOED, wildCrop, FISH, MEALS, FISH_MEAL_T, MEAL_CUT, dryAt, DRY_KINDS, natTile, contTheta, contLand, CONT_IRON, namePools, NAME_LIST, regionAt, siteAt, masses, massAt, gateNet, REGION_NAMES, CONT_LAND, MASS_CELL, get MASS_MIN() { return MASS_MIN; }, HOME_SEA, get GATE_LAND_MIN() { return GATE_LAND_MIN; }, get GATE_LAND_MAX() { return GATE_LAND_MAX; }, get GATE_SEA_MIN() { return GATE_SEA_MIN; }, get GATE_SEA_MAX() { return GATE_SEA_MAX; }, GATE_RING, GATE_RING_MAX, zoneTerr, setGen, get GEN() { return GEN; }, GEN_NEW, ISLE_R2, skerryAt, skerryOf, skerries, SKERRY_CELL, SKERRY_R, SKERRY_SHOAL, SKERRY_GAP, SKERRY_EDGE, SKERRY_KINDS, reefs, REEF_RING, REEF_AREA, REEF_MIN, REEF_MAX, REEF_GAP, stelePaths, isleWell, INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, get WORLD_R() { return WORLD_R; }, PAPER_K, HOME_BOX, HOME_R, HOME_K, isleAt, isleOf, isles, get ISLE_CELL() { return ISLE_CELL; }, ISLE_NAMES, azureAt, zones, zoneAt, ZONE_DEFS };
+  root.G = { STROKES, KILN, PLAQUES, WILD_MIX, WILD_CELL, CROPS, POT, HARMONY_T, HARMONY_K, CROP_HOLD, CROP_FROST, FERT_MAX, FERT_REST, FERT_FALLOW, FERT_WILD, FERT_HOED, wildCrop, FISH, MEALS, FISH_MEAL_T, MEAL_CUT, dryAt, DRY_KINDS, natTile, contTheta, contLand, CONT_IRON, namePools, NAME_LIST, regionAt, siteAt, masses, massAt, gateNet, REGION_NAMES, CONT_LAND, MASS_CELL, get MASS_MIN() { return MASS_MIN; }, HOME_SEA, get GATE_LAND_MIN() { return GATE_LAND_MIN; }, get GATE_LAND_MAX() { return GATE_LAND_MAX; }, get GATE_SEA_MIN() { return GATE_SEA_MIN; }, get GATE_SEA_MAX() { return GATE_SEA_MAX; }, GATE_RING, GATE_RING_MAX, zoneTerr, setGen, get GEN() { return GEN; }, GEN_NEW, ISLE_R2, skerryAt, skerryOf, skerries, SKERRY_CELL, SKERRY_R, SKERRY_SHOAL, SKERRY_GAP, SKERRY_EDGE, SKERRY_KINDS, reefs, REEF_RING, REEF_AREA, REEF_MIN, REEF_MAX, REEF_GAP, stelePaths, isleWell, INK, DB, ITEMS, TOOL_NAMES, RECIPES, CRAFT_CATS, COOK, item, baseTile, fields, islet, stelePlan, placePlan, PLACES, biomeName, ISLAND_R, SEA_EDGE, SHIPS, oldTile, get WORLD_R() { return WORLD_R; }, PAPER_K, HOME_BOX, HOME_R, HOME_K, isleAt, isleOf, isles, get ISLE_CELL() { return ISLE_CELL; }, ISLE_NAMES, azureAt, zones, zoneAt, ZONE_DEFS };
 })();
