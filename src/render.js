@@ -420,6 +420,18 @@
       const cs = rot ? Math.cos(rot) : 1, sn = rot ? Math.sin(rot) : 0;
       ctx.save(); ctx.shadowColor = 'rgba(110,70,0,0.55)'; ctx.shadowBlur = 3 * s; ctx.setTransform(s * cs, s * sn, -s * sn, s * cs, px * s, py * s); ctx.drawImage(c, -size * 0.65, -size * 0.65, size * 1.3, size * 1.3); ctx.restore(); ctx.setTransform(s, 0, 0, s, 0, 0);
     }
+    drawFlight(g, w, h, T, now) {   // 騎鵬一程（v0.9.26）：人底下一個比畫面還大的「鵬」字影子，翅膀一張一斂；風絲往上掠；上方寫一句《莊子》和北冥到南冥走了多遠
+      const f = g.flight, ctx = this.ctx, k = Math.min(1, f.t / f.dur), a = Math.max(0, Math.min(1, f.t / 1.2, (f.dur - f.t) / 1.2));
+      this.drawGlyph(L('鵬'), '#0f1418', w / 2, h / 2 + T * 0.4, Math.max(w, h) * 0.95 * (1 + 0.05 * Math.sin(now * 2.4)), Math.sin(now * 0.8) * 0.02, 0.42 * a);   // drawGlyph 的透明度乘在外層上（v0.9.14），外層不再另外調淡
+      ctx.save(); ctx.strokeStyle = 'rgba(244,247,250,' + (0.6 * a) + ')'; ctx.lineWidth = 1.5;
+      for (let i = 0; i < 28; i++) { const x = ((i * 97) % 100) / 100 * w, sp = 0.6 + ((i * 37) % 10) / 10, y = h + 80 - ((now * 700 * sp + i * 131) % (h + 200)); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 70 * sp); ctx.stroke(); }
+      ctx.restore();
+      const bw = Math.min(360, w - 32), bx = (w - bw) / 2, by = h - 120;   // 字幕放在下方（上方有狀態列與提示）
+      ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(243,235,216,0.88)'; ctx.fillRect(bx, by, bw, 52);
+      ctx.fillStyle = '#1c1a17'; ctx.font = 'bold 18px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(L('摶扶搖而上者九萬里'), w / 2, by + 18);
+      ctx.font = '12px ' + FONT; ctx.fillStyle = '#4a4238'; ctx.textAlign = 'left'; ctx.fillText(L('北冥'), bx + 10, by + 40); ctx.textAlign = 'right'; ctx.fillText(L('南冥'), bx + bw - 10, by + 40);
+      ctx.fillStyle = 'rgba(28,26,23,0.18)'; ctx.fillRect(bx + 44, by + 38, bw - 88, 4); ctx.fillStyle = '#9b3a2a'; ctx.fillRect(bx + 44, by + 38, (bw - 88) * k, 4); ctx.restore();
+    }
     brushRect(x, y, s, color, lw) {
       const ctx = this.ctx; ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = lw || 2; ctx.lineCap = 'round';
       const j = () => (Math.random() - 0.5) * 1.5;
@@ -736,13 +748,13 @@
         ctx.fillStyle = halo; ctx.fillRect(px - T, py - T, T * 2, T * 2);
         ctx.fillStyle = 'rgba(30,20,10,0.16)'; ctx.beginPath(); ctx.ellipse(px, py + T * 0.44, T * 0.32, T * 0.1, 0, 0, 7); ctx.fill();
         ctx.restore();
-        if (p.sailing && p.ship) {   // 身下的船（v0.8.17）：船身照左上角 x0、y0 畫；開船時跟著人一起滑過去，人在船上走時船不動
+        if (p.sailing && p.ship && !g.flight) {   // 身下的船（v0.8.17）；騎鵬的時候船在鵬背上，不畫（v0.9.26）：船身照左上角 x0、y0 畫；開船時跟著人一起滑過去，人在船上走時船不動
           const s = g.shipNow(), k = G.SHIPS[s.kind] || G.SHIPS['孤帆'], h = s.dir === 'h', W = h ? k.h : k.w, H = h ? k.w : k.h;
           const sx = p.shipMove ? p.rx - p.x : 0, sy = p.shipMove ? p.ry - p.y : 0;
           this.drawShip(ox + (s.x0 + sx + W / 2) * T, oy + (s.y0 + sy + H / 2) * T, s, now, g.shipWarded(), true);
         }
         if (g.totemOn && g.totemOn()) { ctx.save(); ctx.strokeStyle = 'rgba(180,57,42,.3)'; ctx.lineWidth = 2; ctx.setLineDash([8, 10]); ctx.lineDashOffset = -now * 20; ctx.strokeRect(px - T * 7.5, py - T * 7.5, T * 15, T * 15); ctx.restore(); }   // 七格內（方框，與判定一致）
-        if (p.swimming) {            // 落水：一圈圈水紋，人只露半身
+        if (p.swimming && !g.flight) {            // 落水：一圈圈水紋，人只露半身
           ctx.save(); ctx.strokeStyle = 'rgba(47,88,120,0.5)'; ctx.lineWidth = 1.5;
           for (let i = 0; i < 2; i++) { const r = T * (0.35 + ((now * 0.8 + i * 0.5) % 1) * 0.45); ctx.globalAlpha = 1 - ((now * 0.8 + i * 0.5) % 1); ctx.beginPath(); ctx.ellipse(px, py + T * 0.25, r, r * 0.4, 0, 0, 7); ctx.stroke(); }
           ctx.restore();
@@ -815,6 +827,36 @@
         if (f.type === 'write') {
           this.drawGlyph(f.ch, f.color, px, py, T * (1.6 - 0.6 * pr), (1 - pr) * 0.4, pr * 0.9);
           ctx.save(); ctx.strokeStyle = 'rgba(180,57,42,' + (0.6 * (1 - pr)) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(px, py, T * (0.3 + 0.5 * pr), 0, 7); ctx.stroke(); ctx.restore();
+        } else if (f.type === 'slash') {   // 兵器有形（v0.9.27）：刀以人為圓心掃一道弧、劍與戈直直刺出去；筆鋒兩頭尖中間粗，前四成寫出去、後六成淡掉
+          const cx0 = ox + f.x * T + T / 2, cy0 = oy + f.y * T + T / 2, C = f.cells.map(([x, y]) => [ox + x * T + T / 2 - cx0, oy + y * T + T / 2 - cy0]);
+          const grow = Math.min(1, pr / 0.4), fade = pr < 0.4 ? 1 : 1 - (pr - 0.4) / 0.6, N = 18, pts = []; let tip = 0, r0 = 0, r1 = 0;
+          if (f.tool === '斧') {   // 劈：在那一格上由右上往左下一道粗短的
+            const [tx, ty] = C[0]; for (let i = 0; i <= N; i++) { const s = i / N; pts.push([cx0 + tx + T * (0.34 - 0.62 * s), cy0 + ty + T * (-0.4 + 0.74 * s)]); }
+          } else if (f.tool === '刀' && C.length === 3) {   // 弧：從一斜經正前到另一斜，走短的那一邊
+            const a1 = Math.atan2(C[1][1], C[1][0]), a0 = Math.atan2(C[0][1], C[0][0]); let a2 = Math.atan2(C[2][1], C[2][0]);
+            let d1 = a0 - a1; while (d1 > Math.PI) d1 -= 2 * Math.PI; while (d1 < -Math.PI) d1 += 2 * Math.PI;
+            const span = d1 * 2, R = T * 1.18;
+            for (let i = 0; i <= N; i++) { const a = a1 - span * 0.08 + span * 1.16 * i / N; pts.push([cx0 + Math.cos(a) * R, cy0 + Math.sin(a) * R]); }
+          } else {   // 直刺：從人身前一點刺到最後一格再過去一點
+            const L2 = C[C.length - 1], len = Math.hypot(L2[0], L2[1]) || 1, ux = L2[0] / len, uy = L2[1] / len, s0 = T * 0.42, s1 = len + T * 0.38;
+            for (let i = 0; i <= N; i++) { const r = s0 + (s1 - s0) * i / N; pts.push([cx0 + ux * r, cy0 + uy * r]); }
+            r0 = s0; r1 = s1; if (f.tool === '戈' && C.length === 3) tip = len * 2.5 / 3;   // 戈頭：過了第二、三格的交界，筆就收細（第三格只吃一半）
+          }
+          const W = T * (f.tool === '斧' ? 0.26 : f.tool === '刀' ? 0.17 : 0.13), head = Math.max(1, Math.round(N * grow));
+          const wAt = (s) => {   // 筆的粗細（佔 W 的幾成）：刀中間粗、劍戈越往前越粗到尖上收鋒、斧落筆最重；戈的前兩格照舊，第三格戈頭細一截
+            let w = f.tool === '斧' ? (s < 0.18 ? 0.4 + 0.6 * s / 0.18 : 1 - 0.5 * (s - 0.18) / 0.82) : f.tool === '刀' ? Math.sin(Math.PI * s) : (s < 0.85 ? 0.55 + 0.45 * s / 0.85 : (1 - s) / 0.15);
+            if (tip) { const r = r0 + (r1 - r0) * s; if (r > tip) w = Math.min(w, 0.4 - 0.22 * (r - tip) / (r1 - tip)); }
+            return w;
+          };
+          const Lt = [], Rt = [];   // 沿著筆畫兩側描出輪廓，整條一次填色（一段一段描，半透明的接頭會疊出一串黑點）
+          for (let i = 0; i <= head; i++) {
+            const a = pts[Math.max(0, i - 1)], b = pts[Math.min(N, i + 1)], dl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / dl, ny = (b[0] - a[0]) / dl, hw = Math.max(1, W * wAt(i / N)) / 2;
+            Lt.push([pts[i][0] + nx * hw, pts[i][1] + ny * hw]); Rt.push([pts[i][0] - nx * hw, pts[i][1] - ny * hw]);
+          }
+          ctx.save(); ctx.fillStyle = 'rgba(28,26,23,' + (0.82 * fade) + ')'; ctx.beginPath(); ctx.moveTo(Lt[0][0], Lt[0][1]);
+          for (let i = 1; i < Lt.length; i++) ctx.lineTo(Lt[i][0], Lt[i][1]);
+          for (let i = Rt.length - 1; i >= 0; i--) ctx.lineTo(Rt[i][0], Rt[i][1]);
+          ctx.closePath(); ctx.fill(); ctx.restore();
         } else if (f.type === 'shot' && f.arrow) {   // 青冥落羽的矰（v0.8.25；v0.8.31 改青色）：一道青色的線，後面拖著白絲
           const ax = ox + f.x * T + T / 2, ay = oy + f.y * T + T / 2, qx = ox + (f.x + (f.x1 - f.x) * pr) * T + T / 2, qy = oy + (f.y + (f.y1 - f.y) * pr) * T + T / 2;
           ctx.save(); ctx.strokeStyle = 'rgba(240,236,226,0.9)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(qx, qy); ctx.stroke();
@@ -832,6 +874,13 @@
         }
       }
 
+      if (world.plaques && world.plaques.size) for (const [k, nm] of world.plaques) {   // 門上的匾（v0.9.26）：一塊朱漆小匾橫在門楣上，金字
+        const [x, y] = U.unkey(k); if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+        const out = [[0, 1], [0, -1], [1, 0], [-1, 0]].find(([dx, dy]) => world.passable(x + dx, y + dy) && !world.houseRoom(x + dx, y + dy)) || [0, -1];   // 掛在門朝屋外的那一邊
+        const bw = T * 0.88, bh = T * 0.34, bx = ox + (x + 0.5 + out[0] * 0.5) * T - bw / 2, by = oy + (y + 0.5 + out[1] * 0.5) * T - bh / 2;
+        ctx.save(); ctx.fillStyle = '#6b2a1f'; ctx.strokeStyle = '#3a160f'; ctx.lineWidth = 1; ctx.fillRect(bx, by, bw, bh); ctx.strokeRect(bx, by, bw, bh);
+        ctx.fillStyle = '#efd38a'; ctx.font = 'bold ' + Math.round(T * 0.26) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(L(nm), bx + bw / 2, by + bh / 2 + 1); ctx.restore();
+      }
       if (world.locust) this.drawLocust(world.locust, ox, oy, T, now);   // 要落下來的蝗群（v0.9.19）在田上空盤旋
       // —— 霧障：一片片白霧順著風飄
       if (world.fogs.size || this.fogSeen.size) this.drawFog(g, ox, oy, x0, x1, y0, y1, dt, now);
@@ -886,6 +935,7 @@
         else if (f.type === 'scorch') this.drawScorch(f, px, py, pr, T, now);
         else this.drawFeather(f, px, py, pr, T, ox, oy);
       }
+      if (g.flight) this.drawFlight(g, w, h, T, now);   // 騎鵬（v0.9.26）
       // —— 雨：一層淡墨與斜斜的雨絲，跟著世界滾動；燈火照得到的雨絲染上暖色，燈光微微透過雨幕
       if (this.rainA > 0.02) {
         const pm = (a, m) => ((a % m) + m) % m;
@@ -1095,6 +1145,7 @@
       // 碑
       m.font = F(2.6, 9); m.fillStyle = '#1c1a17';
       for (const s of w.steles.values()) if (w.isSeen(s.x, s.y)) m.fillText('碑', X(s.x + 0.5), Y(s.y + 0.5));
+      if (w.plaques && w.plaques.size) { m.font = F(2.6, 9); m.fillStyle = '#9b3a2a'; for (const [k, nm] of w.plaques) { const [x, y] = U.unkey(k); if (w.isSeen(x, y)) m.fillText(L(nm), X(x + 0.5), Y(y - 0.8)); } }   // 掛了匾的屋子寫屋名（v0.9.26）
       // 地標：大字 + 朱印名
       const k2 = Math.max(1, 3 / Math.max(px, 0.01));   // 拉遠時地標別縮到看不見
       for (const pl of w.places) {

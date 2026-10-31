@@ -9,6 +9,8 @@
   const DEEP_R = 18;   // 深海離陸地與沙洲至少幾格（v0.9.18 使用者定）
   const HAIL_P = 0.05, HAIL_TERMS = [6, 13], HAIL_LEN = 1 / 12, HAIL_CROP = 0.3, HAIL_LAMP = 0.25, HAIL_SCARE = 0.25;   // 冰雹（v0.9.19 使用者定：夏季、極少）：立夏到處暑的雷雨，HAIL_P 的機會一起頭夾著一時辰的冰雹；屋外的苗秀三成砸死、熟的三成砸落成穗，燈、稻草人各四分之一砸壞
   const LOCUST_P = 0.025, LOCUST_MIN = 6, LOCUST_R = 8, LOCUST_FIRE = 6, LOCUST_TERMS = [10, 13];   // 蝗（v0.9.19）：小暑到處暑，自己種了六格以上，每日 LOCUST_P 起一群，隔天半夜落在方圓 LOCUST_R 格的田上；地上的燈火 LOCUST_FIRE 格內的田保得住
+  // 打雀招蝗（v0.9.25 使用者定）：田邊 SPARROW_KILL_R 格內、SPARROW_KILL_DAYS 日內打死的雀過了 SPARROW_FREE 隻，每多一隻蝗起的機會多 SPARROW_LOCUST 倍，最多 SPARROW_LOCUST_MAX 倍，蝗群也專落那一帶的田；記最多 SPARROW_KEEP 筆
+  const SPARROW_FREE = 3, SPARROW_LOCUST = 0.25, SPARROW_LOCUST_MAX = 2.5, SPARROW_KILL_R = 24, SPARROW_KILL_DAYS = 360, SPARROW_KEEP = 120;
   const MOUSE_P = 0.08, MOUSE_MAX = 2, CAT_R = 12;   // 田鼠（v0.9.19）：秀了、熟了的田每日 MOUSE_P 的機會被偷一把（最多 MOUSE_MAX），籬與稻草人擋不住，只有方圓 CAT_R 格內守田的狸
   const PECK_P = 0.15, PECK_MAX = 2, FENCE_ROOM = 400;   // 五穀（v0.9.18）：秀了、熟了的田沒有稻草人看著，每日 PECK_P 的機會被雀啄一口（收成少一把，最多 PECK_MAX）；籬圍起來 FENCE_ROOM 格以內不生獸
   const morning = (d) => (root.CAL ? root.CAL.dawn(d) : 0.25) + 0.01;   // 大清早：那天日出後一點（v0.9.16 以前固定 0.26；v0.9.17 起日出照節氣）
@@ -47,6 +49,15 @@
   // v0.9.15 天氣（使用者定）：一場雨起時，一小部分成雪、一小部分成雷雨，其餘是雨（v0.9.16 起機會照節氣分，見 src/calendar.js 的 wxOdds()）；雨雷雪天有 GALE_P 的機會起狂風
   // （一天只往一個方向吹，雨雷雪停了就跟著停，最長 GALE_MAX 日）；晴天每日 BREEZE_P 的機會起和風。狂風每息把墟吹倒 GALE_RUIN_P、
   // 把稻草人吹走 GALE_SCARE_P（墟只看你方圓 GALE_RUIN_R 格內的，稻草人全紙）。HOUSE_MAX 格以內的屋子：雷打不進、風吹不著（game.js 用）
+  // 屋有其用（v0.9.26 使用者定）：三十八格以內的屋子照擺了什麼認——居：床、灶，再有櫃或甕；丹房：鼎與燈（或鮫珠），沒有床；倉：只有櫃、甕，沒有床灶鼎窯
+  // ROOM_FURN 是數得進去的擺設（貼著屋裡能走的格子、上下左右相鄰）；DECOR 是四樣擺設（屏、案、几、盆景），丹房的鼎每息只耗 DAN_FUEL 的柴
+  const ROOM_FURN = '床灶櫃甕鼎燈珠窯缸屏案几盆', DECOR = '屏案几盆', DAN_FUEL = 0.75;
+  function roomKind(h) {
+    if (h['床'] && h['灶'] && (h['櫃'] || h['甕'])) return '居';
+    if (h['鼎'] && (h['燈'] || h['珠']) && !h['床']) return '丹房';
+    if ((h['櫃'] || h['甕']) && !h['床'] && !h['灶'] && !h['鼎'] && !h['窯']) return '倉';
+    return '';
+  }
   const GALE_P = 0.06, GALE_MAX = 3, BREEZE_P = 0.18, GALE_RUIN_P = 0.0002, GALE_SCARE_P = 0.003, GALE_RUIN_R = 40, HOUSE_MAX = 38;
   const DIR8 = [[0, -1, '北'], [1, -1, '東北'], [1, 0, '東'], [1, 1, '東南'], [0, 1, '南'], [-1, 1, '西南'], [-1, 0, '西'], [-1, -1, '西北']];   // 狂風把人往哪裡吹；風名照它從哪裡來（往南吹的是北風）
   const SEEN_STEP = 6;   // v0.9.6：走過的地圖每半息記一次、或離上回記的地方六格就記（船快 2.5 倍時半息能走九到十六格）
@@ -98,7 +109,8 @@
       this.fert = new Map();       // 地力（v0.9.18）："x,y" -> { v 幾點, t 從幾時起空著, b 種著東西 }；沒記的照底稿（原本是田 3、鋤出來的 2）
       this.cropDay = -1; this.wildDay = -1; this.wildStage = {};
       this.hail = null; this.hailP = HAIL_P; this.onHail = null;   // 冰雹（v0.9.19）：{ until }；測試可以把 hailP 設 0
-      this.locust = null;          // 要落下來的蝗群（v0.9.19）：{ x, y, at 幾時落 }
+      this.locust = null;          // 要落下來的蝗群（v0.9.19）：{ x, y, at 幾時落, sp 雀打得太兇多出的隻數（v0.9.25） }
+      this.sparrowKills = [];      // 打死的雀（v0.9.25）：[x, y, 第幾日]，只留一年內的
       this.cats = new Map();       // 守田的狸（v0.9.19）："x,y" -> { x, y, t 幾時留下的 }
       this.fenceCache = new Map(); this.fences = new Set(); this.onCrop = null;   // fences：放著籬、扉的格子（沒有就不用漫延）   // onCrop(type, x, y, rec)：遊戲端說一聲（凍死、落穗、雀啄）
       this.ores = new Map();       // "x,y" -> 鑿掉的鐵礦幾時長回來（世界時間）
@@ -107,6 +119,8 @@
       this.kilns = new Map();    // "x,y" -> 窯裡燒著的那一窯 { out, left 還要幾息, done 燒好了 }（v0.9.21）
       this.jars = new Map();     // "x,y" -> 缸裡的水（瓶，帶小數）（v0.9.21）
       this.eaves = new Set();    // 蓋了瓦的磚、甓（v0.9.21）
+      this.plaques = new Map();  // 門上的匾（v0.9.26）：門那格 "x,y" -> 匾上的字
+      this.roomInfo = new Map(); this.roomInfoVer = -1;   // 屋有其用（v0.9.26）："x,y" -> 那間屋子（地上的字一變就重算）
       this.kilnT = KILN_T; this.jarCap = JAR_CAP;
       this.nets = new Map();     // 錨點 "x,y" -> { size, x, y, fish, t }：漁網（一乘一、二乘二、三乘三）
       this.netCells = new Map(); // 每一格 -> 錨點
@@ -262,9 +276,23 @@
         const want = st === 1 ? '苗' : st === 2 ? '秀' : r.c; if (ch !== want) this.set(x, y, want);
       }
       if (this.locust && this.time >= this.locust.at) this.locustLand();
-      else if (!this.locust && term >= LOCUST_TERMS[0] && term <= LOCUST_TERMS[1] && this.crops.size >= LOCUST_MIN && U.trueRand() < 1 - Math.pow(1 - LOCUST_P, Math.min(days, 30))) {
-        const live = [...this.crops].filter(([, r]) => !r.shed); if (live.length) { const [x, y] = U.unkey(live[Math.floor(Math.random() * live.length)][0]); this.locust = { x, y, at: U.r4((d + 1) * DAY) }; if (this.onCrop) this.onCrop('locust', x, y, this.locust); }
+      else if (!this.locust && term >= LOCUST_TERMS[0] && term <= LOCUST_TERMS[1] && this.crops.size >= LOCUST_MIN) {
+        const b = this.locustBoost();   // 田邊雀打得太兇，蝗多（v0.9.25）
+        if (U.trueRand() < 1 - Math.pow(1 - LOCUST_P * b.k, Math.min(days, 30))) {
+          const live = b.at.length ? b.at : [...this.crops].filter(([, r]) => !r.shed).map(([k]) => k);
+          if (live.length) { const [x, y] = U.unkey(live[Math.floor(Math.random() * live.length)]); this.locust = { x, y, at: U.r4((d + 1) * DAY) }; if (b.over) this.locust.sp = b.over; if (this.onCrop) this.onCrop('locust', x, y, this.locust); }
+        }
       }
+    }
+    // 打死一隻雀（v0.9.25）：記下地方與日子，一年後忘掉；回傳這一帶一年內打死了幾隻
+    sparrowKill(x, y) { const d = this.dayIdx(); this.sparrowKills.push([x, y, d]); this.pruneSparrows(); return this.sparrowNear(x, y); }
+    pruneSparrows() { const d = this.dayIdx(); this.sparrowKills = this.sparrowKills.filter(k => d - k[2] < SPARROW_KILL_DAYS).slice(-SPARROW_KEEP); }
+    sparrowNear(x, y) { const d = this.dayIdx(); let n = 0; for (const k of this.sparrowKills) if (d - k[2] < SPARROW_KILL_DAYS && U.cheb(x, y, k[0], k[1]) <= SPARROW_KILL_R) n++; return n; }
+    // 蝗多幾倍（v0.9.25）：看每一格還沒落穗的自種田四周打死了幾隻雀，取最多的；過了 SPARROW_FREE 隻才算，at 是那幾格（蝗群專落那一帶）
+    locustBoost() {
+      let most = 0, at = []; if (!this.sparrowKills.length) return { k: 1, over: 0, n: 0, at };
+      for (const [k, r] of this.crops) { if (r.shed) continue; const [x, y] = U.unkey(k), n = this.sparrowNear(x, y); if (n > most) { most = n; at = [k]; } else if (n === most && n) at.push(k); }
+      const over = Math.max(0, most - SPARROW_FREE); return { k: Math.min(SPARROW_LOCUST_MAX, 1 + SPARROW_LOCUST * over), over, n: most, at: over ? at : [] };
     }
     locustLand() {   // 蝗群落下（v0.9.19）：方圓八格自己種的田吃光，地上的燈火六格內的保得住（《詩·小雅·大田》秉畀炎火）
       const L = this.locust; this.locust = null; let eaten = 0, saved = 0;
@@ -273,7 +301,7 @@
         if (this.lightNear(x, y, LOCUST_FIRE)) { saved++; continue; }
         this.endCrop(x, y, 0); this.set(x, y, '田'); eaten++;
       }
-      if (this.onCrop) this.onCrop('locustLand', L.x, L.y, { eaten, saved });
+      if (this.onCrop) this.onCrop('locustLand', L.x, L.y, { eaten, saved, sp: L.sp || 0 });
     }
     // 雀落在田上啄一口（v0.9.21）：人在附近時看得見、趕得走的雀害；人不在附近的田照換日算（peckLive 由遊戲端給：人二十四格內的田換日不另算）
     peckAt(x, y) {
@@ -305,6 +333,7 @@
       if (this.fogRoomCache.size) this.fogRoomCache.clear();
       this.ver = (this.ver || 0) + 1;   // 地上的字變了：畫面那邊的視線快取看這個數失效（v0.6.4）
       if (old !== ch) this.wallHp.delete(k);   // 換了字，舊的耐久就不算了
+      if (ch !== '門' && this.plaques.size && this.plaques.has(k)) { const nm = this.plaques.get(k); this.plaques.delete(k); if (this.onPlaqueLost) this.onPlaqueLost(x, y, nm); }   // 門撞壞了、被風吹倒了，匾跟著掉了（v0.9.26；自己拆門時先把匾收回來）
       if (ch === this.base(x, y) && !this.wild.has(k)) this.diff.delete(k); else this.diff.set(k, ch);   // 野生苗田那格動過就記著（v0.9.18），免得收了又照節氣長回來
       if (this.crops.size && !(DB[ch] && DB[ch].crop) && this.crops.has(k)) this.crops.delete(k);
       if (DB[ch] && DB[ch].fence) this.fences.add(k); else if (this.fences.size) this.fences.delete(k);
@@ -730,6 +759,32 @@
     galeDir() { return this.gale ? DIR8[this.gale.dir] : null; }   // [dx, dy, 往哪] ；風名是 DIR8[(dir + 4) % 8][2] + '風'
     galeName() { return this.gale ? DIR8[(this.gale.dir + 4) % 8][2] + '風' : ''; }
     newGale() { return { until: U.r4(this.time + (0.25 + U.trueRand() * (GALE_MAX - 0.25)) * DAY), dir: Math.floor(U.trueRand() * 8), day: Math.floor(this.time / DAY) }; }
+    // 屋有其用（v0.9.26）：這格所在、自己蓋的三十八格以內的屋子——能走的格子（cells）、貼著牆內的擺設（has：字 -> 幾個）、門（doors）、認成什麼（kind：居、丹房、倉或空）；不在這樣的屋裡回 null
+    houseRoom(x, y) {
+      if (this.roomInfoVer !== this.ver) { this.roomInfo = new Map(); this.roomInfoVer = this.ver; }
+      const k0 = U.key(x, y), hit = this.roomInfo.get(k0); if (hit !== undefined) return hit;
+      if (!this.passable(x, y) || this.info(x, y).kind === 'water') { this.roomInfo.set(k0, null); return null; }
+      const seen = new Set([k0]), q = [[x, y]], has = {}, doors = new Set(), touched = new Set(); let made = false, over = false;
+      for (let h = 0; h < q.length; h++) {
+        if (seen.size > HOUSE_MAX) { over = true; break; }
+        const [cx, cy] = q[h];
+        for (const [dx, dy] of N4) {
+          const nx = cx + dx, ny = cy + dy, k = U.key(nx, ny); if (seen.has(k)) continue;
+          if (this.passable(nx, ny)) { seen.add(k); q.push([nx, ny]); continue; }
+          if (touched.has(k)) continue; touched.add(k);
+          const ch = this.get(nx, ny); if ('磚甓門窗墟'.indexOf(ch) >= 0) made = true; if (ch === '門') doors.add(k);
+          if (ROOM_FURN.indexOf(ch) >= 0) has[ch] = (has[ch] || 0) + 1;
+        }
+      }
+      const r = !over && made ? { kind: roomKind(has), has, doors: [...doors], cells: [...seen], id: [...seen].sort()[0], decor: [...DECOR].filter(c => has[c]).length } : null;
+      if (over) this.roomInfo.set(k0, null); else for (const k of seen) this.roomInfo.set(k, r);
+      return r;
+    }
+    roomBy(x, y, kind) {   // 擺設（不能走的那格）貼著的屋子：上下左右哪一格在認得出的屋裡；給 kind 就只要那一種
+      for (const [dx, dy] of N4) { const r = this.houseRoom(x + dx, y + dy); if (r && (!kind || r.kind === kind)) return r; }
+      return null;
+    }
+    roomPlaque(r) { if (!r) return ''; for (const k of r.doors) if (this.plaques.has(k)) return this.plaques.get(k); return ''; }   // 屋子的匾（掛在哪一扇門上都算）
     // 三十八格以內的屋子（v0.9.15）：地標屋舍，或從這格順著能走的格子漫延、HOUSE_MAX 格以內圍得住、四面有人造的磚門窗墟；洞窟裡也算有頂
     smallHouse(x, y) {
       const d = this.info(x, y); if (d.shelter || d.cave) return true;
@@ -869,9 +924,9 @@
         if (this.time >= f.moveAt) { f.moveAt = this.time + this.fogStep * (0.6 + U.trueRand() * 0.8); this.steerFog(f, px, py); }
         if (this.fogStep < 1e6) this.placeFog(f, f.x, f.y, f.age);   // 每半息照此刻的位置與形狀重算
       }
-      this.roomCache.clear(); this.houseCache.clear(); this.fenceCache.clear();
+      this.roomCache.clear(); this.houseCache.clear(); this.fenceCache.clear(); this.roomInfoVer = -1;
       // —— 灶裡的柴
-      for (const [k, f] of this.stoves) { if (f > 0) this.stoves.set(k, Math.max(0, f - STEP)); }
+      for (const [k, f] of this.stoves) { if (f > 0) { const [x, y] = U.unkey(k), dan = this.get(x, y) === '鼎' && this.roomBy(x, y, '丹房'); this.stoves.set(k, Math.max(0, f - STEP * (dan ? DAN_FUEL : 1))); } }   // 丹房裡的鼎省四分之一的柴（v0.9.26）
       // —— 窯（v0.9.21）：旁邊的灶有火才燒，燒的時候那個灶多耗一份柴
       for (const [k, r] of this.kilns) { if (r.done) continue; const [x, y] = U.unkey(k), f = this.kilnFire(x, y); if (!f) continue; r.left = U.r4(Math.max(0, r.left - STEP)); const fk = U.key(f.x, f.y); this.stoves.set(fk, Math.max(0, this.stoves.get(fk) - STEP * KILN_PULL)); if (r.left <= 0) { r.done = 1; if (this.onKiln) this.onKiln(x, y, r); } }
       // —— 缸（v0.9.21）：屋外下雨下雪就接水
@@ -966,7 +1021,7 @@
       const crops = {}; for (const [k, r] of this.crops) crops[k] = [r.c, U.r4(r.t), r.f, r.pk || 0, r.rt === undefined ? -1 : U.r4(r.rt), r.shed ? 1 : 0, r.ms || 0];   // 五穀（v0.9.18）；田鼠偷了幾把（v0.9.19）
       const fert = {}; for (const [k, r] of this.fert) fert[k] = [r.v, U.r4(r.t), r.b ? 1 : 0];
       const cats = [...this.cats.values()].map(c => [c.x, c.y, U.r4(c.t)]);
-      return { kilns, jars, eaves: [...this.eaves], crops, fert, cats, locust: this.locust ? [this.locust.x, this.locust.y, U.r4(this.locust.at)] : undefined, hail: this.hail ? U.r4(this.hail.until) : undefined, cropDay: this.cropDay, seed: this.seed, gen: G.GEN, wx: this.wx, gale: this.gale ? { until: U.r4(this.gale.until), dir: this.gale.dir, day: this.gale.day } : undefined, breezeDay: this.breezeDay, purses: Object.fromEntries(this.purses), dayLen: DAY, time: U.r4(this.time), wallHp, dz: pk.dz, tz: pk.tz, dp: Object.keys(pk.dp).length ? pk.dp : undefined, burn, stoves, shelves, bags, weirs, ex, seen, scarecrows, ores: Object.fromEntries([...this.ores].map(([k, v]) => [k, U.r4(v)])), chests, nets, rainUntil: U.r4(this.rainUntil), nextRainAt: U.r4(this.nextRainAt),
+      return { kilns, jars, eaves: [...this.eaves], plq: this.plaques.size ? [...this.plaques] : undefined, crops, fert, cats, locust: this.locust ? [this.locust.x, this.locust.y, U.r4(this.locust.at)].concat(this.locust.sp ? [this.locust.sp] : []) : undefined, sk: this.sparrowKills.length ? this.sparrowKills.map(k => k.slice()) : undefined, hail: this.hail ? U.r4(this.hail.until) : undefined, cropDay: this.cropDay, seed: this.seed, gen: G.GEN, wx: this.wx, gale: this.gale ? { until: U.r4(this.gale.until), dir: this.gale.dir, day: this.gale.day } : undefined, breezeDay: this.breezeDay, purses: Object.fromEntries(this.purses), dayLen: DAY, time: U.r4(this.time), wallHp, dz: pk.dz, tz: pk.tz, dp: Object.keys(pk.dp).length ? pk.dp : undefined, burn, stoves, shelves, bags, weirs, ex, seen, scarecrows, ores: Object.fromEntries([...this.ores].map(([k, v]) => [k, U.r4(v)])), chests, nets, rainUntil: U.r4(this.rainUntil), nextRainAt: U.r4(this.nextRainAt),
         fogs: [...this.fogs.values()].map(f => [U.r4(f.until), [...f.cells].join(';'), f.sea ? 1 : 0, f.shape, [U.r4(f.x), U.r4(f.y), U.r4(f.age || 0), U.r4(f.ang || 0)]]), fogPlan: this.fogPlan.map(U.r4), fogDay: this.fogDay,
         ships: Object.fromEntries([...this.ships].map(([k, v]) => [k, { kind: v.kind, hp: U.r4(v.hp), skulls: (v.skulls || []).map(([n, e]) => [n, U.r4(e)]), repairs: v.repairs || 0, cells: v.cells, fid: v.fid, dir: v.dir, t: v.t }])) };   // t：下水的時刻（v0.8.21）   // fid：洞庭那一場用過這艘（v0.8.16）
     }
@@ -1037,12 +1092,14 @@
       this.cats = new Map((s.cats || []).map(([x, y, t]) => [U.key(x, y), { x, y, t: sh(t) || t }]));   // 守田的狸（v0.9.19）
       this.hail = s.hail ? { until: sh(s.hail) || s.hail } : null;   // 冰雹（v0.9.19）
       this.locust = s.locust ? { x: s.locust[0], y: s.locust[1], at: sh(s.locust[2]) || s.locust[2] } : null;   // 要落下來的蝗群
+      if (this.locust && s.locust[3]) this.locust.sp = s.locust[3];
+      this.sparrowKills = (s.sk || []).map(k => [k[0], k[1], k[2]]);   // 打死的雀（v0.9.25）：記的是第幾日，換日長不用挪
       this.fences = new Set(); for (const [k, v] of this.diff) if (DB[v] && DB[v].fence) this.fences.add(k);
       this.ores = new Map(Object.entries(s.ores || {}).map(([k, v]) => [k, sh(v)]));
       this.chests = new Map(Object.entries(s.chests || {}));
       this.shelves = new Map(Object.entries(s.shelves || {}).map(([k, v]) => [k, v.map(([n, c]) => ({ n, c }))]));
       this.kilns = new Map(Object.entries(s.kilns || {}).map(([k, a]) => [k, { out: a[0], left: a[1], done: a[2] ? 1 : 0 }]));   // 窯、缸、瓦簷（v0.9.21）
-      this.jars = new Map(Object.entries(s.jars || {})); this.eaves = new Set(s.eaves || []);
+      this.jars = new Map(Object.entries(s.jars || {})); this.eaves = new Set(s.eaves || []); this.plaques = new Map(s.plq || []);   // 門上的匾（v0.9.26）
       this.nets = new Map(); this.netCells = new Map();
       for (const [k, v] of Object.entries(s.nets || {})) { const rec = { size: v[0], x: v[1], y: v[2], fish: v[3], t: sh(v[4]), under: v[5] ? Array.from(v[5]) : [], dur: v[6] === undefined ? NET_DUR[v[0]] : v[6], rf: v[7] || 0 }; rec.tidal = rec.under.indexOf('灘') >= 0; this.nets.set(k, rec); for (let j = 0; j < rec.size; j++) for (let i = 0; i < rec.size; i++) this.netCells.set(U.key(rec.x + i, rec.y + j), k); }
       this.stoves = new Map(Object.entries(s.stoves || {}));
@@ -1070,6 +1127,8 @@
   };
   World.newShip = (kind) => ({ kind: SHIPS[kind] ? kind : '孤帆', hp: (SHIPS[kind] || SHIPS['孤帆']).hp, skulls: [], repairs: 0 });
   World.DEEP_R = DEEP_R;
+  World.ROOM = { decor: DECOR, dan: DAN_FUEL, kind: roomKind };   // 屋有其用（v0.9.26）
+  World.SPARROW = { free: SPARROW_FREE, k: SPARROW_LOCUST, max: SPARROW_LOCUST_MAX, r: SPARROW_KILL_R, days: SPARROW_KILL_DAYS };   // 打雀招蝗（v0.9.25）
   root.World = World;
   World.loosen = loosen; World.packWorld = packWorld;
   root.World.CH = CH;
