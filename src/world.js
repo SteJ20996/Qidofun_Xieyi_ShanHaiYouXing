@@ -52,6 +52,10 @@
   // 屋有其用（v0.9.26 使用者定）：三十八格以內的屋子照擺了什麼認——居：床、灶，再有櫃或甕；丹房：鼎與燈（或鮫珠），沒有床；倉：只有櫃、甕，沒有床灶鼎窯
   // ROOM_FURN 是數得進去的擺設（貼著屋裡能走的格子、上下左右相鄰）；DECOR 是四樣擺設（屏、案、几、盆景），丹房的鼎每息只耗 DAN_FUEL 的柴
   const ROOM_FURN = '床灶櫃甕鼎燈珠窯缸屏案几盆', DECOR = '屏案几盆', DAN_FUEL = 0.75;
+  // 屋有其序（v0.9.30 使用者定，補 v0.9.26 只看有沒有的缺口）：擺設照件數算，同一樣最多算 DECOR_PER 件；擺得其所的再算一件——
+  //   几、案、盆景靠窗（八方一格內有窗，「明窗淨几」；盆景向陽）；屏立在門裡第二格（正對門或偏一格，進門先繞過它，「蕭牆」）
+  // 件數與擺得其所加起來由 game.js 的 DECOR_CAP 封頂；件數優先算擺得其所的那幾件
+  const DECOR_PER = 2, BY_WINDOW = '几案盆';
   function roomKind(h) {
     if (h['床'] && h['灶'] && (h['櫃'] || h['甕'])) return '居';
     if (h['鼎'] && (h['燈'] || h['珠']) && !h['床']) return '丹房';
@@ -764,7 +768,7 @@
       if (this.roomInfoVer !== this.ver) { this.roomInfo = new Map(); this.roomInfoVer = this.ver; }
       const k0 = U.key(x, y), hit = this.roomInfo.get(k0); if (hit !== undefined) return hit;
       if (!this.passable(x, y) || this.info(x, y).kind === 'water') { this.roomInfo.set(k0, null); return null; }
-      const seen = new Set([k0]), q = [[x, y]], has = {}, doors = new Set(), touched = new Set(); let made = false, over = false;
+      const seen = new Set([k0]), q = [[x, y]], has = {}, doors = new Set(), touched = new Set(), furn = []; let made = false, over = false;
       for (let h = 0; h < q.length; h++) {
         if (seen.size > HOUSE_MAX) { over = true; break; }
         const [cx, cy] = q[h];
@@ -773,12 +777,31 @@
           if (this.passable(nx, ny)) { seen.add(k); q.push([nx, ny]); continue; }
           if (touched.has(k)) continue; touched.add(k);
           const ch = this.get(nx, ny); if ('磚甓門窗墟'.indexOf(ch) >= 0) made = true; if (ch === '門') doors.add(k);
-          if (ROOM_FURN.indexOf(ch) >= 0) has[ch] = (has[ch] || 0) + 1;
+          if (ROOM_FURN.indexOf(ch) >= 0) { has[ch] = (has[ch] || 0) + 1; furn.push([nx, ny, ch]); }
         }
       }
-      const r = !over && made ? { kind: roomKind(has), has, doors: [...doors], cells: [...seen], id: [...seen].sort()[0], decor: [...DECOR].filter(c => has[c]).length } : null;
+      const r = !over && made ? { kind: roomKind(has), has, furn, doors: [...doors], cells: [...seen], id: [...seen].sort()[0], decor: [...DECOR].filter(c => has[c]).length } : null;
+      if (r) Object.assign(r, this.decorOf(r, seen));
       if (over) this.roomInfo.set(k0, null); else for (const k of seen) this.roomInfo.set(k, r);
       return r;
+    }
+    // 屋有其序（v0.9.30）：pieces 算進去的擺設件數（同一樣最多 DECOR_PER 件）、fit 其中擺得其所的件數、fitList 哪幾件（[x, y, 字]）
+    decorOf(r, seen) {
+      const fits = (x, y, ch) => {
+        if (BY_WINDOW.indexOf(ch) >= 0) { for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) if ((i || j) && this.get(x + i, y + j) === '窗') return true; return false; }
+        if (ch !== '屏') return false;
+        for (const k of r.doors) {   // 門往屋裡那一邊（上下左右貼著屋裡的地）走兩格，正對或偏一格
+          const [dx0, dy0] = U.unkey(k);
+          for (const [ix, iy] of N4) { if (!seen.has(U.key(dx0 + ix, dy0 + iy))) continue; const rx = x - dx0, ry = y - dy0; if (rx * ix + ry * iy === 2 && Math.abs(rx * iy - ry * ix) <= 1) return true; }
+        }
+        return false;
+      };
+      let pieces = 0, fit = 0; const fitList = [];
+      for (const c of DECOR) {
+        const all = r.furn.filter(f => f[2] === c).map(f => [f, fits(f[0], f[1], c)]).sort((a, b) => b[1] - a[1]).slice(0, DECOR_PER);
+        pieces += all.length; for (const [f, ok] of all) if (ok) { fit++; fitList.push(f); }
+      }
+      return { pieces, fit, fitList };
     }
     roomBy(x, y, kind) {   // 擺設（不能走的那格）貼著的屋子：上下左右哪一格在認得出的屋裡；給 kind 就只要那一種
       for (const [dx, dy] of N4) { const r = this.houseRoom(x + dx, y + dy); if (r && (!kind || r.kind === kind)) return r; }
@@ -1127,7 +1150,7 @@
   };
   World.newShip = (kind) => ({ kind: SHIPS[kind] ? kind : '孤帆', hp: (SHIPS[kind] || SHIPS['孤帆']).hp, skulls: [], repairs: 0 });
   World.DEEP_R = DEEP_R;
-  World.ROOM = { decor: DECOR, dan: DAN_FUEL, kind: roomKind };   // 屋有其用（v0.9.26）
+  World.ROOM = { decor: DECOR, dan: DAN_FUEL, kind: roomKind, per: DECOR_PER, byWindow: BY_WINDOW };   // 屋有其用（v0.9.26）
   World.SPARROW = { free: SPARROW_FREE, k: SPARROW_LOCUST, max: SPARROW_LOCUST_MAX, r: SPARROW_KILL_R, days: SPARROW_KILL_DAYS };   // 打雀招蝗（v0.9.25）
   root.World = World;
   World.loosen = loosen; World.packWorld = packWorld;
