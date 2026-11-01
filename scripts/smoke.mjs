@@ -1589,7 +1589,9 @@ const result = await page.evaluate(async () => {
     const ns = []; for (let i = 0; i < 40; i++) ns.push(window.World.newFogShape(18).n);
     ok('v0.6.4: fog shapes run from round (power near 2) to square (power near 6)', Math.min(...ns) < 2.8 && Math.max(...ns) > 5, [Math.min(...ns), Math.max(...ns)]);
     for (const id of [...w.fogs.keys()]) w.removeFog(id);
-    const f = w.addFog(null, w.time + DAY, false, window.World.newFogShape(18), [fx + 0.5, fy + 0.5]), cov = w.fogCoverage(f, undefined, undefined, undefined, f.mul);
+    // v0.9.30：形狀固定一個種子（隨機的形約三百回失手一回，取樣誤差偶爾超過 1.6；跟 v0.9.28 的霧繞小屋同一個辦法）
+    const keepTR = U.trueRand; let fsd = 1000; U.trueRand = () => (fsd = (fsd * 16807) % 2147483647) / 2147483647; const fshape = window.World.newFogShape(18); U.trueRand = keepTR;
+    const f = w.addFog(null, w.time + DAY, false, fshape, [fx + 0.5, fy + 0.5]), cov = w.fogCoverage(f, undefined, undefined, undefined, f.mul);
     const area = cov.reduce((a, e) => a + e.c, 0), counted = [...f.cells], byKey = new Map(cov.map(e => [e.k, e.c]));
     ok('v0.6.4: a fog covers about eighteen tiles of area; a tile counts once more than 5% of it is covered; at most thirty count', Math.abs(area - 18) < 1.6 && counted.length <= 30 && counted.length >= 18 && counted.every(k => byKey.get(k) > 0.05) && cov.filter(e => e.c > 0.05).length >= counted.length, [area, counted.length]);
     w.removeFog(f.id);
@@ -1612,7 +1614,9 @@ const result = await page.evaluate(async () => {
     ok('v0.6.5: fog goes over water and over mountains', on(fw, '水') >= 10 && on(fm, '山') >= 10, [on(fw, '水'), on(fm, '山')]);
     w.removeFog(fw.id); w.removeFog(fm.id); clear(10, '草');
     for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === 3) w.set(fx + dx, fy + dy, '磚');
-    const fh = w.addFog(null, w.time + DAY, false, window.World.newFogShape(18), [fx - 5.5, fy + 0.5]); fh.ang = 0; fh.gx = fh.x; fh.gy = fh.y;
+    // v0.9.28：霧的形狀是真隨機，約兩百五十個形狀有一個繞過屋角時面積偏到 1.2–1.44 格（霧從不進屋）；這一項固定用一個形狀，免得偶爾失手
+    const keepR = U.trueRand; let sd = 1000; U.trueRand = () => (sd = (sd * 16807) % 2147483647) / 2147483647; const fixedShape = window.World.newFogShape(18); U.trueRand = keepR;
+    const fh = w.addFog(null, w.time + DAY, false, fixedShape, [fx - 5.5, fy + 0.5]); fh.ang = 0; fh.gx = fh.x; fh.gy = fh.y;
     let wrapped = true, inside = 0; for (let i = 0; i < 12; i++) { w.placeFog(fh, fh.gx + Math.cos(fh.ang) * 0.5, fh.gy + Math.sin(fh.ang) * 0.5, fh.age); const cv = w.fogCover(fh); if (Math.abs(cv.area - fh.shape.area) > 1.2) wrapped = false; inside += [...fh.cells].filter(k => { const [x, y] = k.split(',').map(Number); return Math.abs(x - fx) <= 2 && Math.abs(y - fy) <= 2; }).length; }
     { const ix = fx - 8, iy = fy + 7; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) w.set(ix + dx, iy + dy, Math.max(Math.abs(dx), Math.abs(dy)) === 2 ? '水' : '草');
       ok('v0.6.7: a little pocket ringed by water alone is not a house — fog may drift in', !w.fogRoom(ix, iy));
@@ -2804,7 +2808,7 @@ const result = await page.evaluate(async () => {
     ok('v0.8: an old save’s dragon flies home to the east sea — gone, and the scale counts as taken', !p.dragon && !E.list.some(e => e.type === '龍') && p.scaleTaken && !p.azure);
     ok('v0.8: …leaving a 青鱗; the bag is full, so a 小囊 by the last bed slept in holds it', !!sack && inSack.some(it => it.n === '青鱗') && g.count('青鱗') === 0, [sack, inSack]);
     ok('v0.8: …and a toast says where the 青龍 is and that it wants a 蜃珠', /龍回東海去了/.test(toasts()) && /蜃珠/.test(toasts()));
-    if (sack) { p.bag.pop(); const st = ring(sack[0], sack[1]).find(([x, y]) => w.get(x, y) === '草'); p.x = p.rx = st[0]; p.y = p.ry = st[1]; face(sack[0] - st[0], sack[1] - st[1]); g.msgUntil = 0; await sleep(120);
+    if (sack) { p.bag.pop(); const st = ring(sack[0], sack[1]).find(([x, y]) => w.get(x, y) === '草'); p.x = p.rx = st[0]; p.y = p.ry = st[1]; face(sack[0] - st[0], sack[1] - st[1]); g.msgUntil = 0; await until(() => /小囊/.test(document.getElementById('msg').textContent), 3000);   // v0.9.28：讀檔後的幾幀可能很慢，等提示列真的換過再讀（原本只等 120 毫秒，慢的機器偶爾讀到上一個測試的鼎）
       const hint = document.getElementById('msg').textContent; g.pressGather();
       ok('v0.8: the hint names what is in the 小囊; E takes the 青鱗 and the sack is gone', /小囊（青鱗）/.test(hint) && g.count('青鱗') === 1 && w.get(sack[0], sack[1]) !== '囊' && !w.bags.has(U.key(sack[0], sack[1])), hint); }
     const n0 = w.ver; g.load(sv); p.x = p.rx = p0.x; p.y = p.ry = p0.y;
@@ -4145,6 +4149,109 @@ const result = await page.evaluate(async () => {
     // 收拾
     for (const s of touched) { const [k, v] = s.split('|'); if (v === '\u0000') w.diff.delete(k); else w.diff.set(k, v); const [x, y] = k.split(',').map(Number); w.chests.delete(k); w.kilns.delete(k); w.jars.delete(k); w.eaves.delete(k); w.stoves.delete(k); w.lamps.delete(k); w.crops.delete(k); }
     w.ver++; w.time = keepT; p.bag = keepBag; p.sel = keepSel; p.x = keepX; p.y = keepY; p.fx = keepFx; p.fy = keepFy; U.trueRand = keepNow; g.barSig = ''; }
+  // ============ v0.9.31 戈收回慢、南冥落腳避開青丘 ============
+  { const keepTools = p.tools, keepTool = p.tool, keepX = p.x, keepY = p.y, keepFx = p.fx, keepFy = p.fy, keepSta = p.sta, keepList = g.ents.list.slice(), touched = new Map();
+    const put = (x, y, ch) => { const k = x + ',' + y; if (!touched.has(k)) touched.set(k, w.diff.has(k) ? w.diff.get(k) : null); w.set(x, y, ch); };
+    const ox = p.x, oy = p.y; for (let y = oy - 2; y <= oy + 2; y++) for (let x = ox - 2; x <= ox + 4; x++) put(x, y, '土');
+    const give = (n) => { p.tools = [{ n, c: 1, dur: G.ITEMS[n].dur }]; p.tool = 0; p.atkT = 0; p.sta = 100; p.fx = 1; p.fy = 0; };
+    const add = (t, x, y) => g.ents.add(t, x, y, { moveT: 99, calm: 9 });
+    g.ents.list = []; give('石戈'); const pig = add('豬', ox + 1, oy), ph = pig.hp; g.pressGather(); const geCd = p.atkT, geHit = pig.hp < ph;
+    g.ents.list = []; give('石刀'); add('豬', ox + 1, oy); g.pressGather(); const daoCd = p.atkT;
+    g.ents.list = []; give('石劍'); add('豬', ox + 1, oy); g.pressGather(); const jianCd = p.atkT;
+    g.ents.list = []; give('石斧'); add('豬', ox + 1, oy); g.pressGather(); const fuCd = p.atkT;
+    const txt = /0\.6 息/.test(G.ITEMS['石戈'].flavor) && /0\.6 息/.test(G.ITEMS['鋼戈'].flavor) && /0\.6 息/.test(G.ITEMS['鎢鋼戈'].flavor);
+    ok('v0.9.31: the 戈 recovers slower — 0.6 breaths after a thrust (刀 and 劍 0.45, 斧 0.675); damage per hit unchanged; the item texts say so', geHit && Math.abs(geCd - 0.6) < 1e-9 && Math.abs(daoCd - 0.45) < 1e-9 && Math.abs(jianCd - 0.45) < 1e-9 && Math.abs(fuCd - 0.675) < 1e-9 && (ph - pig.hp) === U.r4(30 * g.dmgMult()) && txt, { geCd, daoCd, jianCd, fuCd, hit: ph - pig.hp, txt });
+    for (const [k, v] of touched) { if (v === null) w.diff.delete(k); else w.diff.set(k, v); } w.ver++;
+    p.tools = keepTools; p.tool = keepTool; p.x = keepX; p.y = keepY; p.fx = keepFx; p.fy = keepFy; p.sta = keepSta; p.atkT = 0; g.ents.list = keepList; }
+  { const keepX = p.x, keepY = p.y, keepSail = p.sailing, keepSwim = p.swimming, keepShip = p.ship, keepHold = p.hold, keepK = p.kun, keepFeats = (p.feats || []).slice(), keepRg = p.regions, keepBoss = p.bosses, R = G.WORLD_R;
+    const qq = G.zones(g.seed).find(z => z.id === '大風'), outQ = (d) => !!d && g.southSea(d.x, d.y) && Math.hypot(d.x - qq.x, d.y - qq.y) > 100 && !G.zoneAt(d.x, d.y, g.seed);
+    p.sailing = false; p.swimming = false; p.ship = null; p.hold = []; p.bosses = Object.assign({}, keepBoss); delete p.bosses['大風'];
+    const res = []; for (const dx of [-60, 0, 40]) { p.x = p.rx = Math.round(qq.x + dx); p.y = p.ry = Math.round(-0.78 * R); const d = g.pengDest(); res.push(d && [d.x, d.y, Math.round(Math.hypot(d.x - qq.x, d.y - qq.y))]); if (!outQ(d)) res.push('bad'); }
+    const pushed = res.every(r => r !== 'bad' && r) && res.filter(Array.isArray).every(r => Math.abs(r[0] - qq.x) >= 60);
+    ok('v0.9.31: taking off right north of 青丘, the 鵬 aims at least 170 tiles to the side of it and always lands inside 南冥 (south of 0.7R), outside 大風’s ground', pushed, { qq: [qq.x, qq.y], res });
+    // v0.9.32（丙）：還沒斃的大魔王戰場外再留三十格——帶船、沒船都照這條；斃了大風就不另留
+    const ring = (sail) => { const out = []; p.sailing = sail; p.ship = sail ? { kind: '孤帆', n: '孤帆', hp: 100, x0: 0, y0: 0, dir: 'h' } : null;
+      for (const dx of [-170, -60, 0, 40, 170]) { p.x = p.rx = Math.round(qq.x + dx); p.y = p.ry = Math.round(-0.78 * R); const d = g.pengDest(); out.push(d ? Math.round(Math.hypot(d.x - qq.x, d.y - qq.y) * 10) / 10 : null); } return out; };
+    const shipD = ring(true), landD = ring(false); p.sailing = false; p.ship = null;
+    const margin = shipD.concat(landD).every(v => v !== null && v > 130);
+    ok('v0.9.32: with 大風 still alive, the 鵬 never sets you down within 30 tiles of its ground (130 from the centre of 青丘) — by ship or on land', margin, { shipD, landD });
+    p.x = p.rx = qq.x; p.y = p.ry = Math.round(-0.78 * R); p.kun = { st: 'peng', day: g.day(), rise: 1 }; p.feats = []; p.regions = {};
+    const d = g.pengDest(); document.getElementById('toasts').innerHTML = ''; g.pengFly(d); for (let i = 0; i < 30 && g.flight; i++) g.flightTick(1);
+    const t1 = document.getElementById('toasts').textContent, said = /青丘（大風的地界）在你的(東|西|南|北|東南|東北|西南|西北)方約 \d+ 格，大風還在/.test(t1);
+    ok('v0.9.31: on landing in 南冥 the toast says which way 青丘 lies and how far, and that 大風 is still there', !g.flight && said, { said, t1: t1.slice(0, 220) });
+    p.x = p.rx = keepX; p.y = p.ry = keepY; p.sailing = keepSail; p.swimming = keepSwim; p.ship = keepShip; p.hold = keepHold; p.kun = keepK; p.feats = keepFeats; p.regions = keepRg; p.bosses = keepBoss; g.renderer.camInit = false; g.barSig = ''; g.buildBag(); document.getElementById('toasts').innerHTML = ''; }
+  // ============ v0.9.30 屋有其序：擺設照件數、擺得其所、倉廩實 ============
+  { const D = XIEYI.DAY, keepX = p.x, keepY = p.y, keepFx = p.fx, keepFy = p.fy, keepTut = p.tut, keepSan = p.san, keepT = w.time, keepList = g.ents.list.slice(), keepGd = p.granDay, touched = new Map(), chestKeys = [];
+    const put = (x, y, ch) => { const k = x + ',' + y; if (!touched.has(k)) touched.set(k, w.diff.has(k) ? w.diff.get(k) : null); w.set(x, y, ch); };
+    const ox = p.x + 3, oy = p.y - 3;   // 外框九乘七、屋裡七乘五；南牆正中一扇門、北牆正中一扇窗
+    const box = () => { for (let y = oy; y <= oy + 6; y++) for (let x = ox; x <= ox + 8; x++) put(x, y, (x === ox || x === ox + 8 || y === oy || y === oy + 6) ? '磚' : '土'); put(ox + 4, oy + 6, '門'); put(ox + 4, oy, '窗'); for (let x = ox - 1; x <= ox + 9; x++) put(x, oy + 7, '土'); };
+    const tst = () => document.getElementById('toasts').textContent;
+    g.ents.list = []; p.tut = {}; p.sailing = false; p.swimming = false; box();
+    put(ox + 1, oy + 1, '床'); put(ox + 7, oy + 1, '灶'); put(ox + 7, oy + 5, '櫃');
+    put(ox + 4, oy + 1, '几'); put(ox + 3, oy + 1, '盆'); put(ox + 1, oy + 5, '盆'); put(ox + 2, oy + 5, '盆'); put(ox + 4, oy + 4, '屏'); put(ox + 1, oy + 3, '案');
+    const r1 = w.houseRoom(ox + 5, oy + 3), ds1 = g.decorSan(r1);
+    const fitCh = r1 ? r1.fitList.map(f => f[2]).sort().join('') : '';
+    ok('v0.9.30: decorations count by piece (a third 盆景 does not count — two of a kind at most), and well-placed ones count once more: 几 and 盆景 by the window, 屏 two tiles inside the door; the total is capped at +6', r1 && r1.kind === '居' && r1.pieces === 5 && r1.fit === 3 && fitCh === '几屏盆' && ds1.san === 6 && ds1.capped, { kind: r1 && r1.kind, pieces: r1 && r1.pieces, fit: r1 && r1.fit, fitCh, ds1 });
+    put(ox + 4, oy + 4, '土'); put(ox + 2, oy + 4, '屏'); const r2 = w.houseRoom(ox + 5, oy + 3); put(ox + 2, oy + 4, '土'); put(ox + 5, oy + 4, '屏'); const r3 = w.houseRoom(ox + 5, oy + 3);
+    ok('v0.9.30: a 屏 two tiles inside the door counts as well placed straight on or one tile aside; two tiles aside it does not', r2 && r2.fit === 2 && r3 && r3.fit === 3, { r2: r2 && r2.fit, r3: r3 && r3.fit });
+    put(ox + 5, oy + 4, '土'); put(ox + 4, oy + 4, '屏');
+    p.x = ox + 5; p.y = oy + 3; document.getElementById('toasts').innerHTML = ''; g.roomAt = null; g.roomId = null; g.roomTick(); const tipKind = /認出是「居」/.test(tst());
+    g.roomAt = null; g.roomId = null; g.roomTick(); g.roomAt = null; g.roomId = 'x'; g.roomTick(); const tipFit = /當門立屏/.test(tst()) && /蕭牆/.test(tst()) && /几、案、盆景靠窗/.test(tst()) && p.tut.roomFit === 1;
+    let nd = 400; while (window.CAL.term(nd).k === 3) nd++; w.time = nd * D + D * 0.95; g.sunC = null; p.x = ox + 2; p.y = oy + 1; p.fx = -1; p.fy = 0; p.san = 10; document.getElementById('toasts').innerHTML = '';
+    const bonus = g.windowBonus(g.windowShare()), want = U.r4(10 + 20 * (1 + bonus) + 5 + 6); g.sleep();
+    const slept = Math.abs(p.san - want) < 1e-6 && /睡在居裡 \+5/.test(tst()) && /屋裡擺設 5 件、擺得其所 3 件 \+6（最多 \+6）/.test(tst());
+    ok('v0.9.30: sleeping in that 居 gives 20 + 5 + 6 (capped) and the toast names pieces and well-placed ones; the first well-placed piece explains itself once (here the 屏: 當門立屏, 蕭牆)', tipKind && tipFit && slept, { tipKind, tipFit, slept, san: p.san, want, toast: tst().slice(0, 160) });
+    // 老屋子不吃虧：四樣各一件、不靠窗，照舊 +4
+    box(); put(ox + 1, oy + 1, '床'); put(ox + 7, oy + 1, '灶'); put(ox + 7, oy + 5, '櫃'); put(ox + 4, oy, '磚'); put(ox + 2, oy + 3, '屏'); put(ox + 1, oy + 3, '案'); put(ox + 6, oy + 3, '几'); put(ox + 7, oy + 3, '盆');
+    const r4 = w.houseRoom(ox + 4, oy + 2);
+    ok('v0.9.30: a v0.9.26 house with one of each decoration and nothing by the window still gives +4 (no house loses what it had)', r4 && r4.pieces === 4 && r4.fit === 0 && r4.decor === 4 && g.decorSan(r4).san === 4, { pieces: r4 && r4.pieces, fit: r4 && r4.fit });
+    // 倉廩實：兩件以上櫃甕、裝了四分之三的格子，每天頭一回進倉愜意 +1
+    box(); put(ox + 1, oy + 1, '櫃'); put(ox + 2, oy + 1, '甕'); const ka = (ox + 1) + ',' + (oy + 1), kb = (ox + 2) + ',' + (oy + 1); chestKeys.push(ka, kb);
+    const fill = (n) => Array.from({ length: n }, () => ({ n: '石', c: 1 }));
+    w.chests.set(ka, fill(20)); w.chests.set(kb, fill(6)); const cang = w.houseRoom(ox + 4, oy + 3), half = g.granary(cang);
+    p.x = ox + 4; p.y = oy + 3; p.san = 50; p.granDay = undefined; g.roomAt = null; g.roomId = null; g.roomTick(); const noGain = p.san === 50;
+    w.chests.set(kb, fill(7)); g.roomAt = null; g.roomId = null; g.msgText = ''; g.roomTick(); const in1 = p.san, said = /倉廩實則知禮節/.test(g.msgText);
+    g.roomAt = null; g.roomId = null; g.roomTick(); const in2 = p.san;
+    put(ox + 2, oy + 1, '土'); const one = g.granary(w.houseRoom(ox + 4, oy + 3));
+    ok('v0.9.30: a 倉 with two or more 櫃甕 filled three quarters (27 of 36 slots) is 倉廩實 — the first entry each day gives 愜意 +1; 26 slots, or a single 櫃, is not', cang && cang.kind === '倉' && half && !half.full && half.cap === 36 && noGain && in1 === 51 && said && in2 === 51 && one && !one.full, { kind: cang && cang.kind, half, noGain, in1, said, in2, one });
+    p.granDay = g.day(); g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot)));
+    ok('v0.9.30: the 倉廩實 day is saved with the player', sv.player.granDay === g.day(), { gd: sv.player.granDay });
+    for (const k of chestKeys) w.chests.delete(k);
+    for (const [k, v] of touched) { if (v === null) w.diff.delete(k); else w.diff.set(k, v); } w.ver++;
+    p.x = keepX; p.y = keepY; p.fx = keepFx; p.fy = keepFy; p.tut = keepTut; p.san = keepSan; p.granDay = keepGd; w.time = keepT; g.sunC = null; g.ents.list = keepList; g.roomAt = null; g.roomId = null; document.getElementById('toasts').innerHTML = ''; }
+  // ============ v0.9.28 點擊用戈 ============
+  { const keepTools = p.tools, keepTool = p.tool, keepX = p.x, keepY = p.y, keepFx = p.fx, keepFy = p.fy, keepSta = p.sta, keepList = g.ents.list.slice(), touched = new Map();
+    const put = (x, y, ch) => { const k = x + ',' + y; if (!touched.has(k)) touched.set(k, w.diff.has(k) ? w.diff.get(k) : null); w.set(x, y, ch); };
+    const ox = p.x, oy = p.y; for (let y = oy - 4; y <= oy + 4; y++) for (let x = ox - 4; x <= ox + 4; x++) put(x, y, '土');
+    const give = (n) => { p.tools = [{ n, c: 1, dur: G.ITEMS[n].dur }]; p.tool = 0; p.atkT = 0; p.sta = 100; p.fx = 1; p.fy = 0; p.x = p.rx = ox; p.y = p.ry = oy; };
+    const add = (t, x, y) => g.ents.add(t, x, y, { moveT: 99, calm: 9 }), m = g.dmgMult();
+    g.ents.list = []; give('石戈'); const d1 = add('狼', ox + 2, oy - 2), h1 = d1.hp; const diag = g.geClick(d1) && p.fx === 1 && p.fy === -1 && (h1 - d1.hp) === 30 * m;
+    g.ents.list = []; give('石戈'); const d3 = add('狼', ox - 3, oy), h3 = d3.hp; const tip = g.geClick(d3) && p.fx === -1 && p.fy === 0 && Math.abs((h3 - d3.hp) - 15 * m) < 1e-9;
+    g.ents.list = []; give('石戈'); const off = add('狼', ox + 2, oy + 1), ho = off.hp; const offLine = !g.geClick(off) && off.hp === ho && p.fx === 1 && p.fy === 0;
+    g.ents.list = []; give('石戈'); add('鹿', ox, oy + 1); const behind = add('狼', ox, oy + 2), hb = behind.hp; const blocked = !g.geClick(behind) && behind.hp === hb;
+    g.ents.list = []; give('石戈'); put(ox, oy - 1, '磚'); const walled = add('狼', ox, oy - 2), hw = walled.hp; const wall = !g.geClick(walled) && walled.hp === hw; put(ox, oy - 1, '土');
+    g.ents.list = []; give('石刀'); const kn = add('狼', ox + 2, oy), hk = kn.hp; const knife = !g.geClick(kn) && kn.hp === hk;
+    ok('v0.9.28: holding a 戈, clicking a beast two or three tiles away in a straight line (any of eight directions) turns to it and thrusts — full at two, half at three; off the line, behind another creature, behind a wall, or holding a 刀, it does not', diag && tip && offLine && blocked && wall && knife, { diag, tip, offLine, blocked, wall, knife });
+    // 真的點一下畫布：照那隻畫在哪裡算
+    g.ents.list = []; give('石戈'); const ck = add('豬', ox + 3, oy), hc = ck.hp; await sleep(80);   // 用野豬：白天的狼等這一下會被收走
+    { const r = g.renderer, T = r.tile, cx = (ck.rx + 0.5 - r.camX) * T + r.w / 2, cy = (ck.ry + 0.5 - r.camY) * T + r.h / 2, cv = document.getElementById('world'), bb = cv.getBoundingClientRect();
+      cv.dispatchEvent(new MouseEvent('mousedown', { clientX: bb.left + cx, clientY: bb.top + cy, bubbles: true, button: 0 })); }
+    ok('v0.9.28: …and a real click on the canvas does it too, instead of walking over (no path is set)', Math.abs((hc - ck.hp) - 15 * m) < 1e-9 && !g.path && !g.follow, { hit: hc - ck.hp, path: !!g.path, follow: !!g.follow });
+    // v0.9.29 自查：神獸不搆；按 E 不搆鹿（點的才搆）；門擋得住；剛惹惱的才算順手砍得到
+    const divine = !g.geAim({ type: '玄武', hp: 9999 }, true) && !g.geAim({ type: '白虎', hp: 9999 }) && !g.sideOk({ type: '青龍', hp: 9999 });
+    g.ents.list = []; give('石戈'); const dr = add('鹿', ox + 2, oy), hd = dr.hp; const eSkip = !g.geTarget(); const clickDeer = g.geClick(dr) && dr.hp < hd;
+    g.ents.list = []; give('石戈'); put(ox + 1, oy, '門'); const dw = add('豬', ox + 2, oy), hdw = dw.hp; const door = !g.geTarget() && !g.geClick(dw) && dw.hp === hdw; put(ox + 1, oy, '土');
+    const oldAngry = !g.sideOk({ type: '鹿', angry: true, angryAt: w.time - 60, hp: 30 }) && g.sideOk({ type: '鹿', angry: true, angryAt: w.time - 1, hp: 30 });
+    ok('v0.9.29 self-check: the 戈 never reaches the four divine beasts; E does not reach a deer (a click does); a door in between stops it; a long-ago hit no longer makes a deer side-hittable', divine && eSkip && clickDeer && door && oldAngry, { divine, eSkip, clickDeer, door, oldAngry });
+    // 匾：每天頭一回進門的 +1 記在人身上、存檔；騎鵬：還沒答就讀檔會再問一次
+    { const keepKun = p.kun, keepPd = p.plaqueDay; p.plaqueDay = { '1,2': g.day() }; g.save(); const sv = JSON.parse(localStorage.getItem(XIEYI.Game.slotKey(g.slot)));
+      const pdSaved = sv.player.plaqueDay && sv.player.plaqueDay['1,2'] === g.day();
+      p.kun = { st: 'peng', day: g.day(), rise: 1, ask: 1 }; g.pengReasked = false; g.talking = null; g.kunAcc = 0; g.kunTick(1.1); const asked = !!g.talking && /乘鵬南去/.test(document.getElementById('talk').textContent);
+      if (g.talking) g.talkPick(1); g.kunAcc = 0; g.kunTick(1.1); const once = !g.talking;
+      p.kun = keepKun; p.plaqueDay = keepPd; g.pengReasked = false;
+      ok('v0.9.29 self-check: the plaque\'s once-a-day +1 is saved; an unanswered 鵬 offer is asked again (once) after a reload', pdSaved && asked && once, { pdSaved, asked, once }); }
+    g.stopWalk(); g.ents.list = keepList; p.tools = keepTools; p.tool = keepTool; p.x = p.rx = keepX; p.y = p.ry = keepY; p.fx = keepFx; p.fy = keepFy; p.sta = keepSta; p.atkT = 0;
+    for (const [k, v] of touched) { if (v === null) w.diff.delete(k); else w.diff.set(k, v); } w.ver++; }
   // ============ v0.9.27 兵器有形 ============
   { const keepTools = p.tools, keepTool = p.tool, keepX = p.x, keepY = p.y, keepFx = p.fx, keepFy = p.fy, keepSta = p.sta, keepList = g.ents.list.slice(), touched = new Map();
     const put = (x, y, ch) => { const k = x + ',' + y; if (!touched.has(k)) touched.set(k, w.diff.has(k) ? w.diff.get(k) : null); w.set(x, y, ch); };
@@ -4184,7 +4291,7 @@ const result = await page.evaluate(async () => {
     // 擺設：屏、盆景兩樣；睡在居裡 +5、擺設每樣 +1
     put(ox + 1, oy + 3, '屏'); put(ox + 3, oy + 1, '盆'); const rd = w.houseRoom(ox + 3, oy + 2);
     let nd = 400; while (window.CAL.term(nd).k === 3) nd++; w.time = nd * D + D * 0.95; g.sunC = null; p.x = ox + 2; p.y = oy + 1; p.fx = -1; p.fy = 0; p.san = 10; document.getElementById('toasts').innerHTML = ''; g.sleep();
-    const slept = p.san === 10 + 20 + 5 + 2 && /睡在居裡 \+5/.test(tst()) && /屋裡擺設 2 樣 \+2/.test(tst());
+    const slept = p.san === 10 + 20 + 5 + 2 && /睡在居裡 \+5/.test(tst()) && /屋裡擺設 2 件 \+2/.test(tst());
     const recs = ['screen', 'table', 'stool', 'bonsai', 'plaque'].map(id => G.RECIPES.find(r => r.id === id)).filter(Boolean), tables = recs.length === 5 && ['屏', '案', '几', '盆'].every(c => G.DB[c] && G.DB[c].place) && G.item('盆景').tile === '盆' && G.KILN['陶盆'] && G.KILN['陶盆'].need['埴'] === 1;
     ok('v0.9.26: decorations (屏、案、几、盆景) are craftable and placeable; sleeping in a 居 with two of them gives 20 + 5 + 2 愜意', rd && rd.decor === 2 && slept && tables, { decor: rd && rd.decor, san: p.san, tables });
     // 丹房：鼎與燈、沒有床；鼎省四分之一的柴
